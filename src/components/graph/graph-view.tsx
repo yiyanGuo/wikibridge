@@ -35,6 +35,17 @@ function nodeColor(type: string): string {
   return NODE_TYPE_COLORS[type] ?? NODE_TYPE_COLORS.other
 }
 
+/** Mix two hex colors. ratio=0 returns color1, ratio=1 returns color2 */
+function mixColor(color1: string, color2: string, ratio: number): string {
+  const hex = (c: string) => parseInt(c, 16)
+  const r1 = hex(color1.slice(1, 3)), g1 = hex(color1.slice(3, 5)), b1 = hex(color1.slice(5, 7))
+  const r2 = hex(color2.slice(1, 3)), g2 = hex(color2.slice(3, 5)), b2 = hex(color2.slice(5, 7))
+  const r = Math.round(r1 + (r2 - r1) * ratio)
+  const g = Math.round(g1 + (g2 - g1) * ratio)
+  const b = Math.round(b1 + (b2 - b1) * ratio)
+  return `#${r.toString(16).padStart(2, "0")}${g.toString(16).padStart(2, "0")}${b.toString(16).padStart(2, "0")}`
+}
+
 function nodeSize(linkCount: number, maxLinks: number): number {
   if (maxLinks === 0) return BASE_NODE_SIZE
   const ratio = linkCount / maxLinks
@@ -70,8 +81,8 @@ function GraphLoader({ nodes, edges }: GraphLoaderProps) {
     for (const edge of edges) {
       if (graph.hasNode(edge.source) && graph.hasNode(edge.target)) {
         graph.addEdge(edge.source, edge.target, {
-          color: "#e5e7eb",
-          size: 1,
+          color: "#d1d5db",
+          size: 1.5,
         })
       }
     }
@@ -106,14 +117,37 @@ function EventHandler({ onNodeClick }: EventHandlerProps) {
       enterNode: ({ node }) => {
         const container = sigma.getContainer()
         container.style.cursor = "pointer"
-        // Highlight node on hover
-        sigma.getGraph().setNodeAttribute(node, "highlighted", true)
+        const graph = sigma.getGraph()
+        graph.setNodeAttribute(node, "hovering", true)
+        // Dim non-neighbor nodes
+        const neighbors = new Set(graph.neighbors(node))
+        neighbors.add(node)
+        graph.forEachNode((n) => {
+          if (!neighbors.has(n)) {
+            graph.setNodeAttribute(n, "dimmed", true)
+          }
+        })
+        graph.forEachEdge((e, _attrs, source, target) => {
+          if (source !== node && target !== node) {
+            graph.setEdgeAttribute(e, "dimmed", true)
+          } else {
+            graph.setEdgeAttribute(e, "highlighted", true)
+          }
+        })
         sigma.refresh()
       },
-      leaveNode: ({ node }) => {
+      leaveNode: () => {
         const container = sigma.getContainer()
         container.style.cursor = "default"
-        sigma.getGraph().setNodeAttribute(node, "highlighted", false)
+        const graph = sigma.getGraph()
+        graph.forEachNode((n) => {
+          graph.removeNodeAttribute(n, "hovering")
+          graph.removeNodeAttribute(n, "dimmed")
+        })
+        graph.forEachEdge((e) => {
+          graph.removeEdgeAttribute(e, "dimmed")
+          graph.removeEdgeAttribute(e, "highlighted")
+        })
         sigma.refresh()
       },
     })
@@ -250,15 +284,38 @@ export function GraphView() {
           style={{ width: "100%", height: "100%", background: "transparent" }}
           settings={{
             renderEdgeLabels: false,
-            defaultEdgeColor: "#e5e7eb",
+            defaultEdgeColor: "#d1d5db",
             defaultNodeColor: "#9ca3af",
             labelSize: 12,
-            labelWeight: "normal",
-            labelColor: { color: "var(--foreground, #111827)" },
-            nodeReducer: (_node, attrs) => ({
-              ...attrs,
-              highlighted: attrs.highlighted ?? false,
-            }),
+            labelWeight: "bold",
+            labelColor: { color: "#374151" },
+            labelDensity: 0.5,
+            labelRenderedSizeThreshold: 8,
+            nodeReducer: (_node, attrs) => {
+              const result = { ...attrs }
+              if (attrs.hovering) {
+                result.size = (attrs.size ?? BASE_NODE_SIZE) * 1.3
+                result.zIndex = 10
+                result.label = attrs.label
+                result.forceLabel = true
+              }
+              if (attrs.dimmed) {
+                result.color = mixColor(attrs.color ?? "#9ca3af", "#f3f4f6", 0.7)
+                result.label = ""
+              }
+              return result
+            },
+            edgeReducer: (_edge, attrs) => {
+              const result = { ...attrs }
+              if (attrs.dimmed) {
+                result.color = "#f3f4f6"
+              }
+              if (attrs.highlighted) {
+                result.color = "#6b7280"
+                result.size = 2
+              }
+              return result
+            },
           }}
         >
           <GraphLoader nodes={nodes} edges={edges} />
