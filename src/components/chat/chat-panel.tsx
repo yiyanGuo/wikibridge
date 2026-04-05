@@ -83,8 +83,9 @@ export function ChatPanel() {
           }
         }
 
-        // If search found nothing, read all wiki pages (for small wikis)
+        // If search found nothing, read all wiki pages + raw sources (for small wikis)
         if (relevantPages.length === 0) {
+          // Read all wiki pages
           try {
             const wikiTree = await listDirectory(`${project.path}/wiki`)
             const allFiles = flattenMdFiles(wikiTree)
@@ -94,6 +95,59 @@ export function ChatPanel() {
                 const relativePath = file.path.replace(project.path + "/", "")
                 const title = file.name.replace(".md", "")
                 relevantPages.push({ title, path: relativePath, content })
+              } catch {
+                // skip
+              }
+            }
+          } catch {
+            // ignore
+          }
+          // Also read raw sources
+          try {
+            const rawTree = await listDirectory(`${project.path}/raw/sources`)
+            const rawFiles = flattenAllFiles(rawTree)
+            for (const file of rawFiles.slice(0, 5)) {
+              try {
+                const content = await readFile(file.path)
+                // Truncate large source files to avoid overwhelming context
+                const truncated = content.length > 20000
+                  ? content.slice(0, 20000) + "\n\n[...truncated...]"
+                  : content
+                relevantPages.push({
+                  title: `[Source] ${file.name}`,
+                  path: `raw/sources/${file.name}`,
+                  content: truncated,
+                })
+              } catch {
+                // skip
+              }
+            }
+          } catch {
+            // ignore
+          }
+        }
+
+        // Always include matching raw sources in context (search results may include them)
+        const rawSourcePaths = relevantPages
+          .filter((p) => p.path.startsWith("raw/"))
+          .map((p) => p.path)
+
+        // If no raw sources found via search, add them for context
+        if (rawSourcePaths.length === 0) {
+          try {
+            const rawTree = await listDirectory(`${project.path}/raw/sources`)
+            const rawFiles = flattenAllFiles(rawTree)
+            for (const file of rawFiles.slice(0, 3)) {
+              try {
+                const content = await readFile(file.path)
+                const truncated = content.length > 15000
+                  ? content.slice(0, 15000) + "\n\n[...truncated...]"
+                  : content
+                relevantPages.push({
+                  title: `[Source] ${file.name}`,
+                  path: `raw/sources/${file.name}`,
+                  content: truncated,
+                })
               } catch {
                 // skip
               }
@@ -125,10 +179,11 @@ export function ChatPanel() {
         systemMessages.push({
           role: "system",
           content: [
-            "You are a knowledgeable wiki assistant. Answer questions based on the wiki content provided below.",
+            "You are a knowledgeable wiki assistant. Answer questions based on the wiki pages and source documents provided below.",
             "",
             "## Rules",
-            "- Answer based ONLY on the wiki page content provided below. Do not make up information.",
+            "- Answer based on the wiki pages AND raw source documents provided below.",
+            "- Pages marked [Source] are the user's original uploaded documents — they contain the full detail.",
             "- If the provided pages don't contain enough information, say so honestly.",
             "- Use [[wikilink]] syntax to reference wiki pages you cite.",
             "- At the VERY END of your response, add a hidden comment listing source files used:",
@@ -140,7 +195,7 @@ export function ChatPanel() {
             purpose ? `## Wiki Purpose\n${purpose}` : "",
             `## Source Files\n${sourceFileList}`,
             index ? `## Wiki Index\n${index}` : "",
-            `## Relevant Wiki Pages (use these to answer)\n\n${pagesContext}`,
+            `## Relevant Pages & Source Documents (use these to answer)\n\n${pagesContext}`,
           ].filter(Boolean).join("\n"),
         })
       }
@@ -262,6 +317,18 @@ function flattenMdFiles(nodes: FileNode[]): FileNode[] {
     if (node.is_dir && node.children) {
       files.push(...flattenMdFiles(node.children))
     } else if (!node.is_dir && node.name.endsWith(".md")) {
+      files.push(node)
+    }
+  }
+  return files
+}
+
+function flattenAllFiles(nodes: FileNode[]): FileNode[] {
+  const files: FileNode[] = []
+  for (const node of nodes) {
+    if (node.is_dir && node.children) {
+      files.push(...flattenAllFiles(node.children))
+    } else if (!node.is_dir) {
       files.push(node)
     }
   }

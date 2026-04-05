@@ -56,21 +56,39 @@ export async function searchWiki(
 ): Promise<SearchResult[]> {
   if (!query.trim()) return []
 
-  const wikiRoot = `${projectPath}/wiki`
-  let tree: FileNode[]
-  try {
-    tree = await listDirectory(wikiRoot)
-  } catch {
-    return []
-  }
-
-  const wikiFiles = flattenMdFiles(tree)
   const lowerQuery = query.toLowerCase()
-
   const titleMatches: SearchResult[] = []
   const contentMatches: SearchResult[] = []
 
-  for (const file of wikiFiles) {
+  // Search wiki pages
+  try {
+    const wikiTree = await listDirectory(`${projectPath}/wiki`)
+    const wikiFiles = flattenMdFiles(wikiTree)
+    await searchFiles(wikiFiles, lowerQuery, query, titleMatches, contentMatches)
+  } catch {
+    // no wiki directory
+  }
+
+  // Also search raw sources (extracted text)
+  try {
+    const rawTree = await listDirectory(`${projectPath}/raw/sources`)
+    const rawFiles = flattenAllFiles(rawTree)
+    await searchFiles(rawFiles, lowerQuery, query, titleMatches, contentMatches)
+  } catch {
+    // no raw sources
+  }
+
+  return [...titleMatches, ...contentMatches].slice(0, MAX_RESULTS)
+}
+
+async function searchFiles(
+  files: FileNode[],
+  lowerQuery: string,
+  query: string,
+  titleMatches: SearchResult[],
+  contentMatches: SearchResult[],
+): Promise<void> {
+  for (const file of files) {
     let content = ""
     try {
       content = await readFile(file.path)
@@ -103,6 +121,16 @@ export async function searchWiki(
       contentMatches.push(result)
     }
   }
+}
 
-  return [...titleMatches, ...contentMatches].slice(0, MAX_RESULTS)
+function flattenAllFiles(nodes: FileNode[]): FileNode[] {
+  const files: FileNode[] = []
+  for (const node of nodes) {
+    if (node.is_dir && node.children) {
+      files.push(...flattenAllFiles(node.children))
+    } else if (!node.is_dir) {
+      files.push(node)
+    }
+  }
+  return files
 }
