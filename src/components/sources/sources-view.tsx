@@ -6,7 +6,7 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { useWikiStore } from "@/stores/wiki-store"
 import { copyFile, listDirectory, readFile } from "@/commands/fs"
 import type { FileNode } from "@/types/wiki"
-import { startIngest } from "@/lib/ingest"
+import { startIngest, autoIngest } from "@/lib/ingest"
 
 export function SourcesView() {
   const project = useWikiStore((s) => s.project)
@@ -90,6 +90,17 @@ export function SourcesView() {
 
     setImporting(false)
     await loadSources()
+
+    // Auto-ingest each imported file
+    if (llmConfig.apiKey || llmConfig.provider === "ollama") {
+      setChatExpanded(true)
+      setActiveView("wiki")
+      for (const sourcePath of paths) {
+        const fileName = sourcePath.split("/").pop() || sourcePath.split("\\").pop() || "unknown"
+        const destPath = `${project.path}/raw/sources/${fileName}`
+        await autoIngest(project.path, destPath, llmConfig)
+      }
+    }
   }
 
   async function handleOpenSource(node: FileNode) {

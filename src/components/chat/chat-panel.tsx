@@ -1,6 +1,5 @@
 import { useRef, useEffect, useCallback } from "react"
 import { BookOpen } from "lucide-react"
-import { ScrollArea } from "@/components/ui/scroll-area"
 import { Button } from "@/components/ui/button"
 import { ChatMessage, StreamingMessage } from "./chat-message"
 import { ChatInput } from "./chat-input"
@@ -25,10 +24,15 @@ export function ChatPanel() {
   const setFileTree = useWikiStore((s) => s.setFileTree)
 
   const abortRef = useRef<AbortController | null>(null)
+  const scrollContainerRef = useRef<HTMLDivElement>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
 
+  // Auto-scroll to bottom when messages change or streaming content updates
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" })
+    const container = scrollContainerRef.current
+    if (container) {
+      container.scrollTop = container.scrollHeight
+    }
   }, [messages, streamingContent])
 
   const handleSend = useCallback(
@@ -76,12 +80,11 @@ export function ChatPanel() {
     if (!project) return
     try {
       await executeIngestWrites(project.path, llmConfig, undefined, undefined)
-      // Refresh the file tree after writes
       try {
-        const tree = await listDirectory(`${project.path}/wiki`)
+        const tree = await listDirectory(project.path)
         setFileTree(tree)
       } catch {
-        // ignore tree refresh failure
+        // ignore
       }
     } catch (err) {
       console.error("Failed to write to wiki:", err)
@@ -93,7 +96,10 @@ export function ChatPanel() {
 
   return (
     <div className="flex h-full flex-col">
-      <ScrollArea className="flex-1 px-3 py-2">
+      <div
+        ref={scrollContainerRef}
+        className="flex-1 overflow-y-auto px-3 py-2"
+      >
         <div className="flex flex-col gap-3">
           {messages.map((msg) => (
             <ChatMessage key={msg.id} message={msg} />
@@ -101,7 +107,7 @@ export function ChatPanel() {
           {isStreaming && <StreamingMessage content={streamingContent} />}
           <div ref={bottomRef} />
         </div>
-      </ScrollArea>
+      </div>
 
       {showWriteButton && (
         <div className="border-t px-3 py-2">

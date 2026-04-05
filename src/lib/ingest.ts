@@ -1,9 +1,135 @@
-import { readFile, writeFile } from "@/commands/fs"
+import { readFile, writeFile, listDirectory } from "@/commands/fs"
 import { streamChat } from "@/lib/llm-client"
 import type { LlmConfig } from "@/stores/wiki-store"
+import { useWikiStore } from "@/stores/wiki-store"
 import { useChatStore } from "@/stores/chat-store"
 
 const FILE_BLOCK_REGEX = /---FILE:\s*([^\n-]+?)\s*---\n([\s\S]*?)---END FILE---/g
+
+/**
+ * Auto-ingest: reads source → LLM analyzes → LLM writes wiki pages, all in one go.
+ * Used when importing new files.
+ */
+export async function autoIngest(
+  projectPath: string,
+  sourcePath: string,
+  llmConfig: LlmConfig,
+  signal?: AbortSignal,
+): Promise<string[]> {
+  const store = getStore()
+  store.setMode("ingest")
+  store.setIngestSource(sourcePath)
+  store.clearMessages()
+  store.setStreaming(false)
+
+  const [sourceContent, schema, purpose, index] = await Promise.all([
+    tryReadFile(sourcePath),
+    tryReadFile(`${projectPath}/schema.md`),
+    tryReadFile(`${projectPath}/purpose.md`),
+    tryReadFile(`${projectPath}/wiki/index.md`),
+  ])
+
+  const fileName = sourcePath.split("/").pop() ?? sourcePath
+
+  const systemPrompt = [
+    "You are a wiki maintainer. You will read a source document and directly produce wiki files.",
+    "Output ONLY wiki files in this exact format:",
+    "",
+    "---FILE: wiki/sources/filename.md---",
+    "(complete file content with YAML frontmatter)",
+    "---END FILE---",
+    "",
+    "For each source, produce:",
+    "1. A source summary page in wiki/sources/",
+    "2. Entity pages in wiki/entities/ for key entities (people, organizations, products)",
+    "3. Concept pages in wiki/concepts/ for key concepts (theories, methods, techniques)",
+    "4. An updated wiki/index.md with new entries added to existing categories",
+    "5. A log entry for wiki/log.md (just the new entry to append)",
+    "",
+    "Use YAML frontmatter on every page. Use [[wikilink]] syntax for cross-references.",
+    "Use kebab-case filenames.",
+    "",
+    purpose ? `## Wiki Purpose\n${purpose}` : "",
+    schema ? `## Wiki Schema\n${schema}` : "",
+    index ? `## Current Wiki Index (add to this, don't remove existing entries)\n${index}` : "",
+  ].filter(Boolean).join("\n")
+
+  const userMessage = `Ingest this source into the wiki:\n\n**File:** ${fileName}\n\n---\n\n${sourceContent.length > 50000 ? sourceContent.slice(0, 50000) + "\n\n[...truncated...]" : sourceContent}`
+
+  store.addMessage("system", `Auto-ingesting: ${fileName}`)
+  store.addMessage("user", userMessage)
+  store.setStreaming(true)
+
+  let accumulated = ""
+
+  await streamChat(
+    llmConfig,
+    [
+      { role: "system", content: systemPrompt },
+      { role: "user", content: userMessage },
+    ],
+    {
+      onToken: (token) => {
+        accumulated += token
+        getStore().appendStreamToken(token)
+      },
+      onDone: () => {
+        getStore().finalizeStream(accumulated)
+      },
+      onError: (err) => {
+        getStore().finalizeStream(`Error during auto-ingest: ${err.message}`)
+      },
+    },
+    signal,
+  )
+
+  // Parse and write files
+  const writtenPaths = await writeFileBlocks(projectPath, accumulated)
+
+  if (writtenPaths.length > 0) {
+    const fileList = writtenPaths.map((p) => `- ${p}`).join("\n")
+    getStore().addMessage("system", `✓ Wiki updated (${writtenPaths.length} files):\n${fileList}`)
+
+    // Refresh file tree
+    try {
+      const tree = await listDirectory(projectPath)
+      useWikiStore.getState().setFileTree(tree)
+    } catch {
+      // ignore
+    }
+  } else {
+    getStore().addMessage("system", "No wiki files were generated.")
+  }
+
+  return writtenPaths
+}
+
+async function writeFileBlocks(projectPath: string, text: string): Promise<string[]> {
+  const writtenPaths: string[] = []
+  const matches = text.matchAll(FILE_BLOCK_REGEX)
+
+  for (const match of matches) {
+    const relativePath = match[1].trim()
+    const content = match[2]
+    if (!relativePath) continue
+
+    const fullPath = `${projectPath}/${relativePath}`
+    try {
+      if (relativePath === "wiki/log.md" || relativePath.endsWith("/log.md")) {
+        const existing = await tryReadFile(fullPath)
+        const appended = existing ? `${existing}\n\n${content.trim()}` : content.trim()
+        await writeFile(fullPath, appended)
+      } else {
+        await writeFile(fullPath, content)
+      }
+      writtenPaths.push(relativePath)
+    } catch (err) {
+      console.error(`Failed to write ${fullPath}:`, err)
+    }
+  }
+
+  return writtenPaths
+}
 
 function getStore() {
   return useChatStore.getState()
