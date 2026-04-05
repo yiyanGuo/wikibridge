@@ -39,7 +39,31 @@ export function SourcesView() {
       filters: [
         {
           name: "Documents",
-          extensions: ["md", "txt", "pdf", "html", "htm", "json", "csv"],
+          extensions: [
+            "md", "mdx", "txt", "rtf", "pdf",
+            "html", "htm", "xml",
+            "doc", "docx", "xls", "xlsx", "ppt", "pptx",
+            "odt", "ods", "odp", "epub", "pages", "numbers", "key",
+          ],
+        },
+        {
+          name: "Data",
+          extensions: ["json", "jsonl", "csv", "tsv", "yaml", "yml", "ndjson"],
+        },
+        {
+          name: "Code",
+          extensions: [
+            "py", "js", "ts", "jsx", "tsx", "rs", "go", "java",
+            "c", "cpp", "h", "rb", "php", "swift", "sql", "sh",
+          ],
+        },
+        {
+          name: "Images",
+          extensions: ["png", "jpg", "jpeg", "gif", "webp", "svg", "bmp", "tiff", "avif", "heic"],
+        },
+        {
+          name: "Media",
+          extensions: ["mp4", "webm", "mov", "avi", "mkv", "mp3", "wav", "ogg", "flac", "m4a"],
         },
         { name: "All Files", extensions: ["*"] },
       ],

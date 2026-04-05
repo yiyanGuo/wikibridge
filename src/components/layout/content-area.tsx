@@ -1,7 +1,9 @@
 import { useEffect, useCallback, useRef } from "react"
 import { useWikiStore } from "@/stores/wiki-store"
 import { readFile, writeFile } from "@/commands/fs"
+import { getFileCategory, isBinary } from "@/lib/file-types"
 import { WikiEditor } from "@/components/editor/wiki-editor"
+import { FilePreview } from "@/components/editor/file-preview"
 import { ChatBar } from "./chat-bar"
 import { SettingsView } from "@/components/settings/settings-view"
 import { SourcesView } from "@/components/sources/sources-view"
@@ -19,6 +21,17 @@ export function ContentArea() {
       setFileContent("")
       return
     }
+
+    const category = getFileCategory(selectedFile)
+
+    // Don't try to read binary files as text
+    if (isBinary(category)) {
+      setFileContent("")
+      return
+    }
+
+    // For PDF, read_file extracts text on Rust side
+    // For text/code/data/markdown, read as text
     readFile(selectedFile)
       .then(setFileContent)
       .catch((err) => setFileContent(`Error loading file: ${err}`))
@@ -51,22 +64,23 @@ export function ContentArea() {
     return <SourcesView />
   }
 
-  const isMarkdown = selectedFile?.endsWith(".md")
+  const category = selectedFile ? getFileCategory(selectedFile) : null
 
   const editorContent = (
     <div className="h-full min-w-0 overflow-auto">
       {selectedFile ? (
-        isMarkdown ? (
+        category === "markdown" ? (
           <WikiEditor
             key={selectedFile}
             content={fileContent}
             onSave={handleSave}
           />
         ) : (
-          <div className="p-6">
-            <div className="mb-4 text-xs text-muted-foreground">{selectedFile}</div>
-            <pre className="whitespace-pre-wrap font-mono text-sm">{fileContent}</pre>
-          </div>
+          <FilePreview
+            key={selectedFile}
+            filePath={selectedFile}
+            textContent={fileContent}
+          />
         )
       ) : (
         <div className="flex h-full items-center justify-center text-muted-foreground">
