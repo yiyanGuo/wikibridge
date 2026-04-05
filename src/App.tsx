@@ -1,12 +1,11 @@
-import "./App.css";
+import { Button } from "@/components/ui/button"
 
 function App() {
   return (
-    <main className="container">
-      <h1>LLM Wiki</h1>
-      <p>Your personal knowledge base for LLM concepts.</p>
-    </main>
-  );
+    <div className="flex h-screen items-center justify-center bg-background">
+      <Button>LLM Wiki</Button>
+    </div>
+  )
 }
 
-export default App;
+export default App
