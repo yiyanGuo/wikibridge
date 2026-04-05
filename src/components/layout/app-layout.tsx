@@ -1,6 +1,11 @@
 import { useCallback, useEffect } from "react"
 import { useWikiStore } from "@/stores/wiki-store"
 import { listDirectory } from "@/commands/fs"
+import {
+  ResizablePanelGroup,
+  ResizablePanel,
+  ResizableHandle,
+} from "@/components/ui/resizable"
 import { IconSidebar } from "./icon-sidebar"
 import { FileTree } from "./file-tree"
 import { ContentArea } from "./content-area"
@@ -19,19 +24,22 @@ export function AppLayout() {
     }
   }, [project, setFileTree])
 
-  useEffect(() => { loadFileTree() }, [loadFileTree])
+  useEffect(() => {
+    loadFileTree()
+  }, [loadFileTree])
 
   return (
     <div className="flex h-screen bg-background text-foreground">
       <IconSidebar />
-      <div className="flex flex-1 overflow-hidden">
-        <div className="w-60 border-r">
+      <ResizablePanelGroup direction="horizontal" className="flex-1">
+        <ResizablePanel defaultSize={20} minSize={15} maxSize={40}>
           <FileTree />
-        </div>
-        <div className="flex-1">
+        </ResizablePanel>
+        <ResizableHandle withHandle />
+        <ResizablePanel defaultSize={80}>
           <ContentArea />
-        </div>
-      </div>
+        </ResizablePanel>
+      </ResizablePanelGroup>
     </div>
   )
 }
