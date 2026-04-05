@@ -32,7 +32,7 @@ export function AppLayout() {
     <div className="flex h-screen bg-background text-foreground">
       <IconSidebar />
       <ResizablePanelGroup direction="horizontal" className="flex-1">
-        <ResizablePanel defaultSize={20} minSize={15} maxSize={40}>
+        <ResizablePanel defaultSize={25} minSize={15} maxSize={40}>
           <FileTree />
         </ResizablePanel>
         <ResizableHandle withHandle />

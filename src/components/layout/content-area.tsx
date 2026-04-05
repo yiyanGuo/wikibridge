@@ -8,9 +8,11 @@ import {
   ResizableHandle,
 } from "@/components/ui/resizable"
 import { ChatBar } from "./chat-bar"
+import { SettingsView } from "@/components/settings/settings-view"
 
 export function ContentArea() {
   const selectedFile = useWikiStore((s) => s.selectedFile)
+  const activeView = useWikiStore((s) => s.activeView)
   const fileContent = useWikiStore((s) => s.fileContent)
   const setFileContent = useWikiStore((s) => s.setFileContent)
   const chatExpanded = useWikiStore((s) => s.chatExpanded)
@@ -44,6 +46,10 @@ export function ContentArea() {
       if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
     }
   }, [])
+
+  if (activeView === "settings") {
+    return <SettingsView />
+  }
 
   const isMarkdown = selectedFile?.endsWith(".md")
 

@@ -1,6 +1,13 @@
 import { create } from "zustand"
 import type { WikiProject, FileNode } from "@/types/wiki"
 
+interface LlmConfig {
+  provider: "openai" | "anthropic" | "google" | "ollama"
+  apiKey: string
+  model: string
+  ollamaUrl: string
+}
+
 interface WikiState {
   project: WikiProject | null
   fileTree: FileNode[]
@@ -8,6 +15,7 @@ interface WikiState {
   fileContent: string
   chatExpanded: boolean
   activeView: "wiki" | "sources" | "search" | "graph" | "lint" | "settings"
+  llmConfig: LlmConfig
 
   setProject: (project: WikiProject | null) => void
   setFileTree: (tree: FileNode[]) => void
@@ -15,6 +23,7 @@ interface WikiState {
   setFileContent: (content: string) => void
   setChatExpanded: (expanded: boolean) => void
   setActiveView: (view: WikiState["activeView"]) => void
+  setLlmConfig: (config: LlmConfig) => void
 }
 
 export const useWikiStore = create<WikiState>((set) => ({
@@ -24,6 +33,12 @@ export const useWikiStore = create<WikiState>((set) => ({
   fileContent: "",
   chatExpanded: false,
   activeView: "wiki",
+  llmConfig: {
+    provider: "openai",
+    apiKey: "",
+    model: "",
+    ollamaUrl: "http://localhost:11434",
+  },
 
   setProject: (project) => set({ project }),
   setFileTree: (fileTree) => set({ fileTree }),
@@ -31,6 +46,7 @@ export const useWikiStore = create<WikiState>((set) => ({
   setFileContent: (fileContent) => set({ fileContent }),
   setChatExpanded: (chatExpanded) => set({ chatExpanded }),
   setActiveView: (activeView) => set({ activeView }),
+  setLlmConfig: (llmConfig) => set({ llmConfig }),
 }))
 
 export type { WikiState }
