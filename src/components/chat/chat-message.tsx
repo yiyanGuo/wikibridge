@@ -70,7 +70,7 @@ function MarkdownContent({ content }: { content: string }) {
       <ReactMarkdown
         components={{
           // Render wiki links embedded as special markers
-          a: ({ href, children, ...props }) => {
+          a: ({ href, children }) => {
             if (href?.startsWith("wikilink:")) {
               const pageName = href.slice("wikilink:".length)
               return <WikiLink pageName={pageName}>{children}</WikiLink>
@@ -79,7 +79,12 @@ function MarkdownContent({ content }: { content: string }) {
               const fileName = href.slice("sourceref:".length)
               return <SourceRef fileName={fileName} />
             }
-            return <a href={href} {...props} target="_blank" rel="noopener noreferrer">{children}</a>
+            // All other links: render as non-navigating styled text
+            return (
+              <span className="text-primary underline cursor-default" title={href}>
+                {children}
+              </span>
+            )
           },
           // Compact code blocks
           pre: ({ children, ...props }) => (
@@ -125,7 +130,9 @@ function SourceRef({ fileName }: { fileName: string }) {
   const setSelectedFile = useWikiStore((s) => s.setSelectedFile)
   const setActiveView = useWikiStore((s) => s.setActiveView)
 
-  const handleClick = useCallback(() => {
+  const handleClick = useCallback((e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
     if (!project) return
     const path = `${project.path}/raw/sources/${fileName}`
     setSelectedFile(path)
@@ -134,6 +141,7 @@ function SourceRef({ fileName }: { fileName: string }) {
 
   return (
     <button
+      type="button"
       onClick={handleClick}
       className="inline-flex items-center gap-0.5 rounded bg-accent/50 px-1.5 py-0.5 text-xs font-medium text-primary hover:bg-accent"
       title={`Open source: ${fileName}`}
