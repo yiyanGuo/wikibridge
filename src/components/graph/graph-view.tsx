@@ -130,12 +130,10 @@ export function GraphView() {
   const setFileContent = useWikiStore((s) => s.setFileContent)
   const setActiveView = useWikiStore((s) => s.setActiveView)
 
-  const fileTree = useWikiStore((s) => s.fileTree)
   const [nodes, setNodes] = useState<GraphNode[]>([])
   const [edges, setEdges] = useState<GraphEdge[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [loaded, setLoaded] = useState(false)
 
   const loadGraph = useCallback(async () => {
     if (!project) return
@@ -145,7 +143,6 @@ export function GraphView() {
       const result = await buildWikiGraph(project.path)
       setNodes(result.nodes)
       setEdges(result.edges)
-      setLoaded(true)
     } catch (err) {
       const message = err instanceof Error ? err.message : "Failed to build graph"
       setError(message)
@@ -154,12 +151,10 @@ export function GraphView() {
     }
   }, [project])
 
-  // Auto-load on mount and reload when file tree changes (after ingest)
+  // Always load fresh data when component mounts (user switches to Graph view)
   useEffect(() => {
-    if (project) {
-      loadGraph()
-    }
-  }, [project, fileTree, loadGraph])
+    loadGraph()
+  }, [loadGraph])
 
   const handleNodeClick = useCallback(
     async (nodeId: string) => {
@@ -211,28 +206,12 @@ export function GraphView() {
     )
   }
 
-  if (loaded && nodes.length === 0) {
+  if (!loading && nodes.length === 0 && !error) {
     return (
       <div className="flex h-full flex-col items-center justify-center gap-3 text-muted-foreground">
         <Network className="h-10 w-10 opacity-30" />
         <p className="text-sm">No pages yet</p>
         <p className="text-xs">Create some wiki pages to see the graph</p>
-      </div>
-    )
-  }
-
-  if (!loaded) {
-    return (
-      <div className="flex h-full flex-col items-center justify-center gap-3 text-muted-foreground">
-        <Network className="h-10 w-10 opacity-30" />
-        <p className="text-sm">Graph not loaded</p>
-        <button
-          type="button"
-          onClick={loadGraph}
-          className="rounded-md border px-3 py-1.5 text-sm hover:bg-accent transition-colors"
-        >
-          Load Graph
-        </button>
       </div>
     )
   }
