@@ -7,7 +7,11 @@ use crate::types::wiki::WikiProject;
 
 #[tauri::command]
 pub fn create_project(name: String, path: String) -> Result<WikiProject, String> {
-    let root = Path::new(&path);
+    let root = Path::new(&path).join(&name);
+
+    if root.exists() {
+        return Err(format!("Directory already exists: '{}'", root.display()));
+    }
 
     // Create all required subdirectories
     let dirs = [
@@ -182,7 +186,10 @@ related: []
 "#;
     write_file_inner(root.join("wiki/overview.md"), overview_content)?;
 
-    Ok(WikiProject { name, path })
+    Ok(WikiProject {
+        name,
+        path: root.to_string_lossy().to_string(),
+    })
 }
 
 #[tauri::command]

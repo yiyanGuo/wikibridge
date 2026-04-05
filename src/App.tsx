@@ -1,4 +1,5 @@
 import { useState } from "react"
+import { open } from "@tauri-apps/plugin-dialog"
 import { useWikiStore } from "@/stores/wiki-store"
 import { listDirectory, openProject } from "@/commands/fs"
 import { AppLayout } from "@/components/layout/app-layout"
@@ -23,10 +24,14 @@ function App() {
   }
 
   async function handleOpenProject() {
-    const path = window.prompt("Enter the path to an existing wiki project:")
-    if (!path) return
+    const selected = await open({
+      directory: true,
+      multiple: false,
+      title: "Open Wiki Project",
+    })
+    if (!selected) return
     try {
-      const proj = await openProject(path)
+      const proj = await openProject(selected)
       await handleProjectOpened(proj)
     } catch (err) {
       window.alert(`Failed to open project: ${err}`)
