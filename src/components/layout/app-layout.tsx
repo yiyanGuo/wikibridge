@@ -27,15 +27,17 @@ export function AppLayout() {
   return (
     <div className="flex h-screen bg-background text-foreground">
       <IconSidebar />
-      <Group orientation="horizontal" className="flex-1">
-        <Panel defaultSize={25} minSize={15} maxSize={40}>
-          <FileTree />
-        </Panel>
-        <Separator className="w-1.5 cursor-col-resize bg-border/40 transition-colors hover:bg-primary/30" />
-        <Panel defaultSize={75}>
-          <ContentArea />
-        </Panel>
-      </Group>
+      <div className="min-w-0 flex-1 overflow-hidden">
+        <Group orientation="horizontal">
+          <Panel defaultSize={25} minSize={15} maxSize={40}>
+            <FileTree />
+          </Panel>
+          <Separator className="w-1.5 cursor-col-resize bg-border/40 transition-colors hover:bg-primary/30" />
+          <Panel defaultSize={75}>
+            <ContentArea />
+          </Panel>
+        </Group>
+      </div>
     </div>
   )
 }
