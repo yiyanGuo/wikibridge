@@ -9,6 +9,7 @@ const PROVIDERS = [
   { value: "anthropic" as const, label: "Anthropic", models: ["claude-sonnet-4-5-20250514", "claude-opus-4-5-20250514", "claude-haiku-4-5-20251001"] },
   { value: "google" as const, label: "Google", models: ["gemini-2.5-pro", "gemini-2.5-flash"] },
   { value: "ollama" as const, label: "Ollama (Local)", models: [] },
+  { value: "custom" as const, label: "Custom", models: [] },
 ]
 
 export function SettingsView() {
@@ -19,6 +20,7 @@ export function SettingsView() {
   const [apiKey, setApiKey] = useState(llmConfig.apiKey)
   const [model, setModel] = useState(llmConfig.model)
   const [ollamaUrl, setOllamaUrl] = useState(llmConfig.ollamaUrl)
+  const [customEndpoint, setCustomEndpoint] = useState(llmConfig.customEndpoint)
   const [saved, setSaved] = useState(false)
 
   useEffect(() => {
@@ -26,12 +28,13 @@ export function SettingsView() {
     setApiKey(llmConfig.apiKey)
     setModel(llmConfig.model)
     setOllamaUrl(llmConfig.ollamaUrl)
+    setCustomEndpoint(llmConfig.customEndpoint)
   }, [llmConfig])
 
   const currentProvider = PROVIDERS.find((p) => p.value === provider)
 
   function handleSave() {
-    setLlmConfig({ provider, apiKey, model, ollamaUrl })
+    setLlmConfig({ provider, apiKey, model, ollamaUrl, customEndpoint })
     setSaved(true)
     setTimeout(() => setSaved(false), 2000)
   }
@@ -67,16 +70,18 @@ export function SettingsView() {
               </div>
             </div>
 
-            {provider !== "ollama" && (
+            {provider === "custom" && (
               <div className="space-y-2">
-                <Label htmlFor="apiKey">API Key</Label>
+                <Label htmlFor="customEndpoint">API Endpoint (OpenAI-compatible)</Label>
                 <Input
-                  id="apiKey"
-                  type="password"
-                  value={apiKey}
-                  onChange={(e) => setApiKey(e.target.value)}
-                  placeholder={`Enter your ${currentProvider?.label} API key`}
+                  id="customEndpoint"
+                  value={customEndpoint}
+                  onChange={(e) => setCustomEndpoint(e.target.value)}
+                  placeholder="https://your-api.example.com/v1"
                 />
+                <p className="text-xs text-muted-foreground">
+                  Any OpenAI-compatible API endpoint (e.g., LiteLLM, vLLM, LocalAI, Azure OpenAI)
+                </p>
               </div>
             )}
 
@@ -92,30 +97,58 @@ export function SettingsView() {
               </div>
             )}
 
+            {provider !== "ollama" && (
+              <div className="space-y-2">
+                <Label htmlFor="apiKey">API Key</Label>
+                <Input
+                  id="apiKey"
+                  type="password"
+                  value={apiKey}
+                  onChange={(e) => setApiKey(e.target.value)}
+                  placeholder={
+                    provider === "custom"
+                      ? "Enter API key (if required)"
+                      : `Enter your ${currentProvider?.label} API key`
+                  }
+                />
+              </div>
+            )}
+
             <div className="space-y-2">
               <Label htmlFor="model">Model</Label>
               {currentProvider && currentProvider.models.length > 0 ? (
-                <div className="flex flex-wrap gap-2">
-                  {currentProvider.models.map((m) => (
-                    <button
-                      key={m}
-                      onClick={() => setModel(m)}
-                      className={`rounded-md border px-3 py-1.5 text-sm transition-colors ${
-                        model === m
-                          ? "border-primary bg-primary text-primary-foreground"
-                          : "border-border hover:bg-accent"
-                      }`}
-                    >
-                      {m}
-                    </button>
-                  ))}
+                <div className="space-y-2">
+                  <div className="flex flex-wrap gap-2">
+                    {currentProvider.models.map((m) => (
+                      <button
+                        key={m}
+                        onClick={() => setModel(m)}
+                        className={`rounded-md border px-3 py-1.5 text-sm transition-colors ${
+                          model === m
+                            ? "border-primary bg-primary text-primary-foreground"
+                            : "border-border hover:bg-accent"
+                        }`}
+                      >
+                        {m}
+                      </button>
+                    ))}
+                  </div>
+                  <Input
+                    value={model}
+                    onChange={(e) => setModel(e.target.value)}
+                    placeholder="Or type a custom model name"
+                  />
                 </div>
               ) : (
                 <Input
                   id="model"
                   value={model}
                   onChange={(e) => setModel(e.target.value)}
-                  placeholder="Enter model name (e.g., llama3)"
+                  placeholder={
+                    provider === "ollama"
+                      ? "Enter model name (e.g., llama3)"
+                      : "Enter model name"
+                  }
                 />
               )}
             </div>

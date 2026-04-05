@@ -2,10 +2,11 @@ import { create } from "zustand"
 import type { WikiProject, FileNode } from "@/types/wiki"
 
 interface LlmConfig {
-  provider: "openai" | "anthropic" | "google" | "ollama"
+  provider: "openai" | "anthropic" | "google" | "ollama" | "custom"
   apiKey: string
   model: string
   ollamaUrl: string
+  customEndpoint: string
 }
 
 interface WikiState {
@@ -38,6 +39,7 @@ export const useWikiStore = create<WikiState>((set) => ({
     apiKey: "",
     model: "",
     ollamaUrl: "http://localhost:11434",
+    customEndpoint: "",
   },
 
   setProject: (project) => set({ project }),
