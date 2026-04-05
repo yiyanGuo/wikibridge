@@ -23,17 +23,15 @@ export function IconSidebar() {
       <div className="flex h-full w-12 flex-col items-center gap-1 border-r bg-muted/50 py-2">
         {navItems.map(({ view, icon: Icon, label }) => (
           <Tooltip key={view}>
-            <TooltipTrigger asChild>
-              <button
-                onClick={() => setActiveView(view)}
-                className={`flex h-10 w-10 items-center justify-center rounded-md transition-colors ${
-                  activeView === view
-                    ? "bg-accent text-accent-foreground"
-                    : "text-muted-foreground hover:bg-accent/50 hover:text-accent-foreground"
-                }`}
-              >
-                <Icon className="h-5 w-5" />
-              </button>
+            <TooltipTrigger
+              onClick={() => setActiveView(view)}
+              className={`flex h-10 w-10 items-center justify-center rounded-md transition-colors ${
+                activeView === view
+                  ? "bg-accent text-accent-foreground"
+                  : "text-muted-foreground hover:bg-accent/50 hover:text-accent-foreground"
+              }`}
+            >
+              <Icon className="h-5 w-5" />
             </TooltipTrigger>
             <TooltipContent side="right">{label}</TooltipContent>
           </Tooltip>
