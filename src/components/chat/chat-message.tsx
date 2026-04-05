@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useRef, useState, useMemo } from "react"
 import ReactMarkdown from "react-markdown"
-import { Bot, User, FileText, Paperclip } from "lucide-react"
+import { Bot, User, FileText, Paperclip, BookmarkPlus } from "lucide-react"
 import { useWikiStore } from "@/stores/wiki-store"
-import { readFile, listDirectory } from "@/commands/fs"
+import { readFile, writeFile, listDirectory } from "@/commands/fs"
 import type { DisplayMessage } from "@/stores/chat-store"
 import type { FileNode } from "@/types/wiki"
 
@@ -46,9 +46,14 @@ export function ChatMessage({ message }: ChatMessageProps) {
   const isUser = message.role === "user"
   const isSystem = message.role === "system"
   const isAssistant = message.role === "assistant"
+  const [hovered, setHovered] = useState(false)
 
   return (
-    <div className={`flex gap-2 ${isUser ? "flex-row-reverse" : "flex-row"}`}>
+    <div
+      className={`flex gap-2 ${isUser ? "flex-row-reverse" : "flex-row"}`}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+    >
       <div
         className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full ${
           isSystem
@@ -75,8 +80,108 @@ export function ChatMessage({ message }: ChatMessageProps) {
           )}
         </div>
         {isAssistant && <SourceFilesBar content={message.content} />}
+        {isAssistant && (
+          <SaveToWikiButton content={message.content} visible={hovered} />
+        )}
       </div>
     </div>
+  )
+}
+
+function SaveToWikiButton({ content, visible }: { content: string; visible: boolean }) {
+  const project = useWikiStore((s) => s.project)
+  const setFileTree = useWikiStore((s) => s.setFileTree)
+  const [saved, setSaved] = useState(false)
+  const [saving, setSaving] = useState(false)
+
+  const handleSave = useCallback(async () => {
+    if (!project || saving) return
+    setSaving(true)
+    try {
+      // Generate slug from first line or first 50 chars
+      const firstLine = content.split("\n")[0].replace(/^#+\s*/, "").trim()
+      const title = firstLine.slice(0, 60) || "Saved Query"
+      const slug = title
+        .toLowerCase()
+        .replace(/[^a-z0-9\s-]/g, "")
+        .trim()
+        .replace(/\s+/g, "-")
+        .slice(0, 50)
+      const date = new Date().toISOString().slice(0, 10)
+      const fileName = `${slug}-${date}.md`
+      const filePath = `${project.path}/wiki/queries/${fileName}`
+
+      // Strip hidden sources comment from content
+      const cleanContent = content.replace(/<!--\s*sources:.*?-->/g, "").trimEnd()
+
+      const frontmatter = [
+        "---",
+        `type: query`,
+        `title: "${title.replace(/"/g, '\\"')}"`,
+        `created: ${date}`,
+        `tags: []`,
+        "---",
+        "",
+      ].join("\n")
+
+      await writeFile(filePath, frontmatter + cleanContent)
+
+      // Update index.md — append under ## Queries section
+      const indexPath = `${project.path}/wiki/index.md`
+      let indexContent = ""
+      try {
+        indexContent = await readFile(indexPath)
+      } catch {
+        indexContent = "# Wiki Index\n\n## Queries\n"
+      }
+      const entry = `- [[queries/${slug}-${date}|${title}]]`
+      if (indexContent.includes("## Queries")) {
+        indexContent = indexContent.replace(
+          /(## Queries\n)/,
+          `$1${entry}\n`
+        )
+      } else {
+        indexContent = indexContent.trimEnd() + "\n\n## Queries\n" + entry + "\n"
+      }
+      await writeFile(indexPath, indexContent)
+
+      // Append to log.md
+      const logPath = `${project.path}/wiki/log.md`
+      let logContent = ""
+      try {
+        logContent = await readFile(logPath)
+      } catch {
+        logContent = "# Wiki Log\n\n"
+      }
+      const logEntry = `- ${date}: Saved query page \`${fileName}\`\n`
+      await writeFile(logPath, logContent.trimEnd() + "\n" + logEntry)
+
+      // Refresh file tree
+      const tree = await listDirectory(project.path)
+      setFileTree(tree)
+
+      setSaved(true)
+      setTimeout(() => setSaved(false), 2000)
+    } catch (err) {
+      console.error("Failed to save to wiki:", err)
+    } finally {
+      setSaving(false)
+    }
+  }, [project, content, saving, setFileTree])
+
+  if (!visible && !saved) return null
+
+  return (
+    <button
+      type="button"
+      onClick={handleSave}
+      disabled={saving}
+      className="self-start inline-flex items-center gap-1 rounded px-2 py-0.5 text-[11px] text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
+      title="Save to wiki"
+    >
+      <BookmarkPlus className="h-3 w-3" />
+      {saved ? "Saved!" : saving ? "Saving..." : "Save to Wiki"}
+    </button>
   )
 }
 
