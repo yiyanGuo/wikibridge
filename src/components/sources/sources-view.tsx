@@ -1,18 +1,20 @@
 import { useState, useEffect, useCallback } from "react"
 import { open } from "@tauri-apps/plugin-dialog"
-import { Plus, FileText, RefreshCw, BookOpen } from "lucide-react"
+import { Plus, FileText, RefreshCw, BookOpen, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { useWikiStore } from "@/stores/wiki-store"
-import { copyFile, listDirectory, readFile } from "@/commands/fs"
+import { copyFile, listDirectory, readFile, writeFile, deleteFile, findRelatedWikiPages } from "@/commands/fs"
 import type { FileNode } from "@/types/wiki"
 import { startIngest, autoIngest } from "@/lib/ingest"
 
 export function SourcesView() {
   const project = useWikiStore((s) => s.project)
+  const selectedFile = useWikiStore((s) => s.selectedFile)
   const setSelectedFile = useWikiStore((s) => s.setSelectedFile)
   const setActiveView = useWikiStore((s) => s.setActiveView)
   const setFileContent = useWikiStore((s) => s.setFileContent)
+  const setFileTree = useWikiStore((s) => s.setFileTree)
   const setChatExpanded = useWikiStore((s) => s.setChatExpanded)
   const llmConfig = useWikiStore((s) => s.llmConfig)
   const [sources, setSources] = useState<FileNode[]>([])
@@ -114,6 +116,64 @@ export function SourcesView() {
     }
   }
 
+  async function handleDelete(node: FileNode) {
+    if (!project) return
+    const fileName = node.name
+    const confirmed = window.confirm(
+      `Delete "${fileName}" and its related wiki pages?\n\nThis will:\n- Delete the source file\n- Delete wiki pages generated from this source\n- Update index.md`
+    )
+    if (!confirmed) return
+
+    try {
+      // Find related wiki pages before deleting
+      const relatedPages = await findRelatedWikiPages(project.path, fileName)
+
+      // Delete the source file
+      await deleteFile(node.path)
+
+      // Delete related wiki pages
+      for (const pagePath of relatedPages) {
+        try {
+          await deleteFile(pagePath)
+        } catch (err) {
+          console.error(`Failed to delete wiki page ${pagePath}:`, err)
+        }
+      }
+
+      // Remove entries from index.md that reference deleted pages
+      if (relatedPages.length > 0) {
+        try {
+          const indexPath = `${project.path}/wiki/index.md`
+          const indexContent = await readFile(indexPath)
+          const deletedSlugs = relatedPages.map((p) => {
+            const name = p.split("/").pop()?.replace(".md", "") ?? ""
+            return name
+          })
+          const updatedIndex = indexContent
+            .split("\n")
+            .filter((line) => !deletedSlugs.some((slug) => slug && line.toLowerCase().includes(slug)))
+            .join("\n")
+          await writeFile(indexPath, updatedIndex)
+        } catch {
+          // index update failure is non-critical
+        }
+      }
+
+      // Refresh
+      await loadSources()
+      const tree = await listDirectory(project.path)
+      setFileTree(tree)
+
+      // Clear selected file if it was the deleted one
+      if (selectedFile === node.path || relatedPages.includes(selectedFile ?? "")) {
+        setSelectedFile(null)
+      }
+    } catch (err) {
+      console.error("Failed to delete source:", err)
+      window.alert(`Failed to delete: ${err}`)
+    }
+  }
+
   async function handleIngest(node: FileNode) {
     if (!project || ingestingPath) return
     setIngestingPath(node.path)
@@ -176,6 +236,15 @@ export function SourcesView() {
                   onClick={() => handleIngest(source)}
                 >
                   <BookOpen className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7 shrink-0 text-muted-foreground hover:text-destructive"
+                  title="Delete source and related wiki pages"
+                  onClick={() => handleDelete(source)}
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
                 </Button>
               </div>
             ))}

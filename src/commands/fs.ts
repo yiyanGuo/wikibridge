@@ -20,6 +20,17 @@ export async function copyFile(
   return invoke("copy_file", { source, destination })
 }
 
+export async function deleteFile(path: string): Promise<void> {
+  return invoke("delete_file", { path })
+}
+
+export async function findRelatedWikiPages(
+  projectPath: string,
+  sourceName: string
+): Promise<string[]> {
+  return invoke<string[]>("find_related_wiki_pages", { projectPath, sourceName })
+}
+
 export async function createDirectory(path: string): Promise<void> {
   return invoke<void>("create_directory", { path })
 }

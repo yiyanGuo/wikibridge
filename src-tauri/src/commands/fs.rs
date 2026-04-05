@@ -124,6 +124,69 @@ pub fn copy_file(source: String, destination: String) -> Result<(), String> {
 }
 
 #[tauri::command]
+pub fn delete_file(path: String) -> Result<(), String> {
+    let p = Path::new(&path);
+    if p.is_dir() {
+        fs::remove_dir_all(&path)
+            .map_err(|e| format!("Failed to delete directory '{}': {}", path, e))
+    } else {
+        fs::remove_file(&path)
+            .map_err(|e| format!("Failed to delete file '{}': {}", path, e))
+    }
+}
+
+/// Find wiki pages that reference a given source file name.
+/// Scans all .md files under wiki/ for the source filename in frontmatter or content.
+#[tauri::command]
+pub fn find_related_wiki_pages(project_path: String, source_name: String) -> Result<Vec<String>, String> {
+    let wiki_dir = Path::new(&project_path).join("wiki");
+    if !wiki_dir.is_dir() {
+        return Ok(vec![]);
+    }
+
+    let mut related = Vec::new();
+    collect_related_pages(&wiki_dir, &source_name, &mut related)?;
+    Ok(related)
+}
+
+fn collect_related_pages(dir: &Path, source_name: &str, results: &mut Vec<String>) -> Result<(), String> {
+    let entries = fs::read_dir(dir).map_err(|e| e.to_string())?;
+    // derive a slug from source filename for matching (e.g., "my-article.pdf" → "my-article")
+    let slug = source_name
+        .rsplit('/')
+        .next()
+        .unwrap_or(source_name)
+        .rsplit('.')
+        .last()
+        .unwrap_or(source_name)
+        .to_lowercase();
+
+    for entry in entries.flatten() {
+        let path = entry.path();
+        if path.is_dir() {
+            collect_related_pages(&path, source_name, results)?;
+        } else if path.extension().map(|e| e == "md").unwrap_or(false) {
+            // Skip index.md and log.md — they'll be updated separately
+            let fname = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
+            if fname == "index.md" || fname == "log.md" || fname == "overview.md" {
+                continue;
+            }
+
+            if let Ok(content) = fs::read_to_string(&path) {
+                let content_lower = content.to_lowercase();
+                // Match if the page references the source file name or its slug
+                if content_lower.contains(&source_name.to_lowercase())
+                    || content_lower.contains(&slug)
+                {
+                    results.push(path.to_string_lossy().to_string());
+                }
+            }
+        }
+    }
+    Ok(())
+}
+
+#[tauri::command]
 pub fn create_directory(path: String) -> Result<(), String> {
     fs::create_dir_all(&path)
         .map_err(|e| format!("Failed to create directory '{}': {}", path, e))
