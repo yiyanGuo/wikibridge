@@ -4,6 +4,7 @@ import { listDirectory } from "@/commands/fs"
 import { IconSidebar } from "./icon-sidebar"
 import { FileTree } from "./file-tree"
 import { ContentArea } from "./content-area"
+import { PreviewPanel } from "./preview-panel"
 import { ActivityPanel } from "./activity-panel"
 
 interface AppLayoutProps {
@@ -12,9 +13,12 @@ interface AppLayoutProps {
 
 export function AppLayout({ onSwitchProject }: AppLayoutProps) {
   const project = useWikiStore((s) => s.project)
+  const selectedFile = useWikiStore((s) => s.selectedFile)
   const setFileTree = useWikiStore((s) => s.setFileTree)
-  const [sidebarWidth, setSidebarWidth] = useState(260)
-  const isDragging = useRef(false)
+  const [leftWidth, setLeftWidth] = useState(220)
+  const [rightWidth, setRightWidth] = useState(400)
+  const isDraggingLeft = useRef(false)
+  const isDraggingRight = useRef(false)
   const containerRef = useRef<HTMLDivElement>(null)
 
   const loadFileTree = useCallback(async () => {
@@ -31,40 +35,51 @@ export function AppLayout({ onSwitchProject }: AppLayoutProps) {
     loadFileTree()
   }, [loadFileTree])
 
-  const handleMouseDown = useCallback((e: React.MouseEvent) => {
-    e.preventDefault()
-    isDragging.current = true
-    document.body.style.cursor = "col-resize"
-    document.body.style.userSelect = "none"
+  const startDrag = useCallback(
+    (side: "left" | "right") => (e: React.MouseEvent) => {
+      e.preventDefault()
+      if (side === "left") isDraggingLeft.current = true
+      else isDraggingRight.current = true
+      document.body.style.cursor = "col-resize"
+      document.body.style.userSelect = "none"
 
-    const handleMouseMove = (e: MouseEvent) => {
-      if (!isDragging.current || !containerRef.current) return
-      const containerRect = containerRef.current.getBoundingClientRect()
-      const newWidth = e.clientX - containerRect.left
-      const minWidth = 150
-      const maxWidth = containerRect.width * 0.5
-      setSidebarWidth(Math.max(minWidth, Math.min(maxWidth, newWidth)))
-    }
+      const handleMouseMove = (e: MouseEvent) => {
+        if (!containerRef.current) return
+        const rect = containerRef.current.getBoundingClientRect()
 
-    const handleMouseUp = () => {
-      isDragging.current = false
-      document.body.style.cursor = ""
-      document.body.style.userSelect = ""
-      document.removeEventListener("mousemove", handleMouseMove)
-      document.removeEventListener("mouseup", handleMouseUp)
-    }
+        if (isDraggingLeft.current) {
+          const newWidth = e.clientX - rect.left
+          setLeftWidth(Math.max(150, Math.min(rect.width * 0.3, newWidth)))
+        }
+        if (isDraggingRight.current) {
+          const newWidth = rect.right - e.clientX
+          setRightWidth(Math.max(250, Math.min(rect.width * 0.5, newWidth)))
+        }
+      }
 
-    document.addEventListener("mousemove", handleMouseMove)
-    document.addEventListener("mouseup", handleMouseUp)
-  }, [])
+      const handleMouseUp = () => {
+        isDraggingLeft.current = false
+        isDraggingRight.current = false
+        document.body.style.cursor = ""
+        document.body.style.userSelect = ""
+        document.removeEventListener("mousemove", handleMouseMove)
+        document.removeEventListener("mouseup", handleMouseUp)
+      }
+
+      document.addEventListener("mousemove", handleMouseMove)
+      document.addEventListener("mouseup", handleMouseUp)
+    },
+    []
+  )
 
   return (
     <div className="flex h-screen bg-background text-foreground">
       <IconSidebar onSwitchProject={onSwitchProject} />
       <div ref={containerRef} className="flex min-w-0 flex-1 overflow-hidden">
+        {/* Left: File tree + Activity */}
         <div
           className="flex shrink-0 flex-col overflow-hidden border-r"
-          style={{ width: sidebarWidth }}
+          style={{ width: leftWidth }}
         >
           <div className="flex-1 overflow-hidden">
             <FileTree />
@@ -73,11 +88,29 @@ export function AppLayout({ onSwitchProject }: AppLayoutProps) {
         </div>
         <div
           className="w-1.5 shrink-0 cursor-col-resize bg-border/40 transition-colors hover:bg-primary/30 active:bg-primary/40"
-          onMouseDown={handleMouseDown}
+          onMouseDown={startDrag("left")}
         />
+
+        {/* Center: Chat or view (sources/settings/review) */}
         <div className="min-w-0 flex-1 overflow-hidden">
           <ContentArea />
         </div>
+
+        {/* Right: File preview (shown when a file is selected) */}
+        {selectedFile && (
+          <>
+            <div
+              className="w-1.5 shrink-0 cursor-col-resize bg-border/40 transition-colors hover:bg-primary/30 active:bg-primary/40"
+              onMouseDown={startDrag("right")}
+            />
+            <div
+              className="shrink-0 overflow-hidden border-l"
+              style={{ width: rightWidth }}
+            >
+              <PreviewPanel />
+            </div>
+          </>
+        )}
       </div>
     </div>
   )
