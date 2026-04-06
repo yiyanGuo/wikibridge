@@ -3,6 +3,7 @@ import { streamChat } from "./llm-client"
 import { writeFile } from "@/commands/fs"
 import { useWikiStore, type LlmConfig, type SearchApiConfig } from "@/stores/wiki-store"
 import { useActivityStore } from "@/stores/activity-store"
+import { useChatStore } from "@/stores/chat-store"
 import { listDirectory } from "@/commands/fs"
 
 export interface ResearchResult {
@@ -14,6 +15,7 @@ export interface ResearchResult {
 
 /**
  * Deep Research: search the web for a topic, synthesize findings with LLM, save to wiki.
+ * Shows the entire process in the Chat panel.
  */
 export async function deepResearch(
   projectPath: string,
@@ -22,6 +24,8 @@ export async function deepResearch(
   searchConfig: SearchApiConfig,
 ): Promise<ResearchResult> {
   const activity = useActivityStore.getState()
+  const chat = useChatStore.getState()
+
   const activityId = activity.addItem({
     type: "query",
     title: `Research: ${topic.slice(0, 50)}`,
@@ -30,18 +34,43 @@ export async function deepResearch(
     filesWritten: [],
   })
 
+  // Switch chat to show the research process
+  chat.setMode("chat")
+  chat.clearMessages()
+  chat.addMessage("system", `🔍 Deep Research: ${topic}`)
+
+  // Make sure chat is visible
+  useWikiStore.getState().setActiveView("wiki")
+
   let webResults: WebSearchResult[] = []
   let synthesis = ""
   let savedPath: string | null = null
 
   try {
     // Step 1: Web search
+    chat.addMessage("system", "Searching the web...")
     webResults = await webSearch(topic, searchConfig, 8)
+
+    if (webResults.length === 0) {
+      chat.addMessage("system", "No web results found for this topic.")
+      activity.updateItem(activityId, { status: "done", detail: "No results found" })
+      return { query: topic, webResults, synthesis: "", savedPath: null }
+    }
+
+    // Show search results in chat
+    const resultsText = webResults
+      .map((r, i) => `**${i + 1}. [${r.title}](${r.url})**\n> ${r.snippet}\n> _${r.source}_`)
+      .join("\n\n")
+
+    chat.addMessage("assistant", `Found **${webResults.length} sources**:\n\n${resultsText}`)
+
     activity.updateItem(activityId, {
       detail: `Found ${webResults.length} results, synthesizing...`,
     })
 
-    // Step 2: LLM synthesizes findings
+    // Step 2: LLM synthesizes findings (streamed to chat)
+    chat.addMessage("system", "Synthesizing findings...")
+
     const searchContext = webResults
       .map((r, i) => `[${i + 1}] **${r.title}** (${r.source})\n${r.snippet}`)
       .join("\n\n")
@@ -69,6 +98,7 @@ export async function deepResearch(
     ].join("\n")
 
     let accumulated = ""
+    chat.setStreaming(true)
 
     await streamChat(
       llmConfig,
@@ -77,18 +107,23 @@ export async function deepResearch(
         { role: "user", content: userMessage },
       ],
       {
-        onToken: (token) => { accumulated += token },
-        onDone: () => {},
+        onToken: (token) => {
+          accumulated += token
+          useChatStore.getState().appendStreamToken(token)
+        },
+        onDone: () => {
+          useChatStore.getState().finalizeStream(accumulated)
+        },
         onError: (err) => {
-          synthesis = `Research error: ${err.message}`
+          useChatStore.getState().finalizeStream(`Research synthesis error: ${err.message}`)
         },
       },
     )
 
-    synthesis = accumulated || synthesis
+    synthesis = accumulated
 
-    // Step 3: Save to wiki as a query/research page
-    if (synthesis && !synthesis.startsWith("Research error")) {
+    // Step 3: Save to wiki
+    if (synthesis && !synthesis.startsWith("Research synthesis error")) {
       activity.updateItem(activityId, { detail: "Saving to wiki..." })
 
       const date = new Date().toISOString().slice(0, 10)
@@ -127,6 +162,9 @@ export async function deepResearch(
       await writeFile(filePath, pageContent)
       savedPath = `wiki/queries/${fileName}`
 
+      // Show save confirmation in chat
+      useChatStore.getState().addMessage("system", `✅ Saved to wiki: \`${savedPath}\`\n\nReferences:\n${references}`)
+
       // Refresh tree
       try {
         const tree = await listDirectory(projectPath)
@@ -145,6 +183,7 @@ export async function deepResearch(
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err)
     activity.updateItem(activityId, { status: "error", detail: message })
+    useChatStore.getState().addMessage("system", `❌ Research failed: ${message}`)
   }
 
   return { query: topic, webResults, synthesis, savedPath }
