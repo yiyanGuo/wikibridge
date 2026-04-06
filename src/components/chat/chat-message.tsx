@@ -215,26 +215,37 @@ function SourceFilesBar({ content }: { content: string }) {
 /**
  * Extract cited source files from the hidden comment at the end of the response.
  * Format: <!-- sources: file1.pdf, file2.md -->
- * Falls back to showing all source files if no comment found (all sources are relevant
- * since the wiki is built from them).
+ * Only shows files explicitly cited by the LLM. Returns empty if none cited.
  */
 function extractCitedSources(text: string): string[] {
   // Try to parse the hidden comment
   const commentMatch = text.match(/<!--\s*sources:\s*(.+?)\s*-->/)
   if (commentMatch) {
+    // LLM cited specific files — validate they exist
     const cited = commentMatch[1]
       .split(",")
       .map((s) => s.trim())
       .filter((s) => s.length > 0 && cachedSourceFiles.includes(s))
     if (cited.length > 0) return cited
+
+    // LLM cited files but names don't match exactly — try fuzzy match
+    const rawCited = commentMatch[1].split(",").map((s) => s.trim()).filter((s) => s.length > 0)
+    const fuzzy = rawCited.flatMap((cited) => {
+      const lower = cited.toLowerCase()
+      return cachedSourceFiles.filter((f) =>
+        f.toLowerCase().includes(lower) || lower.includes(f.toLowerCase().replace(/\.[^.]+$/, ""))
+      )
+    })
+    const unique = [...new Set(fuzzy)]
+    if (unique.length > 0) return unique
   }
 
   // Fallback: check which known source filenames appear in the text
   const mentioned = cachedSourceFiles.filter((name) => text.includes(name))
   if (mentioned.length > 0) return mentioned
 
-  // Final fallback: show all source files (wiki is built from all of them)
-  return [...cachedSourceFiles]
+  // No sources identified — return empty (don't show all)
+  return []
 }
 
 interface StreamingMessageProps {
