@@ -21,6 +21,7 @@ export function ResearchPanel() {
 
   const running = tasks.filter((t) => ["searching", "synthesizing", "saving"].includes(t.status))
   const queued = tasks.filter((t) => t.status === "queued")
+  const done = tasks.filter((t) => t.status === "done" || t.status === "error")
 
   function handleStartResearch() {
     const topic = inputValue.trim()
