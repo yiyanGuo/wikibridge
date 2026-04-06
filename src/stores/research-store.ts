@@ -4,6 +4,7 @@ import type { WebSearchResult } from "@/lib/web-search"
 export interface ResearchTask {
   id: string
   topic: string
+  searchQueries?: string[]
   status: "queued" | "searching" | "synthesizing" | "saving" | "done" | "error"
   webResults: WebSearchResult[]
   synthesis: string

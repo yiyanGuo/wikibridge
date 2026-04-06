@@ -14,9 +14,14 @@ export function queueResearch(
   topic: string,
   llmConfig: LlmConfig,
   searchConfig: SearchApiConfig,
+  searchQueries?: string[],
 ): string {
   const store = useResearchStore.getState()
   const taskId = store.addTask(topic)
+  // Store search queries on the task
+  if (searchQueries && searchQueries.length > 0) {
+    store.updateTask(taskId, { searchQueries })
+  }
   // Ensure panel is open
   store.setPanelOpen(true)
   // Start processing on next tick to ensure React has rendered the panel
@@ -55,10 +60,32 @@ async function executeResearch(
   const store = useResearchStore.getState()
 
   try {
-    // Step 1: Web search
+    // Step 1: Web search — use multiple queries if available, merge and deduplicate
     store.updateTask(taskId, { status: "searching" })
 
-    const webResults = await webSearch(topic, searchConfig, 8)
+    const task = useResearchStore.getState().tasks.find((t) => t.id === taskId)
+    const queries = task?.searchQueries && task.searchQueries.length > 0
+      ? task.searchQueries
+      : [topic]
+
+    const allResults: import("./web-search").WebSearchResult[] = []
+    const seenUrls = new Set<string>()
+
+    for (const query of queries) {
+      try {
+        const results = await webSearch(query, searchConfig, 5)
+        for (const r of results) {
+          if (!seenUrls.has(r.url)) {
+            seenUrls.add(r.url)
+            allResults.push(r)
+          }
+        }
+      } catch {
+        // continue with other queries
+      }
+    }
+
+    const webResults = allResults
     store.updateTask(taskId, { webResults })
 
     if (webResults.length === 0) {
