@@ -109,6 +109,38 @@ export async function autoIngest(
   activity.updateItem(activityId, { detail: "Writing files..." })
   const writtenPaths = await writeFileBlocks(projectPath, generation)
 
+  // Ensure source summary page exists (LLM may not have generated it correctly)
+  const sourceBaseName = fileName.replace(/\.[^.]+$/, "")
+  const sourceSummaryPath = `wiki/sources/${sourceBaseName}.md`
+  const sourceSummaryFullPath = `${projectPath}/${sourceSummaryPath}`
+  const hasSourceSummary = writtenPaths.some((p) => p.startsWith("wiki/sources/"))
+
+  if (!hasSourceSummary) {
+    const date = new Date().toISOString().slice(0, 10)
+    const fallbackContent = [
+      "---",
+      `type: source`,
+      `title: "Source: ${fileName}"`,
+      `created: ${date}`,
+      `updated: ${date}`,
+      `sources: ["${fileName}"]`,
+      `tags: []`,
+      `related: []`,
+      "---",
+      "",
+      `# Source: ${fileName}`,
+      "",
+      analysis ? analysis.slice(0, 3000) : "(Analysis not available)",
+      "",
+    ].join("\n")
+    try {
+      await writeFile(sourceSummaryFullPath, fallbackContent)
+      writtenPaths.push(sourceSummaryPath)
+    } catch {
+      // non-critical
+    }
+  }
+
   if (writtenPaths.length > 0) {
     try {
       const tree = await listDirectory(projectPath)
