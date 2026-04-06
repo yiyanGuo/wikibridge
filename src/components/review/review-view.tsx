@@ -345,6 +345,8 @@ function ReviewCard({
 
 /** Detect if an action implies deep research (web search + LLM synthesis) */
 function actionLooksLikeResearch(action: string): boolean {
+  // Skip internal action identifiers
+  if (action.startsWith("__")) return false
   const lower = action.toLowerCase()
   return (
     lower.includes("research") ||
