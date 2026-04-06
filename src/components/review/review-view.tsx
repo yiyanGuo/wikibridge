@@ -291,26 +291,36 @@ function ReviewCard({
   )
 }
 
-/** Detect if an action label implies creating a wiki page */
-function actionLooksLikeCreate(action: string): boolean {
+/** Detect if an action is a dismissal (no-op) or should create a page */
+function actionIsDismissal(action: string): boolean {
   const lower = action.toLowerCase()
   return (
-    lower.includes("create") ||
-    lower.includes("add page") ||
-    lower.includes("new page") ||
-    lower.includes("investigate") ||
-    lower.includes("创建") ||
-    lower.includes("新建")
+    lower === "skip" ||
+    lower === "dismiss" ||
+    lower === "ignore" ||
+    lower === "跳过" ||
+    lower === "忽略" ||
+    lower === "approve" ||
+    lower === "keep existing" ||
+    lower === "no"
   )
+}
+
+function actionLooksLikeCreate(action: string): boolean {
+  // Anything that isn't a dismissal should create a page
+  return !actionIsDismissal(action)
 }
 
 /** Infer wiki page type from action text and review item type */
 function detectPageType(action: string, reviewType: string): string {
   const lower = action.toLowerCase()
-  if (lower.includes("query") || lower.includes("question") || lower.includes("investigate")) return "query"
   if (lower.includes("entity") || lower.includes("实体")) return "entity"
   if (lower.includes("concept") || lower.includes("概念")) return "concept"
+  if (lower.includes("comparison") || lower.includes("compare") || lower.includes("比较")) return "comparison"
+  if (lower.includes("synthesis") || lower.includes("综合")) return "synthesis"
   if (reviewType === "missing-page") return "concept"
+  if (reviewType === "contradiction") return "query"
   if (reviewType === "suggestion") return "query"
+  // Default: research/investigate/create → query
   return "query"
 }
