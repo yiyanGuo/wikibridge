@@ -75,7 +75,7 @@ export async function autoIngest(
   await streamChat(
     llmConfig,
     [
-      { role: "system", content: buildGenerationPrompt(schema, purpose, index) },
+      { role: "system", content: buildGenerationPrompt(schema, purpose, index, fileName) },
       {
         role: "user",
         content: [
@@ -280,9 +280,21 @@ function buildAnalysisPrompt(purpose: string, index: string): string {
 /**
  * Step 2 prompt: AI takes its own analysis and generates wiki files + review items.
  */
-function buildGenerationPrompt(schema: string, purpose: string, index: string): string {
+function buildGenerationPrompt(schema: string, purpose: string, index: string, sourceFileName: string): string {
+  // Derive a slug from the source filename for the source summary page
+  const sourceSlug = sourceFileName
+    .replace(/\.[^.]+$/, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, "")
+    .trim()
+    .replace(/\s+/g, "-")
+
   return [
     "You are a wiki maintainer. Based on the analysis provided, generate wiki files.",
+    "",
+    `## IMPORTANT: Source File`,
+    `The original source file is: **${sourceFileName}**`,
+    `All wiki pages generated from this source MUST include this filename in their frontmatter \`sources\` field.`,
     "",
     "## Output Format",
     "",
@@ -293,14 +305,30 @@ function buildGenerationPrompt(schema: string, purpose: string, index: string): 
     "---END FILE---",
     "",
     "Generate:",
-    "1. A source summary page in wiki/sources/ (always)",
+    `1. A source summary page at **wiki/sources/${sourceSlug}.md** (MUST use this exact path)`,
     "2. Entity pages in wiki/entities/ for key entities identified in the analysis",
     "3. Concept pages in wiki/concepts/ for key concepts identified in the analysis",
     "4. An updated wiki/index.md — add new entries to existing categories, preserve all existing entries",
     "5. A log entry for wiki/log.md (just the new entry to append, format: ## [YYYY-MM-DD] ingest | Title)",
     "",
-    "Rules:",
-    "- Use YAML frontmatter on every page (type, title, created, updated, tags, related)",
+    "## Frontmatter Rules (CRITICAL)",
+    "",
+    "Every page MUST have YAML frontmatter with these fields:",
+    "```yaml",
+    "---",
+    "type: source | entity | concept | comparison | query | synthesis",
+    "title: Human-readable title",
+    "created: YYYY-MM-DD",
+    "updated: YYYY-MM-DD",
+    "tags: []",
+    "related: []",
+    `sources: [\"${sourceFileName}\"]  # MUST contain the original source filename`,
+    "---",
+    "```",
+    "",
+    `The \`sources\` field MUST always contain "${sourceFileName}" — this links the wiki page back to the original uploaded document.`,
+    "",
+    "Other rules:",
     "- Use [[wikilink]] syntax for cross-references between pages",
     "- Use kebab-case filenames",
     "- Follow the analysis recommendations on what to emphasize",
