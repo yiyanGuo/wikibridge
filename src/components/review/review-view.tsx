@@ -167,11 +167,16 @@ export function ReviewView() {
         resolveItem(id, action)
       }
     } else if (action === "__deep_research__" && project) {
+      // Check if search API is configured
+      const searchConfig = useWikiStore.getState().searchApiConfig
+      if (searchConfig.provider === "none" || !searchConfig.apiKey) {
+        window.alert("Web Search not configured. Go to Settings → Web Search to add a Tavily API key first.")
+        return
+      }
       // Queue deep research task
       const item = items.find((i) => i.id === id)
       if (item) {
         const llmConfig = useWikiStore.getState().llmConfig
-        const searchConfig = useWikiStore.getState().searchApiConfig
         const topic = item.title.replace(/^(Save to Wiki|Create|Research)[:\s]*/i, "").trim() || item.description.split("\n")[0]
         queueResearch(project.path, topic, llmConfig, searchConfig)
         resolveItem(id, "Queued for research")

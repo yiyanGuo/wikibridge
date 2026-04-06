@@ -17,7 +17,12 @@ export function queueResearch(
 ): string {
   const store = useResearchStore.getState()
   const taskId = store.addTask(topic)
-  processQueue(projectPath, llmConfig, searchConfig)
+  // Ensure panel is open
+  store.setPanelOpen(true)
+  // Start processing on next tick to ensure React has rendered the panel
+  setTimeout(() => {
+    processQueue(projectPath, llmConfig, searchConfig)
+  }, 50)
   return taskId
 }
 

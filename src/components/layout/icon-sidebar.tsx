@@ -1,9 +1,10 @@
 import {
-  FileText, FolderOpen, Search, Network, ClipboardCheck, Settings, ArrowLeftRight, ClipboardList,
+  FileText, FolderOpen, Search, Network, ClipboardCheck, Settings, ArrowLeftRight, ClipboardList, Globe,
 } from "lucide-react"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { useWikiStore } from "@/stores/wiki-store"
 import { useReviewStore } from "@/stores/review-store"
+import { useResearchStore } from "@/stores/research-store"
 import { useTranslation } from "react-i18next"
 import type { WikiState } from "@/stores/wiki-store"
 
@@ -28,6 +29,9 @@ export function IconSidebar({ onSwitchProject }: IconSidebarProps) {
   const activeView = useWikiStore((s) => s.activeView)
   const setActiveView = useWikiStore((s) => s.setActiveView)
   const pendingCount = useReviewStore((s) => s.items.filter((i) => !i.resolved).length)
+  const researchPanelOpen = useResearchStore((s) => s.panelOpen)
+  const researchActiveCount = useResearchStore((s) => s.tasks.filter((t) => t.status !== "done" && t.status !== "error").length)
+  const toggleResearchPanel = useResearchStore((s) => s.setPanelOpen)
 
   return (
     <TooltipProvider delayDuration={300}>
@@ -58,6 +62,24 @@ export function IconSidebar({ onSwitchProject }: IconSidebarProps) {
           ))}
         </div>
         <div className="flex flex-col items-center gap-1 pb-1">
+          <Tooltip>
+            <TooltipTrigger
+              onClick={() => toggleResearchPanel(!researchPanelOpen)}
+              className={`relative flex h-10 w-10 items-center justify-center rounded-md transition-colors ${
+                researchPanelOpen
+                  ? "bg-accent text-accent-foreground"
+                  : "text-muted-foreground hover:bg-accent/50 hover:text-accent-foreground"
+              }`}
+            >
+              <Globe className="h-5 w-5" />
+              {researchActiveCount > 0 && (
+                <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-blue-500 px-1 text-[10px] font-bold text-white">
+                  {researchActiveCount}
+                </span>
+              )}
+            </TooltipTrigger>
+            <TooltipContent side="right">Deep Research</TooltipContent>
+          </Tooltip>
           <Tooltip>
             <TooltipTrigger
               onClick={onSwitchProject}
