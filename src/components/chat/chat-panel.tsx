@@ -81,18 +81,6 @@ export function ChatPanel() {
           }
         }
 
-        // Get source file list
-        let sourceFileList = ""
-        try {
-          const sourceTree = await listDirectory(`${project.path}/raw/sources`)
-          const sourceNames = flattenFileNames(sourceTree)
-          sourceFileList = sourceNames.length > 0
-            ? sourceNames.map((n) => `- ${n}`).join("\n")
-            : "(No source files yet)"
-        } catch {
-          sourceFileList = "(No source files yet)"
-        }
-
         // Build the wiki context with actual page content
         const pagesContext = relevantPages.length > 0
           ? relevantPages.map((p) =>
@@ -103,29 +91,23 @@ export function ChatPanel() {
         systemMessages.push({
           role: "system",
           content: [
-            "You are a knowledgeable wiki assistant. Answer questions based on the wiki pages and source documents provided below.",
+            "You are a knowledgeable wiki assistant. Answer questions based on the wiki content provided below.",
             "",
             "## Rules",
-            "- Answer based on the wiki pages AND raw source documents provided below.",
-            "- Pages marked [Source] are the user's original uploaded documents — they contain the full detail.",
+            "- Answer based ONLY on the wiki page content provided below.",
             "- If the provided pages don't contain enough information, say so honestly.",
             "- Use [[wikilink]] syntax to reference wiki pages you cite.",
-            "- At the VERY END of your response, add hidden comments:",
-            "  <!-- sources: file1.pdf, file2.md -->",
-            "- Use EXACT file names from the Source Files list below.",
             "",
             "## Save Judgment",
-            "- If your answer contains a valuable synthesis, comparison, analysis, new insight, or connection worth preserving in the wiki, add this hidden comment BEFORE the sources comment:",
-            "  <!-- save-worthy: yes | Brief reason why this is worth saving -->",
-            "- Only mark as save-worthy if the answer genuinely adds knowledge value. Simple factual lookups or short answers are NOT save-worthy.",
-            "- Examples of save-worthy: cross-source comparisons, multi-concept synthesis, discovered contradictions, novel connections between topics.",
+            "- If your answer contains a valuable synthesis, comparison, analysis, or new insight worth preserving, add this at the VERY END:",
+            "  <!-- save-worthy: yes | Brief reason -->",
+            "- Only for genuinely valuable answers (cross-source comparisons, synthesis, novel connections). NOT for simple lookups.",
             "",
             "Use markdown formatting for clarity.",
             "",
             purpose ? `## Wiki Purpose\n${purpose}` : "",
-            `## Source Files\n${sourceFileList}`,
             index ? `## Wiki Index\n${index}` : "",
-            `## Relevant Pages & Source Documents (use these to answer)\n\n${pagesContext}`,
+            `## Relevant Wiki Pages (use these to answer)\n\n${pagesContext}`,
           ].filter(Boolean).join("\n"),
         })
       }
