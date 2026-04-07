@@ -1,5 +1,6 @@
 import { webSearch } from "./web-search"
 import { streamChat } from "./llm-client"
+import { autoIngest } from "./ingest"
 import { writeFile, listDirectory } from "@/commands/fs"
 import { useWikiStore, type LlmConfig, type SearchApiConfig } from "@/stores/wiki-store"
 import { useResearchStore } from "@/stores/research-store"
@@ -192,6 +193,11 @@ async function executeResearch(
     } catch {
       // ignore
     }
+
+    // Auto-ingest the research result to generate entities, concepts, cross-references
+    autoIngest(projectPath, `${projectPath}/${savedPath}`, llmConfig).catch((err) => {
+      console.error("Failed to auto-ingest research result:", err)
+    })
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err)
     useResearchStore.getState().updateTask(taskId, {
