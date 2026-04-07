@@ -199,6 +199,9 @@ export async function runSemanticLint(
   const prompt = [
     "You are a wiki quality analyst. Review the following wiki page summaries and identify issues.",
     "",
+    "## Language Rule",
+    "- Match the language of the wiki content. If pages are in Chinese, write issues in Chinese. If in English, use English.",
+    "",
     "For each issue, output exactly this format:",
     "",
     "---LINT: type | severity | Short title---",

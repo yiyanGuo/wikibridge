@@ -103,6 +103,10 @@ async function executeResearch(
 
     const systemPrompt = [
       "You are a research assistant. Synthesize the web search results into a comprehensive wiki page.",
+      "",
+      "## Language Rule",
+      "- ALWAYS match the language of the research topic. If the topic is in Chinese, write in Chinese. If in English, write in English.",
+      "",
       "- Organize into clear sections with headings",
       "- Cite sources using [N] notation",
       "- Note contradictions or gaps",

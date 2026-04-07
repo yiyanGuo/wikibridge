@@ -101,6 +101,9 @@ export function ChatPanel() {
           content: [
             "You are a knowledgeable wiki assistant. Answer questions based on the wiki content provided below.",
             "",
+            "## Language Rule",
+            "- ALWAYS respond in the same language the user uses. If the user writes in Chinese, respond in Chinese. If in English, respond in English. Match the user's language exactly.",
+            "",
             "## Rules",
             "- Answer based ONLY on the numbered wiki pages provided below.",
             "- If the provided pages don't contain enough information, say so honestly.",

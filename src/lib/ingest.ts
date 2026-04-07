@@ -8,6 +8,8 @@ import { useReviewStore, type ReviewItem } from "@/stores/review-store"
 
 const FILE_BLOCK_REGEX = /---FILE:\s*([^\n-]+?)\s*---\n([\s\S]*?)---END FILE---/g
 
+export const LANGUAGE_RULE = "## Language Rule\n- ALWAYS match the language of the source document. If the source is in Chinese, write in Chinese. If in English, write in English. Wiki page titles, content, and descriptions should all be in the same language as the source material."
+
 /**
  * Auto-ingest: reads source → LLM analyzes → LLM writes wiki pages, all in one go.
  * Used when importing new files.
@@ -270,6 +272,8 @@ function buildAnalysisPrompt(purpose: string, index: string): string {
   return [
     "You are an expert research analyst. Read the source document and produce a structured analysis.",
     "",
+    LANGUAGE_RULE,
+    "",
     "Your analysis should cover:",
     "",
     "## Key Entities",
@@ -318,6 +322,8 @@ function buildGenerationPrompt(schema: string, purpose: string, index: string, s
 
   return [
     "You are a wiki maintainer. Based on the analysis provided, generate wiki files.",
+    "",
+    LANGUAGE_RULE,
     "",
     `## IMPORTANT: Source File`,
     `The original source file is: **${sourceFileName}**`,
@@ -428,6 +434,8 @@ export async function startIngest(
   const systemPrompt = [
     "You are a knowledgeable assistant helping to build a wiki from source documents.",
     "",
+    LANGUAGE_RULE,
+    "",
     purpose ? `## Wiki Purpose\n${purpose}` : "",
     schema ? `## Wiki Schema\n${schema}` : "",
     index ? `## Current Wiki Index\n${index}` : "",
@@ -522,6 +530,8 @@ export async function executeIngestWrites(
 
   const systemPrompt = [
     "You are a wiki generation assistant. Your task is to produce structured wiki file contents.",
+    "",
+    LANGUAGE_RULE,
     schema ? `## Wiki Schema\n${schema}` : "",
   ]
     .filter(Boolean)
