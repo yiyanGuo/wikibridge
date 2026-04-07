@@ -261,14 +261,24 @@ interface StreamingMessageProps {
 }
 
 export function StreamingMessage({ content }: StreamingMessageProps) {
+  const { thinking, answer } = useMemo(() => separateThinking(content), [content])
+  const isThinking = thinking !== null && answer.length === 0
+
   return (
     <div className="flex gap-2 flex-row">
       <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground">
         <Bot className="h-4 w-4" />
       </div>
       <div className="max-w-[80%] rounded-lg px-3 py-2 text-sm bg-muted text-foreground">
-        <MarkdownContent content={content} />
-        <span className="animate-pulse">▊</span>
+        {isThinking ? (
+          <StreamingThinkingBlock content={thinking} />
+        ) : (
+          <>
+            {thinking && <ThinkingBlock content={thinking} />}
+            <MarkdownContent content={answer} />
+            <span className="animate-pulse">▊</span>
+          </>
+        )}
       </div>
     </div>
   )
@@ -339,8 +349,38 @@ function separateThinking(text: string): { thinking: string | null; answer: stri
   return { thinking, answer }
 }
 
+/** Streaming thinking: shows latest ~5 lines rolling upward with animation */
+function StreamingThinkingBlock({ content }: { content: string }) {
+  const lines = content.split("\n").filter((l) => l.trim())
+  const visibleLines = lines.slice(-5)
+
+  return (
+    <div className="rounded-md border border-dashed border-amber-500/30 bg-amber-50/50 dark:bg-amber-950/20 px-2.5 py-2">
+      <div className="flex items-center gap-1.5 mb-1.5">
+        <span className="text-sm animate-pulse">💭</span>
+        <span className="text-xs font-medium text-amber-700 dark:text-amber-400">Thinking...</span>
+        <span className="text-[10px] text-amber-600/50 dark:text-amber-500/40">{lines.length} lines</span>
+      </div>
+      <div className="h-[5lh] overflow-hidden text-xs text-amber-800/70 dark:text-amber-300/60 font-mono leading-relaxed">
+        {visibleLines.map((line, i) => (
+          <div
+            key={lines.length - 5 + i}
+            className="truncate"
+            style={{ opacity: 0.4 + (i / visibleLines.length) * 0.6 }}
+          >
+            {line}
+          </div>
+        ))}
+        <span className="animate-pulse text-amber-500">▊</span>
+      </div>
+    </div>
+  )
+}
+
+/** Completed thinking: collapsed by default, click to expand */
 function ThinkingBlock({ content }: { content: string }) {
   const [expanded, setExpanded] = useState(false)
+  const lines = content.split("\n").filter((l) => l.trim())
 
   return (
     <div className="mb-2 rounded-md border border-dashed border-amber-500/30 bg-amber-50/50 dark:bg-amber-950/20">
@@ -350,13 +390,13 @@ function ThinkingBlock({ content }: { content: string }) {
         className="flex w-full items-center gap-1.5 px-2.5 py-1.5 text-xs text-amber-700 dark:text-amber-400 hover:bg-amber-100/50 dark:hover:bg-amber-900/20 transition-colors"
       >
         <span className="text-sm">💭</span>
-        <span className="font-medium">Thinking</span>
+        <span className="font-medium">Thought for {lines.length} lines</span>
         <span className="text-amber-600/60 dark:text-amber-500/60">
-          {expanded ? "▼" : "▶"} {content.length > 100 ? `${Math.ceil(content.length / 100) * 100}+ chars` : ""}
+          {expanded ? "▼" : "▶"}
         </span>
       </button>
       {expanded && (
-        <div className="border-t border-amber-500/20 px-2.5 py-2 text-xs text-amber-800/80 dark:text-amber-300/70 whitespace-pre-wrap max-h-64 overflow-y-auto">
+        <div className="border-t border-amber-500/20 px-2.5 py-2 text-xs text-amber-800/80 dark:text-amber-300/70 whitespace-pre-wrap max-h-64 overflow-y-auto font-mono leading-relaxed">
           {content}
         </div>
       )}
