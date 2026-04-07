@@ -2,8 +2,12 @@ import { useState, useEffect } from "react"
 import { open } from "@tauri-apps/plugin-dialog"
 import i18n from "@/i18n"
 import { useWikiStore } from "@/stores/wiki-store"
+import { useReviewStore } from "@/stores/review-store"
+import { useChatStore } from "@/stores/chat-store"
 import { listDirectory, openProject } from "@/commands/fs"
 import { getLastProject, saveLastProject, loadLlmConfig, loadLanguage, loadSearchApiConfig } from "@/lib/project-store"
+import { loadReviewItems, loadChatHistory } from "@/lib/persist"
+import { setupAutoSave } from "@/lib/auto-save"
 import { AppLayout } from "@/components/layout/app-layout"
 import { WelcomeScreen } from "@/components/project/welcome-screen"
 import { CreateProjectDialog } from "@/components/project/create-project-dialog"
@@ -17,6 +21,11 @@ function App() {
   const setActiveView = useWikiStore((s) => s.setActiveView)
   const [showCreateDialog, setShowCreateDialog] = useState(false)
   const [loading, setLoading] = useState(true)
+
+  // Set up auto-save once on mount
+  useEffect(() => {
+    setupAutoSave()
+  }, [])
 
   // Auto-open last project on startup
   useEffect(() => {
@@ -62,6 +71,24 @@ function App() {
       setFileTree(tree)
     } catch (err) {
       console.error("Failed to load file tree:", err)
+    }
+    // Load persisted review items
+    try {
+      const savedReview = await loadReviewItems(proj.path)
+      if (savedReview.length > 0) {
+        useReviewStore.getState().setItems(savedReview)
+      }
+    } catch {
+      // ignore, start fresh
+    }
+    // Load persisted chat history
+    try {
+      const savedChat = await loadChatHistory(proj.path)
+      if (savedChat.length > 0) {
+        useChatStore.getState().setMessages(savedChat)
+      }
+    } catch {
+      // ignore, start fresh
     }
   }
 

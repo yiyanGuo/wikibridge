@@ -23,6 +23,7 @@ interface ReviewState {
   items: ReviewItem[]
   addItem: (item: Omit<ReviewItem, "id" | "resolved" | "createdAt">) => void
   addItems: (items: Omit<ReviewItem, "id" | "resolved" | "createdAt">[]) => void
+  setItems: (items: ReviewItem[]) => void
   resolveItem: (id: string, action: string) => void
   dismissItem: (id: string) => void
   clearResolved: () => void
@@ -58,6 +59,8 @@ export const useReviewStore = create<ReviewState>((set) => ({
         })),
       ],
     })),
+
+  setItems: (items) => set({ items }),
 
   resolveItem: (id, action) =>
     set((state) => ({

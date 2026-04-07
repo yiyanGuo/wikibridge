@@ -16,6 +16,7 @@ interface ChatState {
   ingestSource: string | null
 
   addMessage: (role: DisplayMessage["role"], content: string) => void
+  setMessages: (messages: DisplayMessage[]) => void
   setStreaming: (streaming: boolean) => void
   appendStreamToken: (token: string) => void
   finalizeStream: (content: string) => void
@@ -50,6 +51,8 @@ export const useChatStore = create<ChatState>((set) => ({
         },
       ],
     })),
+
+  setMessages: (messages) => set({ messages }),
 
   setStreaming: (isStreaming) => set({ isStreaming }),
 
