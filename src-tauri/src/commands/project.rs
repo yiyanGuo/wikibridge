@@ -186,6 +186,44 @@ related: []
 "#;
     write_file_inner(root.join("wiki/overview.md"), overview_content)?;
 
+    // .obsidian config for Obsidian compatibility
+    fs::create_dir_all(root.join(".obsidian"))
+        .map_err(|e| format!("Failed to create .obsidian: {}", e))?;
+
+    // Obsidian app config: set attachment folder, exclude hidden dirs
+    let obsidian_app_config = r#"{
+  "attachmentFolderPath": "raw/assets",
+  "userIgnoreFilters": [
+    ".cache",
+    ".llm-wiki",
+    ".superpowers"
+  ],
+  "useMarkdownLinks": false,
+  "newLinkFormat": "shortest",
+  "showUnsupportedFiles": false
+}"#;
+    write_file_inner(root.join(".obsidian/app.json"), obsidian_app_config)?;
+
+    // Obsidian appearance: dark mode
+    let obsidian_appearance = r#"{
+  "baseFontSize": 16,
+  "theme": "obsidian"
+}"#;
+    write_file_inner(root.join(".obsidian/appearance.json"), obsidian_appearance)?;
+
+    // Enable graph view and backlinks core plugins
+    let obsidian_core_plugins = r#"{
+  "file-explorer": true,
+  "global-search": true,
+  "graph": true,
+  "backlink": true,
+  "tag-pane": true,
+  "page-preview": true,
+  "outgoing-link": true,
+  "starred": true
+}"#;
+    write_file_inner(root.join(".obsidian/core-plugins.json"), obsidian_core_plugins)?;
+
     Ok(WikiProject {
         name,
         path: root.to_string_lossy().to_string(),
