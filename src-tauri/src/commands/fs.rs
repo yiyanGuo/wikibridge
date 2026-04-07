@@ -486,41 +486,25 @@ fn extract_pptx_markdown(archive: &mut zip::ZipArchive<fs::File>) -> Result<Stri
 
         result.push_str(&format!("## Slide {}\n\n", idx + 1));
 
-        // Extract text from <a:t> tags, group by <a:p> paragraphs
+        // Extract text from <a:t>...</a:t> tags, group by <a:p>...</a:p> paragraphs
+        // Use string split approach to avoid byte/char index mismatch with CJK characters
         let mut paragraphs: Vec<String> = Vec::new();
-        let mut current_para = String::new();
 
-        let mut i = 0;
-        let chars: Vec<char> = xml.chars().collect();
-        let len = chars.len();
-
-        while i < len {
-            if i + 4 < len && &xml[i..i+4] == "<a:p" {
-                current_para.clear();
-                // skip to end of tag
-                while i < len && chars[i] != '>' { i += 1; }
-                i += 1;
-            } else if i + 5 <= len && &xml[i..i+5] == "</a:p" {
-                let text = current_para.trim().to_string();
-                if !text.is_empty() {
-                    paragraphs.push(text);
+        for para_part in xml.split("<a:p") {
+            let mut para_text = String::new();
+            for t_part in para_part.split("<a:t") {
+                if let Some(close_pos) = t_part.find("</a:t>") {
+                    if let Some(gt_pos) = t_part.find('>') {
+                        if gt_pos < close_pos {
+                            let text = &t_part[gt_pos + 1..close_pos];
+                            para_text.push_str(&decode_xml_entities(text));
+                        }
+                    }
                 }
-                current_para.clear();
-                while i < len && chars[i] != '>' { i += 1; }
-                i += 1;
-            } else if i + 4 < len && &xml[i..i+4] == "<a:t" {
-                // skip to end of opening tag
-                while i < len && chars[i] != '>' { i += 1; }
-                i += 1;
-                // read text
-                let mut text = String::new();
-                while i < len && chars[i] != '<' {
-                    text.push(chars[i]);
-                    i += 1;
-                }
-                current_para.push_str(&decode_xml_entities(&text));
-            } else {
-                i += 1;
+            }
+            let trimmed = para_text.trim().to_string();
+            if !trimmed.is_empty() {
+                paragraphs.push(trimmed);
             }
         }
 
