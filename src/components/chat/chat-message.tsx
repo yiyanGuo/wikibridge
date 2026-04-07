@@ -317,8 +317,8 @@ function MarkdownContent({ content }: { content: string }) {
  * Handles multiple think blocks and partial (unclosed) thinking during streaming.
  */
 function separateThinking(text: string): { thinking: string | null; answer: string } {
-  // Match complete <think>...</think> blocks
-  const thinkRegex = /<think>([\s\S]*?)<\/think>/gi
+  // Match complete <think>...</think> and <thinking>...</thinking> blocks
+  const thinkRegex = /<think(?:ing)?>([\s\S]*?)<\/think(?:ing)?>/gi
   const thinkParts: string[] = []
   let answer = text
 
@@ -326,13 +326,13 @@ function separateThinking(text: string): { thinking: string | null; answer: stri
   while ((match = thinkRegex.exec(text)) !== null) {
     thinkParts.push(match[1].trim())
   }
-  answer = answer.replace(/<think>[\s\S]*?<\/think>/gi, "").trim()
+  answer = answer.replace(/<think(?:ing)?>[\s\S]*?<\/think(?:ing)?>/gi, "").trim()
 
-  // Handle unclosed <think> tag (streaming in progress)
-  const unclosedMatch = answer.match(/<think>([\s\S]*)$/i)
+  // Handle unclosed <think> or <thinking> tag (streaming in progress)
+  const unclosedMatch = answer.match(/<think(?:ing)?>([\s\S]*)$/i)
   if (unclosedMatch) {
     thinkParts.push(unclosedMatch[1].trim())
-    answer = answer.replace(/<think>[\s\S]*$/i, "").trim()
+    answer = answer.replace(/<think(?:ing)?>[\s\S]*$/i, "").trim()
   }
 
   const thinking = thinkParts.length > 0 ? thinkParts.join("\n\n") : null
