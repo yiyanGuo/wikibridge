@@ -1,14 +1,47 @@
-import { useState } from "react"
-import { ChevronUp, ChevronDown, Loader2, CheckCircle2, AlertCircle, X } from "lucide-react"
+import { useState, useEffect, useRef } from "react"
+import {
+  ChevronUp, ChevronDown, Loader2, CheckCircle2, AlertCircle,
+  FileText, Users, Lightbulb, BookOpen, GitMerge, BarChart3, HelpCircle, Layout,
+} from "lucide-react"
 import { useActivityStore, type ActivityItem } from "@/stores/activity-store"
+import { useWikiStore } from "@/stores/wiki-store"
+
+const FILE_TYPE_ICONS: Record<string, typeof FileText> = {
+  sources: BookOpen,
+  entities: Users,
+  concepts: Lightbulb,
+  queries: HelpCircle,
+  synthesis: GitMerge,
+  comparisons: BarChart3,
+}
+
+function getFileTypeInfo(path: string): { icon: typeof FileText; type: string } {
+  for (const [dir, icon] of Object.entries(FILE_TYPE_ICONS)) {
+    if (path.includes(`/${dir}/`) || path.startsWith(`wiki/${dir}/`)) {
+      return { icon, type: dir.charAt(0).toUpperCase() + dir.slice(1, -1) }
+    }
+  }
+  if (path.includes("index.md")) return { icon: Layout, type: "Index" }
+  if (path.includes("log.md")) return { icon: FileText, type: "Log" }
+  return { icon: FileText, type: "File" }
+}
 
 export function ActivityPanel() {
   const items = useActivityStore((s) => s.items)
   const clearDone = useActivityStore((s) => s.clearDone)
   const [expanded, setExpanded] = useState(false)
+  const prevRunningRef = useRef(0)
 
   const runningCount = items.filter((i) => i.status === "running").length
   const hasItems = items.length > 0
+
+  // Auto-expand when a new task starts running
+  useEffect(() => {
+    if (runningCount > 0 && prevRunningRef.current === 0) {
+      setExpanded(true)
+    }
+    prevRunningRef.current = runningCount
+  }, [runningCount])
 
   if (!hasItems) return null
 
@@ -38,7 +71,7 @@ export function ActivityPanel() {
       </button>
 
       {expanded && (
-        <div className="max-h-48 overflow-y-auto border-t">
+        <div className="max-h-64 overflow-y-auto border-t">
           {items.map((item) => (
             <ActivityRow key={item.id} item={item} />
           ))}
@@ -57,22 +90,50 @@ export function ActivityPanel() {
 }
 
 function ActivityRow({ item }: { item: ActivityItem }) {
+  const setSelectedFile = useWikiStore((s) => s.setSelectedFile)
+  const project = useWikiStore((s) => s.project)
+
+  function handleFileClick(filePath: string) {
+    if (!project) return
+    const fullPath = filePath.startsWith("/") ? filePath : `${project.path}/${filePath}`
+    setSelectedFile(fullPath)
+  }
+
   return (
-    <div className="flex items-start gap-2 px-3 py-1.5 text-xs">
-      <div className="mt-0.5 shrink-0">
-        {item.status === "running" && <Loader2 className="h-3 w-3 animate-spin text-primary" />}
-        {item.status === "done" && <CheckCircle2 className="h-3 w-3 text-emerald-500" />}
-        {item.status === "error" && <AlertCircle className="h-3 w-3 text-destructive" />}
+    <div className="px-3 py-2 text-xs border-b border-border/50 last:border-b-0">
+      <div className="flex items-start gap-2">
+        <div className="mt-0.5 shrink-0">
+          {item.status === "running" && <Loader2 className="h-3 w-3 animate-spin text-primary" />}
+          {item.status === "done" && <CheckCircle2 className="h-3 w-3 text-emerald-500" />}
+          {item.status === "error" && <AlertCircle className="h-3 w-3 text-destructive" />}
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="font-medium">{item.title}</div>
+          <div className="text-muted-foreground mt-0.5">{item.detail}</div>
+        </div>
       </div>
-      <div className="min-w-0 flex-1">
-        <div className="truncate font-medium">{item.title}</div>
-        <div className="truncate text-muted-foreground">{item.detail}</div>
-        {item.filesWritten.length > 0 && item.status === "done" && (
-          <div className="mt-0.5 text-muted-foreground">
-            {item.filesWritten.length} file{item.filesWritten.length !== 1 ? "s" : ""} written
-          </div>
-        )}
-      </div>
+
+      {/* File list with types */}
+      {item.filesWritten.length > 0 && item.status === "done" && (
+        <div className="mt-1.5 ml-5 flex flex-col gap-0.5">
+          {item.filesWritten.map((filePath) => {
+            const { icon: Icon, type } = getFileTypeInfo(filePath)
+            const fileName = filePath.split("/").pop() ?? filePath
+            return (
+              <button
+                key={filePath}
+                type="button"
+                onClick={() => handleFileClick(filePath)}
+                className="flex items-center gap-1.5 rounded px-1 py-0.5 text-left text-muted-foreground hover:bg-accent/50 hover:text-foreground transition-colors"
+              >
+                <Icon className="h-3 w-3 shrink-0" />
+                <span className="text-[10px] font-medium text-muted-foreground/70 w-14 shrink-0">{type}</span>
+                <span className="truncate">{fileName}</span>
+              </button>
+            )
+          })}
+        </div>
+      )}
     </div>
   )
 }
