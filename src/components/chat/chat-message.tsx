@@ -228,12 +228,22 @@ function SaveToWikiButton({ content, visible }: { content: string; visible: bool
       const logEntry = `- ${date}: Saved query page \`${fileName}\`\n`
       await writeFile(logPath, logContent.trimEnd() + "\n" + logEntry)
 
-      // Refresh file tree
+      // Refresh file tree and update graph
       const tree = await listDirectory(project.path)
       setFileTree(tree)
+      useWikiStore.getState().bumpDataVersion()
 
       setSaved(true)
       setTimeout(() => setSaved(false), 2000)
+
+      // Auto-ingest the saved query to generate entities/concepts/cross-references
+      const llmConfig = useWikiStore.getState().llmConfig
+      if (llmConfig.apiKey || llmConfig.provider === "ollama") {
+        const { autoIngest } = await import("@/lib/ingest")
+        autoIngest(project.path, filePath, llmConfig).catch((err) =>
+          console.error("Failed to auto-ingest saved query:", err)
+        )
+      }
     } catch (err) {
       console.error("Failed to save to wiki:", err)
     } finally {
