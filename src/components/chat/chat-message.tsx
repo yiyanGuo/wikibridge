@@ -313,6 +313,25 @@ function extractCitedPages(text: string): CitedPage[] {
     }
   }
 
+  // Fallback for persisted messages: extract [[wikilinks]] from the text
+  const wikilinks = text.match(/\[\[([^\]|]+?)(?:\|[^\]]+?)?\]\]/g)
+  if (wikilinks) {
+    const seen = new Set<string>()
+    const pages: CitedPage[] = []
+    for (const link of wikilinks) {
+      const nameMatch = link.match(/\[\[([^\]|]+?)(?:\|([^\]]+?))?\]\]/)
+      if (nameMatch) {
+        const id = nameMatch[1].trim()
+        const display = nameMatch[2]?.trim() || id
+        if (!seen.has(id)) {
+          seen.add(id)
+          pages.push({ title: display, path: `wiki/${id}.md` })
+        }
+      }
+    }
+    if (pages.length > 0) return pages
+  }
+
   // No citations found
   return []
 }
@@ -372,18 +391,18 @@ function MarkdownContent({ content }: { content: string }) {
               )
             },
             table: ({ children, ...props }) => (
-              <div className="my-2 overflow-x-auto">
+              <div className="my-2 overflow-x-auto rounded border border-border">
                 <table className="w-full border-collapse text-xs" {...props}>{children}</table>
               </div>
             ),
             thead: ({ children, ...props }) => (
-              <thead className="bg-muted/50" {...props}>{children}</thead>
+              <thead className="bg-muted" {...props}>{children}</thead>
             ),
             th: ({ children, ...props }) => (
-              <th className="border border-border px-2 py-1 text-left font-semibold" {...props}>{children}</th>
+              <th className="border border-border/80 px-3 py-1.5 text-left font-semibold bg-muted" {...props}>{children}</th>
             ),
             td: ({ children, ...props }) => (
-              <td className="border border-border px-2 py-1" {...props}>{children}</td>
+              <td className="border border-border/60 px-3 py-1.5" {...props}>{children}</td>
             ),
             pre: ({ children, ...props }) => (
               <pre className="rounded bg-background/50 p-2 text-xs overflow-x-auto" {...props}>{children}</pre>
@@ -484,13 +503,41 @@ function ThinkingBlock({ content }: { content: string }) {
  * - [[wikilinks]] → markdown links with wikilink: protocol
  */
 function processContent(text: string): string {
-  return text.replace(
+  let result = text
+
+  // Clean up LaTeX notation → readable text
+  result = result
+    .replace(/\$\\rightarrow\$/g, "→")
+    .replace(/\$\\leftarrow\$/g, "←")
+    .replace(/\$\\leftrightarrow\$/g, "↔")
+    .replace(/\$\\times\$/g, "×")
+    .replace(/\$\\div\$/g, "÷")
+    .replace(/\$\\pm\$/g, "±")
+    .replace(/\$\\geq?\$/g, "≥")
+    .replace(/\$\\leq?\$/g, "≤")
+    .replace(/\$\\neq\$/g, "≠")
+    .replace(/\$\\approx\$/g, "≈")
+    .replace(/\$\\infty\$/g, "∞")
+    .replace(/\$\\alpha\$/g, "α")
+    .replace(/\$\\beta\$/g, "β")
+    .replace(/\$\\gamma\$/g, "γ")
+    .replace(/\$\\delta\$/g, "δ")
+    // Generic: strip remaining $...$ inline math (display the inner text without $ delimiters)
+    .replace(/\$([^$]+)\$/g, "$1")
+
+  // Fix malformed wikilinks like [[name] (missing closing bracket)
+  result = result.replace(/\[\[([^\]]+)\](?!\])/g, "[[$1]]")
+
+  // Convert [[wikilinks]] to markdown links
+  result = result.replace(
     /\[\[([^\]|]+?)(?:\|([^\]]+?))?\]\]/g,
     (_match, pageName: string, displayText?: string) => {
       const display = displayText?.trim() || pageName.trim()
       return `[${display}](wikilink:${pageName.trim()})`
     }
   )
+
+  return result
 }
 
 function SourceRef({ fileName }: { fileName: string }) {
