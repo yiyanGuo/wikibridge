@@ -12,6 +12,7 @@ import type { DisplayMessage } from "@/stores/chat-store"
 import type { FileNode } from "@/types/wiki"
 
 import { convertLatexToUnicode } from "@/lib/latex-to-unicode"
+import { enrichWithWikilinks } from "@/lib/enrich-wikilinks"
 
 // Module-level cache of source file names
 let cachedSourceFiles: string[] = []
@@ -185,12 +186,11 @@ function SaveToWikiButton({ content, visible }: { content: string; visible: bool
       setSaved(true)
       setTimeout(() => setSaved(false), 2000)
 
-      // Auto-ingest the saved query to generate entities/concepts/cross-references
+      // Lightweight cross-referencing: ask LLM to add [[wikilinks]] to the saved content
       const llmConfig = useWikiStore.getState().llmConfig
       if (llmConfig.apiKey || llmConfig.provider === "ollama") {
-        const { autoIngest } = await import("@/lib/ingest")
-        autoIngest(project.path, filePath, llmConfig).catch((err) =>
-          console.error("Failed to auto-ingest saved query:", err)
+        enrichWithWikilinks(project.path, filePath, llmConfig).catch((err) =>
+          console.error("Failed to enrich with wikilinks:", err)
         )
       }
     } catch (err) {
