@@ -1,5 +1,6 @@
 import { readFile, listDirectory } from "@/commands/fs"
 import type { FileNode } from "@/types/wiki"
+import { buildRetrievalGraph, calculateRelevance } from "./graph-relevance"
 
 export interface GraphNode {
   id: string
@@ -12,6 +13,7 @@ export interface GraphNode {
 export interface GraphEdge {
   source: string
   target: string
+  weight: number // relevance score between source and target
 }
 
 const WIKILINK_REGEX = /\[\[([^\]|]+?)(?:\|[^\]]+?)?\]\]/g
@@ -122,16 +124,39 @@ export async function buildWikiGraph(
     }
   }
 
-  // Deduplicate edges (keep only unique source->target pairs)
+  // Deduplicate edges
   const seenEdges = new Set<string>()
-  const edges: GraphEdge[] = []
+  const dedupedEdges: { source: string; target: string }[] = []
   for (const edge of rawEdges) {
     const key = `${edge.source}:::${edge.target}`
-    if (!seenEdges.has(key)) {
+    const reverseKey = `${edge.target}:::${edge.source}`
+    if (!seenEdges.has(key) && !seenEdges.has(reverseKey)) {
       seenEdges.add(key)
-      edges.push(edge)
+      dedupedEdges.push(edge)
     }
   }
+
+  // Calculate relevance weights using the retrieval graph
+  let retrievalGraph: Awaited<ReturnType<typeof buildRetrievalGraph>> | null = null
+  try {
+    const { useWikiStore } = await import("@/stores/wiki-store")
+    const dv = useWikiStore.getState().dataVersion
+    retrievalGraph = await buildRetrievalGraph(projectPath, dv)
+  } catch {
+    // ignore — weights will default to 1
+  }
+
+  const edges: GraphEdge[] = dedupedEdges.map((e) => {
+    let weight = 1
+    if (retrievalGraph) {
+      const nodeA = retrievalGraph.get(e.source)
+      const nodeB = retrievalGraph.get(e.target)
+      if (nodeA && nodeB) {
+        weight = calculateRelevance(nodeA, nodeB, retrievalGraph)
+      }
+    }
+    return { source: e.source, target: e.target, weight }
+  })
 
   const nodes: GraphNode[] = Array.from(nodeMap.values()).map((n) => ({
     id: n.id,

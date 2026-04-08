@@ -82,13 +82,22 @@ function GraphLoader({ nodes, edges }: { nodes: GraphNode[]; edges: GraphEdge[] 
       })
     }
 
+    // Calculate max weight for normalization
+    const maxWeight = Math.max(...edges.map((e) => e.weight), 1)
+
     for (const edge of edges) {
       if (graph.hasNode(edge.source) && graph.hasNode(edge.target)) {
         const edgeKey = `${edge.source}->${edge.target}`
         if (!graph.hasEdge(edgeKey) && !graph.hasEdge(`${edge.target}->${edge.source}`)) {
+          const normalizedWeight = edge.weight / maxWeight // 0..1
+          const size = 0.5 + normalizedWeight * 3.5 // 0.5..4
+          // Stronger relationships → darker color
+          const alpha = Math.round(40 + normalizedWeight * 180) // 40..220
+          const color = `rgba(100,116,139,${alpha / 255})` // slate-500 with variable opacity
           graph.addEdgeWithKey(edgeKey, edge.source, edge.target, {
-            color: "#cbd5e1",
-            size: 1,
+            color,
+            size,
+            weight: edge.weight,
           })
         }
       }
@@ -326,7 +335,7 @@ export function GraphView() {
         <SigmaContainer
           style={{ width: "100%", height: "100%", background: "transparent" }}
           settings={{
-            renderEdgeLabels: false,
+            renderEdgeLabels: true,
             defaultEdgeColor: "#cbd5e1",
             defaultNodeColor: "#94a3b8",
             labelSize: 13,
@@ -353,11 +362,15 @@ export function GraphView() {
               const result = { ...attrs }
               if (attrs.dimmed) {
                 result.color = "#f1f5f9"
-                result.size = 0.5
+                result.size = 0.3
               }
               if (attrs.highlighted) {
-                result.color = "#475569"
-                result.size = 2.5
+                // Highlighted edges: show stronger with weight-based thickness
+                const w = attrs.weight ?? 1
+                result.color = "#1e293b"
+                result.size = Math.max(2, (attrs.size ?? 1) * 1.5)
+                result.label = `relevance: ${w.toFixed(1)}`
+                result.forceLabel = true
               }
               return result
             },
