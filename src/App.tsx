@@ -66,6 +66,12 @@ function App() {
     setSelectedFile(null)
     setActiveView("wiki")
     await saveLastProject(proj)
+    // Notify local clip server of the current project path (fire-and-forget)
+    fetch("http://127.0.0.1:19827/project", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ path: proj.path }),
+    }).catch(() => {})
     try {
       const tree = await listDirectory(proj.path)
       setFileTree(tree)

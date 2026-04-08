@@ -1,8 +1,11 @@
+mod clip_server;
 mod commands;
 mod types;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    clip_server::start_clip_server();
+
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
