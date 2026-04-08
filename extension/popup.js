@@ -244,7 +244,21 @@ async function sendClip() {
 
 clipBtn.addEventListener("click", sendClip);
 
+// Resize content preview to fill available space without causing popup scroll
+function resizePreview() {
+  const totalHeight = 500; // matches html/body height
+  const preview = document.getElementById("contentPreview");
+  if (!preview) return;
+
+  // Calculate space used by everything except the preview
+  const previewRect = preview.getBoundingClientRect();
+  const bottomSpace = totalHeight - previewRect.top - 60; // 60px for button + footer
+  const maxH = Math.max(100, Math.min(300, bottomSpace));
+  preview.style.maxHeight = maxH + "px";
+}
+
 (async () => {
   const connected = await checkConnection();
   if (connected) await extractContent();
+  setTimeout(resizePreview, 100);
 })();
