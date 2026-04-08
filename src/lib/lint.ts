@@ -3,7 +3,7 @@ import { streamChat } from "@/lib/llm-client"
 import type { LlmConfig } from "@/stores/wiki-store"
 import type { FileNode } from "@/types/wiki"
 import { useActivityStore } from "@/stores/activity-store"
-import { getFileName, normalizePath } from "@/lib/path-utils"
+import { getFileName, getRelativePath, normalizePath } from "@/lib/path-utils"
 
 export interface LintResult {
   type: "orphan" | "broken-link" | "no-outlinks" | "semantic"
@@ -50,7 +50,7 @@ function buildSlugMap(
   const map = new Map<string, string>()
   for (const f of wikiFiles) {
     // e.g. /path/to/project/wiki/entities/foo.md → entities/foo
-    const rel = f.path.replace(wikiRoot + "/", "").replace(/\.md$/, "")
+    const rel = getRelativePath(f.path, wikiRoot).replace(/\.md$/, "")
     map.set(rel, f.path)
     // also index by basename without extension
     map.set(f.name.replace(/\.md$/, ""), f.path)
@@ -84,7 +84,7 @@ export async function runStructuralLint(projectPath: string): Promise<LintResult
   for (const f of contentFiles) {
     try {
       const content = await readFile(f.path)
-      const slug = relativeToSlug(f.path.replace(wikiRoot + "/", ""))
+      const slug = relativeToSlug(getRelativePath(f.path, wikiRoot))
       const outlinks = extractWikilinks(content)
       pages.push({ path: f.path, slug, content, outlinks })
     } catch {
@@ -97,7 +97,7 @@ export async function runStructuralLint(projectPath: string): Promise<LintResult
   for (const p of pages) {
     for (const link of p.outlinks) {
       const target = slugMap.has(link)
-        ? relativeToSlug(slugMap.get(link)!.replace(wikiRoot + "/", ""))
+        ? relativeToSlug(getRelativePath(slugMap.get(link)!, wikiRoot))
         : link
       inboundCounts.set(target, (inboundCounts.get(target) ?? 0) + 1)
     }
@@ -106,7 +106,7 @@ export async function runStructuralLint(projectPath: string): Promise<LintResult
   const results: LintResult[] = []
 
   for (const p of pages) {
-    const shortName = p.path.replace(wikiRoot + "/", "")
+    const shortName = getRelativePath(p.path, wikiRoot)
 
     // Orphan: no inbound links
     const inbound = inboundCounts.get(p.slug) ?? 0
@@ -184,7 +184,7 @@ export async function runSemanticLint(
     try {
       const content = await readFile(f.path)
       const preview = content.slice(0, 500) + (content.length > 500 ? "..." : "")
-      const shortPath = f.path.replace(wikiRoot + "/", "")
+      const shortPath = getRelativePath(f.path, wikiRoot)
       summaries.push(`### ${shortPath}\n${preview}`)
     } catch {
       // skip

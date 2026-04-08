@@ -237,10 +237,11 @@ fn handle_clip(body: &str) -> String {
     let slug: String = slug_raw.chars().take(50).collect();
 
     let base_name = format!("{}-{}", slug, date_compact);
-    let dir = format!("{}/raw/sources", project_path);
+    // Use PathBuf for cross-platform path construction
+    let dir_path = std::path::Path::new(&project_path).join("raw").join("sources");
 
     // Ensure directory exists
-    if let Err(e) = std::fs::create_dir_all(&dir) {
+    if let Err(e) = std::fs::create_dir_all(&dir_path) {
         return format!(
             r#"{{"ok":false,"error":"Failed to create directory: {}"}}"#,
             e
@@ -248,12 +249,13 @@ fn handle_clip(body: &str) -> String {
     }
 
     // Find unique filename
-    let mut file_path = format!("{}/{}.md", dir, base_name);
+    let mut file_path = dir_path.join(format!("{}.md", base_name));
     let mut counter = 2u32;
-    while std::path::Path::new(&file_path).exists() {
-        file_path = format!("{}/{}-{}.md", dir, base_name, counter);
+    while file_path.exists() {
+        file_path = dir_path.join(format!("{}-{}.md", base_name, counter));
         counter += 1;
     }
+    let file_path = file_path.to_string_lossy().to_string();
 
     // Build markdown content with web-clip origin
     let markdown = format!(
@@ -273,7 +275,14 @@ fn handle_clip(body: &str) -> String {
         );
     }
 
-    let relative_path = file_path.replace(&format!("{}/", project_path), "");
+    // Compute relative path using Path for cross-platform separator handling
+    let relative_path = {
+        let full = std::path::Path::new(&file_path);
+        let base = std::path::Path::new(&project_path);
+        full.strip_prefix(base)
+            .map(|p| p.to_string_lossy().replace('\\', "/"))
+            .unwrap_or_else(|_| file_path.replace('\\', "/"))
+    };
 
     // Add to pending clips for frontend to pick up and auto-ingest
     if let Ok(mut pending) = PENDING_CLIPS.lock() {

@@ -759,10 +759,11 @@ pub fn find_related_wiki_pages(project_path: String, source_name: String) -> Res
 fn collect_related_pages(dir: &Path, source_name: &str, results: &mut Vec<String>) -> Result<(), String> {
     let entries = fs::read_dir(dir).map_err(|e| e.to_string())?;
 
-    // Get just the filename without path
-    let file_name = source_name
-        .rsplit('/')
-        .next()
+    // Get just the filename without path — use Path for cross-platform separator handling
+    let source_path = std::path::Path::new(source_name);
+    let file_name = source_path
+        .file_name()
+        .and_then(|n| n.to_str())
         .unwrap_or(source_name);
     let file_name_lower = file_name.to_lowercase();
 
@@ -797,7 +798,11 @@ fn collect_related_pages(dir: &Path, source_name: &str, results: &mut Vec<String
                     || content_lower.contains(&format!("'{}'", file_name_lower));
 
                 // Match 2: source summary page (wiki/sources/{stem}.md)
-                let is_source_summary = path.to_string_lossy().contains("/sources/")
+                // Use Path component iteration to avoid hardcoded separator assumptions
+                let is_in_sources_dir = path
+                    .components()
+                    .any(|c| c.as_os_str() == "sources");
+                let is_source_summary = is_in_sources_dir
                     && fname.to_lowercase().starts_with(&file_stem_lower);
 
                 // Match 3: page was generated from this source (check frontmatter sources field)

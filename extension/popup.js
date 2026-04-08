@@ -49,7 +49,7 @@ async function loadProjects() {
     const res = await fetch(`${API_URL}/project`, { method: "GET" });
     const data = await res.json();
     if (data.ok && data.path) {
-      const name = data.path.split("/").pop() || data.path;
+      const name = data.path.replace(/\\/g, "/").split("/").pop() || data.path;
       projectSelect.innerHTML = `<option value="${data.path}">${name}</option>`;
     }
   } catch {
