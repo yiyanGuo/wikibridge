@@ -65,8 +65,17 @@ function nodeSize(linkCount: number, maxLinks: number): number {
 
 function GraphLoader({ nodes, edges }: { nodes: GraphNode[]; edges: GraphEdge[] }) {
   const loadGraph = useLoadGraph()
+  const loadGraphRef = useRef(loadGraph)
+  loadGraphRef.current = loadGraph
+  // Track data identity to avoid re-layout on unrelated re-renders
+  const lastDataKey = useRef("")
 
   useEffect(() => {
+    // Only rebuild if nodes/edges data actually changed
+    const dataKey = nodes.map((n) => n.id).join(",") + "|" + edges.map((e) => `${e.source}-${e.target}`).join(",")
+    if (dataKey === lastDataKey.current) return
+    lastDataKey.current = dataKey
+
     const graph = new Graph()
     const maxLinks = Math.max(...nodes.map((n) => n.linkCount), 1)
 
@@ -117,8 +126,8 @@ function GraphLoader({ nodes, edges }: { nodes: GraphNode[]; edges: GraphEdge[] 
       })
     }
 
-    loadGraph(graph)
-  }, [loadGraph, nodes, edges])
+    loadGraphRef.current(graph)
+  }, [nodes, edges])
 
   return null
 }
@@ -165,46 +174,6 @@ function EventHandler({ onNodeClick }: { onNodeClick: (nodeId: string) => void }
       },
     })
   }, [registerEvents, sigma, onNodeClick])
-
-  return null
-}
-
-/**
- * Prevents sigma from shifting the graph when the container resizes
- * (e.g., when the right preview panel opens/closes).
- * Saves camera state before resize and restores it after.
- */
-function CameraStabilizer() {
-  const sigma = useSigma()
-  const cameraState = useRef<{ x: number; y: number; ratio: number } | null>(null)
-
-  useEffect(() => {
-    const container = sigma.getContainer()
-    if (!container) return
-
-    const observer = new ResizeObserver(() => {
-      // On resize, restore the previous camera state
-      if (cameraState.current) {
-        const cam = sigma.getCamera()
-        cam.setState(cameraState.current)
-      }
-    })
-
-    observer.observe(container)
-
-    // Continuously save camera state on any camera update
-    const handler = () => {
-      const cam = sigma.getCamera()
-      const state = cam.getState()
-      cameraState.current = { x: state.x, y: state.y, ratio: state.ratio }
-    }
-    sigma.getCamera().on("updated", handler)
-
-    return () => {
-      observer.disconnect()
-      sigma.getCamera().removeListener("updated", handler)
-    }
-  }, [sigma])
 
   return null
 }
@@ -416,7 +385,6 @@ export function GraphView() {
         >
           <GraphLoader nodes={nodes} edges={edges} />
           <EventHandler onNodeClick={handleNodeClick} />
-          <CameraStabilizer />
           <ZoomControls />
         </SigmaContainer>
 
