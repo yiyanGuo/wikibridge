@@ -159,6 +159,7 @@ export function ChatPanel() {
 
       // Build system prompt with wiki context using graph-enhanced retrieval
       const systemMessages: LLMMessage[] = []
+      let queryRefs: { title: string; path: string }[] = []
       if (project) {
         const dataVersion = useWikiStore.getState().dataVersion
         const maxCtx = llmConfig.maxContextSize || 204800
@@ -302,8 +303,7 @@ export function ChatPanel() {
         })
 
         lastQueryPages = relevantPages.map((p) => ({ title: p.title, path: p.path }))
-        // Capture for passing to finalizeStream
-        const queryRefs = [...lastQueryPages]
+        queryRefs = [...lastQueryPages]
       }
 
       // ── Conversation history with count limit ────────────────
