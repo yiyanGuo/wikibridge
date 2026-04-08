@@ -22,11 +22,42 @@ const STOP_WORDS = new Set([
 ])
 
 export function tokenizeQuery(query: string): string[] {
-  return query
+  // Split by whitespace and punctuation
+  const rawTokens = query
     .toLowerCase()
-    .split(/[\s,，。！？、；：""''（）()\-_/\\]+/)
+    .split(/[\s,，。！？、；：""''（）()\-_/\\·~～…]+/)
     .filter((t) => t.length > 1)
     .filter((t) => !STOP_WORDS.has(t))
+
+  const tokens: string[] = []
+
+  for (const token of rawTokens) {
+    // Check if token contains CJK characters
+    const hasCJK = /[\u4e00-\u9fff\u3400-\u4dbf]/.test(token)
+
+    if (hasCJK && token.length > 2) {
+      // For CJK text: split into individual characters AND overlapping bigrams
+      // "默会知识" → ["默会", "会知", "知识", "默", "会", "知", "识"]
+      const chars = [...token]
+      // Add bigrams (most useful for Chinese)
+      for (let i = 0; i < chars.length - 1; i++) {
+        tokens.push(chars[i] + chars[i + 1])
+      }
+      // Also add individual chars (for single-char matches)
+      for (const ch of chars) {
+        if (!STOP_WORDS.has(ch)) {
+          tokens.push(ch)
+        }
+      }
+      // Keep the original token too (for exact phrase match)
+      tokens.push(token)
+    } else {
+      tokens.push(token)
+    }
+  }
+
+  // Deduplicate
+  return [...new Set(tokens)]
 }
 
 function tokenMatchScore(text: string, tokens: readonly string[]): number {
