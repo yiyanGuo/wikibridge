@@ -330,8 +330,9 @@ export function GraphView() {
         </Button>
       </div>
 
-      {/* Graph canvas */}
+      {/* Graph canvas — use absolute positioning to decouple from parent resize */}
       <div className="relative flex-1 overflow-hidden bg-slate-50 dark:bg-slate-950">
+      <div className="absolute inset-0">
         <SigmaContainer
           style={{ width: "100%", height: "100%", background: "transparent" }}
           settings={{
@@ -381,6 +382,7 @@ export function GraphView() {
           <ZoomControls />
         </SigmaContainer>
 
+        </div>
         {/* Legend */}
         <div className="absolute bottom-3 left-3 rounded-lg border bg-background/90 backdrop-blur-sm px-3 py-2 text-xs shadow-sm">
           <div className="mb-1.5 font-semibold text-foreground">Node Types</div>
