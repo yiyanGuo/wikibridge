@@ -98,9 +98,11 @@ function flattenNames(nodes: FileNode[]): string[] {
 
 interface ChatMessageProps {
   message: DisplayMessage
+  isLastAssistant?: boolean
+  onRegenerate?: () => void
 }
 
-export function ChatMessage({ message }: ChatMessageProps) {
+export function ChatMessage({ message, isLastAssistant, onRegenerate }: ChatMessageProps) {
   const isUser = message.role === "user"
   const isSystem = message.role === "system"
   const isAssistant = message.role === "assistant"
@@ -138,8 +140,20 @@ export function ChatMessage({ message }: ChatMessageProps) {
           )}
         </div>
         {isAssistant && <CitedReferencesPanel content={message.content} savedReferences={message.references} />}
-        {isAssistant && (
-          <SaveToWikiButton content={message.content} visible={hovered} />
+        {isAssistant && hovered && (
+          <div className="flex items-center gap-1">
+            <SaveToWikiButton content={message.content} visible={true} />
+            {isLastAssistant && onRegenerate && (
+              <button
+                type="button"
+                onClick={onRegenerate}
+                className="inline-flex items-center gap-1 rounded px-2 py-0.5 text-[11px] text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
+                title="Regenerate this response"
+              >
+                🔄 Regenerate
+              </button>
+            )}
+          </div>
         )}
       </div>
     </div>

@@ -49,6 +49,7 @@ interface ChatState {
   setIngestSource: (path: string | null) => void
   clearMessages: () => void
   setMaxHistoryMessages: (n: number) => void
+  removeLastAssistantMessage: () => void  // for regenerate: remove last assistant reply
 
   // Helpers
   getActiveMessages: () => DisplayMessage[]
@@ -204,6 +205,20 @@ export const useChatStore = create<ChatState>((set, get) => ({
     })),
 
   setMaxHistoryMessages: (maxHistoryMessages) => set({ maxHistoryMessages }),
+
+  removeLastAssistantMessage: () =>
+    set((state) => {
+      const activeId = state.activeConversationId
+      if (!activeId) return state
+      const activeMessages = state.messages.filter((m) => m.conversationId === activeId)
+      // Find last assistant message
+      const lastAssistantIdx = [...activeMessages].reverse().findIndex((m) => m.role === "assistant")
+      if (lastAssistantIdx === -1) return state
+      const msgToRemove = activeMessages[activeMessages.length - 1 - lastAssistantIdx]
+      return {
+        messages: state.messages.filter((m) => m.id !== msgToRemove.id),
+      }
+    }),
 
   getActiveMessages: () => {
     const { messages, activeConversationId } = get()

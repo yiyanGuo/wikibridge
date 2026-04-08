@@ -7,7 +7,7 @@ import { useChatStore, chatMessagesToLLM } from "@/stores/chat-store"
 import { useWikiStore } from "@/stores/wiki-store"
 import { streamChat, type ChatMessage as LLMMessage } from "@/lib/llm-client"
 import { executeIngestWrites } from "@/lib/ingest"
-import { listDirectory, readFile, writeFile } from "@/commands/fs"
+import { listDirectory, readFile, writeFile, deleteFile } from "@/commands/fs"
 import { searchWiki } from "@/lib/search"
 import { buildRetrievalGraph, getRelatedNodes } from "@/lib/graph-relevance"
 import { useReviewStore } from "@/stores/review-store"
@@ -87,6 +87,11 @@ function ConversationSidebar() {
                       onClick={(e) => {
                         e.stopPropagation()
                         deleteConversation(conv.id)
+                        // Delete persisted chat file
+                        const proj = useWikiStore.getState().project
+                        if (proj) {
+                          deleteFile(`${proj.path}/.llm-wiki/chats/${conv.id}.json`).catch(() => {})
+                        }
                       }}
                     >
                       <Trash2 className="h-3 w-3" />
@@ -122,6 +127,7 @@ export function ChatPanel() {
   const appendStreamToken = useChatStore((s) => s.appendStreamToken)
   const finalizeStream = useChatStore((s) => s.finalizeStream)
   const createConversation = useChatStore((s) => s.createConversation)
+  const removeLastAssistantMessage = useChatStore((s) => s.removeLastAssistantMessage)
   const maxHistoryMessages = useChatStore((s) => s.maxHistoryMessages)
 
   // Derive active messages via selector to re-render on message changes
@@ -348,6 +354,31 @@ export function ChatPanel() {
     abortRef.current = null
   }, [])
 
+  const handleRegenerate = useCallback(async () => {
+    if (isStreaming) return
+    // Find the last user message in active conversation
+    const active = useChatStore.getState().getActiveMessages()
+    const lastUserMsg = [...active].reverse().find((m) => m.role === "user")
+    if (!lastUserMsg) return
+    // Remove the last assistant reply, then re-send
+    removeLastAssistantMessage()
+    // Small delay to let state update
+    await new Promise((r) => setTimeout(r, 50))
+    // Trigger send with the same text (handleSend will add a new user message,
+    // so also remove the original to avoid duplication)
+    // Actually: just call handleSend — but it adds a user message. To avoid dupe,
+    // we remove the last user message too and let handleSend re-add it.
+    const store = useChatStore.getState()
+    const updatedActive = store.getActiveMessages()
+    const lastUser = [...updatedActive].reverse().find((m) => m.role === "user")
+    if (lastUser) {
+      useChatStore.setState((s) => ({
+        messages: s.messages.filter((m) => m.id !== lastUser.id),
+      }))
+    }
+    handleSend(lastUserMsg.content)
+  }, [isStreaming, removeLastAssistantMessage, handleSend])
+
   const handleWriteToWiki = useCallback(async () => {
     if (!project) return
     try {
@@ -386,9 +417,19 @@ export function ChatPanel() {
               className="flex-1 overflow-y-auto px-3 py-2"
             >
               <div className="flex flex-col gap-3">
-                {activeMessages.map((msg) => (
-                  <ChatMessage key={msg.id} message={msg} />
-                ))}
+                {activeMessages.map((msg, idx) => {
+                  // Check if this is the last assistant message
+                  const isLastAssistant = msg.role === "assistant" &&
+                    !activeMessages.slice(idx + 1).some((m) => m.role === "assistant")
+                  return (
+                    <ChatMessage
+                      key={msg.id}
+                      message={msg}
+                      isLastAssistant={isLastAssistant && !isStreaming}
+                      onRegenerate={isLastAssistant ? handleRegenerate : undefined}
+                    />
+                  )
+                })}
                 {isStreaming && <StreamingMessage content={streamingContent} />}
                 <div ref={bottomRef} />
               </div>
