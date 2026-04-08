@@ -4,6 +4,7 @@ import type { DisplayMessage, Conversation } from "@/stores/chat-store"
 
 async function ensureDir(projectPath: string): Promise<void> {
   await createDirectory(`${projectPath}/.llm-wiki`).catch(() => {})
+  await createDirectory(`${projectPath}/.llm-wiki/chats`).catch(() => {})
 }
 
 export async function saveReviewItems(projectPath: string, items: ReviewItem[]): Promise<void> {
@@ -31,39 +32,76 @@ export async function saveChatHistory(
   messages: DisplayMessage[]
 ): Promise<void> {
   await ensureDir(projectPath)
-  // Only save last 200 messages to keep file manageable
-  const toSave: PersistedChatData = {
-    conversations,
-    messages: messages.slice(-200),
+
+  // Save conversation list
+  await writeFile(
+    `${projectPath}/.llm-wiki/conversations.json`,
+    JSON.stringify(conversations, null, 2)
+  )
+
+  // Save each conversation's messages separately
+  const byConversation = new Map<string, DisplayMessage[]>()
+  for (const msg of messages) {
+    const list = byConversation.get(msg.conversationId) ?? []
+    list.push(msg)
+    byConversation.set(msg.conversationId, list)
   }
-  await writeFile(`${projectPath}/.llm-wiki/chat-history.json`, JSON.stringify(toSave, null, 2))
+
+  for (const [convId, msgs] of byConversation) {
+    // Keep last 100 messages per conversation
+    const toSave = msgs.slice(-100)
+    await writeFile(
+      `${projectPath}/.llm-wiki/chats/${convId}.json`,
+      JSON.stringify(toSave, null, 2)
+    )
+  }
 }
 
 export async function loadChatHistory(projectPath: string): Promise<PersistedChatData> {
   try {
-    const content = await readFile(`${projectPath}/.llm-wiki/chat-history.json`)
-    const parsed = JSON.parse(content)
+    // Try new format: separate files per conversation
+    const convContent = await readFile(`${projectPath}/.llm-wiki/conversations.json`)
+    const conversations = JSON.parse(convContent) as Conversation[]
 
-    // Backward compatibility: old format was just an array of messages
-    if (Array.isArray(parsed)) {
-      const legacyMessages = parsed as DisplayMessage[]
-      // Migrate legacy messages into a default conversation
-      const defaultConv: Conversation = {
-        id: "default",
-        title: "Previous Conversations",
-        createdAt: legacyMessages[0]?.timestamp ?? Date.now(),
-        updatedAt: legacyMessages[legacyMessages.length - 1]?.timestamp ?? Date.now(),
+    const allMessages: DisplayMessage[] = []
+    for (const conv of conversations) {
+      try {
+        const msgContent = await readFile(`${projectPath}/.llm-wiki/chats/${conv.id}.json`)
+        const msgs = JSON.parse(msgContent) as DisplayMessage[]
+        allMessages.push(...msgs)
+      } catch {
+        // Conversation file missing, skip
       }
-      const migratedMessages = legacyMessages.map((m) => ({
-        ...m,
-        conversationId: "default",
-      }))
-      return { conversations: [defaultConv], messages: migratedMessages }
     }
 
-    // New format
-    return parsed as PersistedChatData
+    return { conversations, messages: allMessages }
   } catch {
-    return { conversations: [], messages: [] }
+    // Fall back to old format
+    try {
+      const content = await readFile(`${projectPath}/.llm-wiki/chat-history.json`)
+      const parsed = JSON.parse(content)
+
+      if (Array.isArray(parsed)) {
+        // Very old format: flat array
+        const legacyMessages = parsed as DisplayMessage[]
+        const defaultConv: Conversation = {
+          id: "default",
+          title: "Previous Conversations",
+          createdAt: legacyMessages[0]?.timestamp ?? Date.now(),
+          updatedAt: legacyMessages[legacyMessages.length - 1]?.timestamp ?? Date.now(),
+        }
+        const migratedMessages = legacyMessages.map((m) => ({
+          ...m,
+          conversationId: "default",
+        }))
+        return { conversations: [defaultConv], messages: migratedMessages }
+      }
+
+      // Old combined format
+      const data = parsed as PersistedChatData
+      return data
+    } catch {
+      return { conversations: [], messages: [] }
+    }
   }
 }
