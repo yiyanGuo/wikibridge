@@ -10,7 +10,6 @@ const projectSelect = document.getElementById("projectSelect");
 let extractedContent = "";
 let pageUrl = "";
 
-// Check connection and load projects
 async function checkConnection() {
   try {
     const res = await fetch(`${API_URL}/status`, { method: "GET" });
@@ -21,9 +20,7 @@ async function checkConnection() {
       await loadProjects();
       return true;
     }
-  } catch {
-    // not running
-  }
+  } catch {}
   statusBar.className = "status disconnected";
   statusBar.textContent = "✗ LLM Wiki app is not running";
   clipBtn.disabled = true;
@@ -31,19 +28,12 @@ async function checkConnection() {
   return false;
 }
 
-// Load project list from server
 async function loadProjects() {
   try {
     const res = await fetch(`${API_URL}/projects`, { method: "GET" });
     const data = await res.json();
-    if (data.ok && data.projects) {
+    if (data.ok && data.projects?.length > 0) {
       projectSelect.innerHTML = "";
-
-      if (data.projects.length === 0) {
-        projectSelect.innerHTML = '<option value="">No projects found</option>';
-        return;
-      }
-
       for (const proj of data.projects) {
         const opt = document.createElement("option");
         opt.value = proj.path;
@@ -51,23 +41,22 @@ async function loadProjects() {
         if (proj.current) opt.selected = true;
         projectSelect.appendChild(opt);
       }
+      return;
+    }
+  } catch {}
+  // Fallback to current project
+  try {
+    const res = await fetch(`${API_URL}/project`, { method: "GET" });
+    const data = await res.json();
+    if (data.ok && data.path) {
+      const name = data.path.split("/").pop() || data.path;
+      projectSelect.innerHTML = `<option value="${data.path}">${name}</option>`;
     }
   } catch {
-    // Fallback: try getting just current project
-    try {
-      const res = await fetch(`${API_URL}/project`, { method: "GET" });
-      const data = await res.json();
-      if (data.ok && data.path) {
-        const name = data.path.split("/").pop() || data.path;
-        projectSelect.innerHTML = `<option value="${data.path}">${name}</option>`;
-      }
-    } catch {
-      projectSelect.innerHTML = '<option value="">No projects</option>';
-    }
+    projectSelect.innerHTML = '<option value="">No projects</option>';
   }
 }
 
-// Extract content from current tab
 async function extractContent() {
   try {
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
@@ -77,88 +66,140 @@ async function extractContent() {
     titleInput.value = tab.title || "Untitled";
     urlPreview.textContent = pageUrl;
 
+    // First inject Readability.js and Turndown.js into the page
+    await chrome.scripting.executeScript({
+      target: { tabId: tab.id },
+      files: ["Readability.js", "Turndown.js"],
+    });
+
+    // Then extract content using them
     const results = await chrome.scripting.executeScript({
       target: { tabId: tab.id },
       func: () => {
-        const selectors = [
-          "article",
-          '[role="main"]',
-          "main",
-          ".post-content",
-          ".article-content",
-          ".entry-content",
-          "#content",
-          ".content",
-        ];
+        try {
+          // Use Readability to extract article content
+          const documentClone = document.cloneNode(true);
+          const reader = new window.Readability(documentClone);
+          const article = reader.parse();
 
-        let article = null;
-        for (const sel of selectors) {
-          article = document.querySelector(sel);
-          if (article) break;
-        }
-        if (!article) article = document.body;
-
-        const clone = article.cloneNode(true);
-        const removeSelectors = [
-          "script", "style", "nav", "header", "footer",
-          ".sidebar", ".nav", ".menu", ".ad", ".advertisement",
-          ".comments", ".comment", "#comments", ".social-share",
-          ".related-posts", ".newsletter", "[role='navigation']",
-        ];
-        for (const sel of removeSelectors) {
-          clone.querySelectorAll(sel).forEach((el) => el.remove());
-        }
-
-        function nodeToText(node) {
-          if (node.nodeType === Node.TEXT_NODE) return node.textContent.trim();
-          if (node.nodeType !== Node.ELEMENT_NODE) return "";
-
-          const tag = node.tagName.toLowerCase();
-          const children = Array.from(node.childNodes).map((c) => nodeToText(c)).filter((t) => t).join(" ");
-          if (!children.trim()) return "";
-
-          switch (tag) {
-            case "h1": return `\n\n# ${children}\n\n`;
-            case "h2": return `\n\n## ${children}\n\n`;
-            case "h3": return `\n\n### ${children}\n\n`;
-            case "h4": return `\n\n#### ${children}\n\n`;
-            case "p": return `\n\n${children}\n\n`;
-            case "li": return `\n- ${children}`;
-            case "ul": case "ol": return `\n${children}\n`;
-            case "blockquote": return `\n\n> ${children}\n\n`;
-            case "pre": case "code": return `\n\n\`\`\`\n${children}\n\`\`\`\n\n`;
-            case "strong": case "b": return `**${children}**`;
-            case "em": case "i": return `*${children}*`;
-            case "a": return `[${children}](${node.getAttribute("href") || ""})`;
-            case "img": return `\n\n![${node.getAttribute("alt") || "image"}](${node.getAttribute("src") || ""})\n\n`;
-            case "br": return "\n";
-            case "hr": return "\n\n---\n\n";
-            case "tr": return `| ${children} |\n`;
-            case "th": case "td": return ` ${children} |`;
-            default: return children;
+          if (!article || !article.content) {
+            return { error: "Readability could not extract content" };
           }
-        }
 
-        let text = nodeToText(clone);
-        text = text.replace(/\n{3,}/g, "\n\n").trim();
-        return text;
+          // Use Turndown to convert HTML to Markdown
+          const turndown = new window.TurndownService({
+            headingStyle: "atx",
+            codeBlockStyle: "fenced",
+            bulletListMarker: "-",
+          });
+
+          // Add table support
+          turndown.addRule("tableCell", {
+            filter: ["th", "td"],
+            replacement: (content) => ` ${content.trim()} |`,
+          });
+          turndown.addRule("tableRow", {
+            filter: "tr",
+            replacement: (content) => `|${content}\n`,
+          });
+          turndown.addRule("table", {
+            filter: "table",
+            replacement: (content) => {
+              // Add header separator after first row
+              const lines = content.trim().split("\n");
+              if (lines.length > 0) {
+                const cols = (lines[0].match(/\|/g) || []).length - 1;
+                const separator = "|" + " --- |".repeat(cols);
+                lines.splice(1, 0, separator);
+              }
+              return "\n\n" + lines.join("\n") + "\n\n";
+            },
+          });
+
+          // Remove images that are tracking pixels or tiny
+          turndown.addRule("removeSmallImages", {
+            filter: (node) => {
+              if (node.nodeName !== "IMG") return false;
+              const w = parseInt(node.getAttribute("width") || "999");
+              const h = parseInt(node.getAttribute("height") || "999");
+              return w < 10 || h < 10;
+            },
+            replacement: () => "",
+          });
+
+          const markdown = turndown.turndown(article.content);
+
+          return {
+            title: article.title,
+            content: markdown,
+            excerpt: article.excerpt || "",
+            siteName: article.siteName || "",
+            length: article.length || 0,
+          };
+        } catch (err) {
+          return { error: err.message };
+        }
       },
     });
 
     if (results?.[0]?.result) {
-      extractedContent = results[0].result;
-      const preview = extractedContent.slice(0, 200);
-      contentPreview.textContent = preview + (extractedContent.length > 200 ? "..." : "");
+      const result = results[0].result;
+
+      if (result.error) {
+        contentPreview.textContent = `Extraction failed: ${result.error}. Falling back...`;
+        await fallbackExtract(tab.id);
+        return;
+      }
+
+      // Use Readability's title if better
+      if (result.title && result.title.length > 5) {
+        titleInput.value = result.title;
+      }
+
+      extractedContent = result.content;
+      const preview = extractedContent.slice(0, 300);
+      contentPreview.textContent = preview + (extractedContent.length > 300 ? "..." : "");
+
+      if (result.excerpt) {
+        contentPreview.textContent = result.excerpt.slice(0, 200) + "\n\n" + preview;
+      }
+
       clipBtn.disabled = false;
     } else {
-      contentPreview.textContent = "Failed to extract content";
+      await fallbackExtract(tab.id);
     }
   } catch (err) {
     contentPreview.textContent = `Error: ${err.message}`;
   }
 }
 
-// Send clip to selected project
+// Fallback: simple DOM extraction if Readability fails
+async function fallbackExtract(tabId) {
+  const results = await chrome.scripting.executeScript({
+    target: { tabId },
+    func: () => {
+      const clone = document.body.cloneNode(true);
+      ["script", "style", "nav", "header", "footer", ".sidebar", ".ad", ".comments"]
+        .forEach((sel) => clone.querySelectorAll(sel).forEach((el) => el.remove()));
+
+      return clone.innerText
+        .split("\n")
+        .map((l) => l.trim())
+        .filter((l) => l.length > 0)
+        .join("\n\n")
+        .slice(0, 50000);
+    },
+  });
+
+  if (results?.[0]?.result) {
+    extractedContent = results[0].result;
+    contentPreview.textContent = extractedContent.slice(0, 200) + "...";
+    clipBtn.disabled = false;
+  } else {
+    contentPreview.textContent = "Failed to extract content";
+  }
+}
+
 async function sendClip() {
   const selectedProject = projectSelect.value;
   if (!selectedProject) {
@@ -190,7 +231,6 @@ async function sendClip() {
       statusBar.className = "status success";
       statusBar.textContent = `✓ Saved to ${projectName}`;
       clipBtn.textContent = "✓ Clipped!";
-      clipBtn.disabled = true;
     } else {
       statusBar.className = "status error";
       statusBar.textContent = `✗ Error: ${data.error}`;
@@ -205,10 +245,7 @@ async function sendClip() {
 
 clipBtn.addEventListener("click", sendClip);
 
-// Initialize
 (async () => {
   const connected = await checkConnection();
-  if (connected) {
-    await extractContent();
-  }
+  if (connected) await extractContent();
 })();
