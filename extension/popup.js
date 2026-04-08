@@ -157,11 +157,11 @@ async function extractContent() {
       }
 
       extractedContent = result.content;
-      const preview = extractedContent.slice(0, 300);
-      contentPreview.textContent = preview + (extractedContent.length > 300 ? "..." : "");
+      const preview = extractedContent.slice(0, 2000);
+      contentPreview.textContent = preview + (extractedContent.length > 2000 ? "\n\n..." : "");
 
       if (result.excerpt) {
-        contentPreview.textContent = result.excerpt.slice(0, 200) + "\n\n" + preview;
+        contentPreview.textContent = "📝 " + result.excerpt + "\n\n---\n\n" + preview;
       }
 
       clipBtn.disabled = false;
