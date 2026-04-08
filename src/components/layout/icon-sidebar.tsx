@@ -6,6 +6,7 @@ import { useWikiStore } from "@/stores/wiki-store"
 import { useReviewStore } from "@/stores/review-store"
 import { useResearchStore } from "@/stores/research-store"
 import { useTranslation } from "react-i18next"
+import logoImg from "@/assets/logo.jpg"
 import type { WikiState } from "@/stores/wiki-store"
 
 type NavView = WikiState["activeView"]
@@ -35,6 +36,14 @@ export function IconSidebar({ onSwitchProject }: IconSidebarProps) {
   return (
     <TooltipProvider delayDuration={300}>
       <div className="flex h-full w-12 flex-col items-center border-r bg-muted/50 py-2">
+        {/* Logo */}
+        <div className="mb-2 flex items-center justify-center">
+          <img
+            src={logoImg}
+            alt="LLM Wiki"
+            className="h-8 w-8 rounded-[22%]"
+          />
+        </div>
         {/* Top: main nav items + Deep Research */}
         <div className="flex flex-1 flex-col items-center gap-1">
           {NAV_ITEMS.map(({ view, icon: Icon, labelKey }) => (
