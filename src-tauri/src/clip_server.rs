@@ -3,6 +3,7 @@ use std::thread;
 use tiny_http::{Header, Method, Response, Server};
 
 static CURRENT_PROJECT: Mutex<String> = Mutex::new(String::new());
+static ALL_PROJECTS: Mutex<Vec<(String, String)>> = Mutex::new(Vec::new()); // (name, path)
 
 pub fn start_clip_server() {
     thread::spawn(|| {
@@ -77,6 +78,41 @@ pub fn start_clip_server() {
                     for h in &cors_headers {
                         response.add_header(h.clone());
                     }
+                    let _ = request.respond(response);
+                }
+                (&Method::Get, "/projects") => {
+                    let projects = ALL_PROJECTS.lock().unwrap().clone();
+                    let current = CURRENT_PROJECT.lock().unwrap().clone();
+                    let items: Vec<String> = projects.iter()
+                        .map(|(name, path)| format!(r#"{{"name":"{}","path":"{}","current":{}}}"#,
+                            name.replace('"', r#"\""#),
+                            path.replace('"', r#"\""#),
+                            path == &current))
+                        .collect();
+                    let body = format!(r#"{{"ok":true,"projects":[{}]}}"#, items.join(","));
+                    let mut response = Response::from_string(body);
+                    for h in &cors_headers { response.add_header(h.clone()); }
+                    let _ = request.respond(response);
+                }
+                (&Method::Post, "/projects") => {
+                    let mut body = String::new();
+                    if request.as_reader().read_to_string(&mut body).is_ok() {
+                        if let Ok(parsed) = serde_json::from_str::<serde_json::Value>(&body) {
+                            if let Some(arr) = parsed["projects"].as_array() {
+                                let mut projects = ALL_PROJECTS.lock().unwrap();
+                                projects.clear();
+                                for item in arr {
+                                    let name = item["name"].as_str().unwrap_or("").to_string();
+                                    let path = item["path"].as_str().unwrap_or("").to_string();
+                                    if !path.is_empty() {
+                                        projects.push((name, path));
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    let mut response = Response::from_string(r#"{"ok":true}"#);
+                    for h in &cors_headers { response.add_header(h.clone()); }
                     let _ = request.respond(response);
                 }
                 (&Method::Post, "/clip") => {

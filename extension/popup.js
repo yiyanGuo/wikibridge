@@ -5,11 +5,12 @@ const titleInput = document.getElementById("titleInput");
 const urlPreview = document.getElementById("urlPreview");
 const contentPreview = document.getElementById("contentPreview");
 const clipBtn = document.getElementById("clipBtn");
+const projectSelect = document.getElementById("projectSelect");
 
 let extractedContent = "";
 let pageUrl = "";
 
-// Check if LLM Wiki app is running
+// Check connection and load projects
 async function checkConnection() {
   try {
     const res = await fetch(`${API_URL}/status`, { method: "GET" });
@@ -17,6 +18,7 @@ async function checkConnection() {
     if (data.ok) {
       statusBar.className = "status connected";
       statusBar.textContent = "✓ Connected to LLM Wiki";
+      await loadProjects();
       return true;
     }
   } catch {
@@ -25,7 +27,44 @@ async function checkConnection() {
   statusBar.className = "status disconnected";
   statusBar.textContent = "✗ LLM Wiki app is not running";
   clipBtn.disabled = true;
+  projectSelect.innerHTML = '<option value="">App not running</option>';
   return false;
+}
+
+// Load project list from server
+async function loadProjects() {
+  try {
+    const res = await fetch(`${API_URL}/projects`, { method: "GET" });
+    const data = await res.json();
+    if (data.ok && data.projects) {
+      projectSelect.innerHTML = "";
+
+      if (data.projects.length === 0) {
+        projectSelect.innerHTML = '<option value="">No projects found</option>';
+        return;
+      }
+
+      for (const proj of data.projects) {
+        const opt = document.createElement("option");
+        opt.value = proj.path;
+        opt.textContent = proj.name + (proj.current ? " (current)" : "");
+        if (proj.current) opt.selected = true;
+        projectSelect.appendChild(opt);
+      }
+    }
+  } catch {
+    // Fallback: try getting just current project
+    try {
+      const res = await fetch(`${API_URL}/project`, { method: "GET" });
+      const data = await res.json();
+      if (data.ok && data.path) {
+        const name = data.path.split("/").pop() || data.path;
+        projectSelect.innerHTML = `<option value="${data.path}">${name}</option>`;
+      }
+    } catch {
+      projectSelect.innerHTML = '<option value="">No projects</option>';
+    }
+  }
 }
 
 // Extract content from current tab
@@ -38,11 +77,9 @@ async function extractContent() {
     titleInput.value = tab.title || "Untitled";
     urlPreview.textContent = pageUrl;
 
-    // Inject content extraction script
     const results = await chrome.scripting.executeScript({
       target: { tabId: tab.id },
       func: () => {
-        // Try to get article content using common selectors
         const selectors = [
           "article",
           '[role="main"]',
@@ -59,16 +96,9 @@ async function extractContent() {
           article = document.querySelector(sel);
           if (article) break;
         }
+        if (!article) article = document.body;
 
-        // Fallback to body
-        if (!article) {
-          article = document.body;
-        }
-
-        // Clone to avoid modifying the page
         const clone = article.cloneNode(true);
-
-        // Remove unwanted elements
         const removeSelectors = [
           "script", "style", "nav", "header", "footer",
           ".sidebar", ".nav", ".menu", ".ad", ".advertisement",
@@ -79,19 +109,12 @@ async function extractContent() {
           clone.querySelectorAll(sel).forEach((el) => el.remove());
         }
 
-        // Convert to simplified markdown-like text
-        function nodeToText(node, depth = 0) {
-          if (node.nodeType === Node.TEXT_NODE) {
-            return node.textContent.trim();
-          }
+        function nodeToText(node) {
+          if (node.nodeType === Node.TEXT_NODE) return node.textContent.trim();
           if (node.nodeType !== Node.ELEMENT_NODE) return "";
 
           const tag = node.tagName.toLowerCase();
-          const children = Array.from(node.childNodes)
-            .map((c) => nodeToText(c, depth))
-            .filter((t) => t)
-            .join(" ");
-
+          const children = Array.from(node.childNodes).map((c) => nodeToText(c)).filter((t) => t).join(" ");
           if (!children.trim()) return "";
 
           switch (tag) {
@@ -106,18 +129,10 @@ async function extractContent() {
             case "pre": case "code": return `\n\n\`\`\`\n${children}\n\`\`\`\n\n`;
             case "strong": case "b": return `**${children}**`;
             case "em": case "i": return `*${children}*`;
-            case "a": {
-              const href = node.getAttribute("href") || "";
-              return `[${children}](${href})`;
-            }
-            case "img": {
-              const alt = node.getAttribute("alt") || "image";
-              const src = node.getAttribute("src") || "";
-              return `\n\n![${alt}](${src})\n\n`;
-            }
+            case "a": return `[${children}](${node.getAttribute("href") || ""})`;
+            case "img": return `\n\n![${node.getAttribute("alt") || "image"}](${node.getAttribute("src") || ""})\n\n`;
             case "br": return "\n";
             case "hr": return "\n\n---\n\n";
-            case "table": return `\n\n${children}\n\n`;
             case "tr": return `| ${children} |\n`;
             case "th": case "td": return ` ${children} |`;
             default: return children;
@@ -125,13 +140,12 @@ async function extractContent() {
         }
 
         let text = nodeToText(clone);
-        // Clean up excessive whitespace
         text = text.replace(/\n{3,}/g, "\n\n").trim();
         return text;
       },
     });
 
-    if (results && results[0] && results[0].result) {
+    if (results?.[0]?.result) {
       extractedContent = results[0].result;
       const preview = extractedContent.slice(0, 200);
       contentPreview.textContent = preview + (extractedContent.length > 200 ? "..." : "");
@@ -144,8 +158,15 @@ async function extractContent() {
   }
 }
 
-// Send clip to LLM Wiki
+// Send clip to selected project
 async function sendClip() {
+  const selectedProject = projectSelect.value;
+  if (!selectedProject) {
+    statusBar.className = "status error";
+    statusBar.textContent = "✗ Please select a project";
+    return;
+  }
+
   clipBtn.disabled = true;
   statusBar.className = "status sending";
   statusBar.textContent = "⏳ Sending to LLM Wiki...";
@@ -158,14 +179,16 @@ async function sendClip() {
         title: titleInput.value,
         url: pageUrl,
         content: extractedContent,
+        projectPath: selectedProject,
       }),
     });
 
     const data = await res.json();
 
     if (data.ok) {
+      const projectName = projectSelect.options[projectSelect.selectedIndex]?.textContent || "project";
       statusBar.className = "status success";
-      statusBar.textContent = `✓ Saved: ${data.path}`;
+      statusBar.textContent = `✓ Saved to ${projectName}`;
       clipBtn.textContent = "✓ Clipped!";
       clipBtn.disabled = true;
     } else {

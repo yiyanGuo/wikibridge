@@ -5,7 +5,7 @@
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
-      width: 320px;
+      width: 340px;
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       font-size: 13px;
       color: #1a1a2e;
@@ -42,7 +42,7 @@
       text-transform: uppercase;
       margin-bottom: 4px;
     }
-    .field input, .field textarea {
+    .field input, .field textarea, .field select {
       width: 100%;
       padding: 8px;
       border: 1px solid #e5e7eb;
@@ -50,12 +50,14 @@
       font-size: 13px;
       font-family: inherit;
       outline: none;
+      background: white;
     }
-    .field input:focus, .field textarea:focus {
+    .field input:focus, .field textarea:focus, .field select:focus {
       border-color: #6366f1;
       box-shadow: 0 0 0 2px rgba(99,102,241,0.1);
     }
     .field textarea { resize: vertical; min-height: 60px; }
+    .field select { cursor: pointer; }
     .preview {
       padding: 8px;
       background: #f3f4f6;
@@ -93,6 +95,14 @@
       color: #9ca3af;
       text-align: center;
     }
+    .project-badge {
+      display: inline-block;
+      font-size: 10px;
+      background: rgba(255,255,255,0.2);
+      padding: 2px 6px;
+      border-radius: 4px;
+      margin-left: auto;
+    }
   </style>
 </head>
 <body>
@@ -103,6 +113,13 @@
 
   <div class="content">
     <div id="statusBar" class="status disconnected">Checking connection...</div>
+
+    <div class="field">
+      <label>Save to Project</label>
+      <select id="projectSelect">
+        <option value="">Loading projects...</option>
+      </select>
+    </div>
 
     <div class="field">
       <label>Title</label>
@@ -125,7 +142,7 @@
   </div>
 
   <div class="footer">
-    Content will be saved to your LLM Wiki project
+    Content will be saved and auto-ingested into your wiki
   </div>
 
   <script src="popup.js"></script>

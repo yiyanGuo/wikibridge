@@ -5,7 +5,7 @@ import { useWikiStore } from "@/stores/wiki-store"
 import { useReviewStore } from "@/stores/review-store"
 import { useChatStore } from "@/stores/chat-store"
 import { listDirectory, openProject } from "@/commands/fs"
-import { getLastProject, saveLastProject, loadLlmConfig, loadLanguage, loadSearchApiConfig } from "@/lib/project-store"
+import { getLastProject, getRecentProjects, saveLastProject, loadLlmConfig, loadLanguage, loadSearchApiConfig } from "@/lib/project-store"
 import { loadReviewItems, loadChatHistory } from "@/lib/persist"
 import { setupAutoSave } from "@/lib/auto-save"
 import { AppLayout } from "@/components/layout/app-layout"
@@ -66,11 +66,21 @@ function App() {
     setSelectedFile(null)
     setActiveView("wiki")
     await saveLastProject(proj)
-    // Notify local clip server of the current project path (fire-and-forget)
+    // Notify local clip server of the current project + all recent projects
     fetch("http://127.0.0.1:19827/project", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ path: proj.path }),
+    }).catch(() => {})
+
+    // Send all recent projects to clip server for extension project picker
+    getRecentProjects().then((recents) => {
+      const projects = recents.map((p) => ({ name: p.name, path: p.path }))
+      fetch("http://127.0.0.1:19827/projects", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ projects }),
+      }).catch(() => {})
     }).catch(() => {})
     try {
       const tree = await listDirectory(proj.path)
