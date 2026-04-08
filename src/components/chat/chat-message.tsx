@@ -186,11 +186,12 @@ function SaveToWikiButton({ content, visible }: { content: string; visible: bool
       setSaved(true)
       setTimeout(() => setSaved(false), 2000)
 
-      // Lightweight cross-referencing: ask LLM to add [[wikilinks]] to the saved content
+      // Full auto-ingest: extract entities, concepts, cross-references from saved content
       const llmConfig = useWikiStore.getState().llmConfig
       if (llmConfig.apiKey || llmConfig.provider === "ollama") {
-        enrichWithWikilinks(project.path, filePath, llmConfig).catch((err) =>
-          console.error("Failed to enrich with wikilinks:", err)
+        const { autoIngest } = await import("@/lib/ingest")
+        autoIngest(project.path, filePath, llmConfig).catch((err) =>
+          console.error("Failed to auto-ingest saved query:", err)
         )
       }
     } catch (err) {
