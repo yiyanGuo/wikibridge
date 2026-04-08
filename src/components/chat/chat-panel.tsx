@@ -52,23 +52,65 @@ export function ChatPanel() {
       const systemMessages: LLMMessage[] = []
       if (project) {
         const dataVersion = useWikiStore.getState().dataVersion
-        const [index, purpose] = await Promise.all([
+        const maxCtx = llmConfig.maxContextSize || 204800
+
+        // ── Budget allocation ──────────────────────────────────
+        // Total context split into parts:
+        //   System prompt fixed:  ~0.5%
+        //   purpose.md:           ~0.2%
+        //   wiki/index.md:        5% (max)
+        //   Wiki page content:    60%
+        //   Conversation history: 20%
+        //   Reserved for LLM:    ~15%
+        const INDEX_BUDGET = Math.floor(maxCtx * 0.05)
+        const PAGE_BUDGET = Math.floor(maxCtx * 0.6)
+        const MAX_PAGE_SIZE = Math.min(Math.floor(PAGE_BUDGET * 0.3), 30_000)
+        const HISTORY_BUDGET = Math.floor(maxCtx * 0.2)
+
+        const [rawIndex, purpose] = await Promise.all([
           readFile(`${project.path}/wiki/index.md`).catch(() => ""),
           readFile(`${project.path}/purpose.md`).catch(() => ""),
         ])
 
-        // --- Phase 1: Tokenized search -> top 10 ---
+        // ── Phase 1: Tokenized search → top 10 ────────────────
         const searchResults = await searchWiki(project.path, text)
         const topSearchResults = searchResults.slice(0, 10)
 
-        // --- Phase 2: Graph 1-level expansion ---
+        // ── Trim index by relevance if over budget ─────────────
+        let index = rawIndex
+        if (rawIndex.length > INDEX_BUDGET) {
+          // Keep lines that match any search token, plus section headers
+          const { tokenizeQuery } = await import("@/lib/search")
+          const tokens = tokenizeQuery(text)
+          const lines = rawIndex.split("\n")
+          const keptLines: string[] = []
+          let keptSize = 0
+
+          for (const line of lines) {
+            const isHeader = line.startsWith("##")
+            const lower = line.toLowerCase()
+            const isRelevant = tokens.some((t) => lower.includes(t))
+
+            if (isHeader || isRelevant) {
+              if (keptSize + line.length + 1 <= INDEX_BUDGET) {
+                keptLines.push(line)
+                keptSize += line.length + 1
+              }
+            }
+          }
+          index = keptLines.join("\n")
+          if (index.length < rawIndex.length) {
+            index += "\n\n[...index trimmed to relevant entries...]"
+          }
+        }
+
+        // ── Phase 2: Graph 1-level expansion ───────────────────
         const graph = await buildRetrievalGraph(project.path, dataVersion)
         const expandedIds = new Set<string>()
         const searchHitPaths = new Set(topSearchResults.map((r) => r.path))
         const graphExpansions: { title: string; path: string; relevance: number }[] = []
 
         for (const result of topSearchResults) {
-          // Derive node ID from file path (kebab-case filename without .md)
           const fileName = result.path.split("/").pop() ?? ""
           const nodeId = fileName.replace(/\.md$/, "")
           const related = getRelatedNodes(nodeId, graph, 3)
@@ -77,72 +119,54 @@ export function ChatPanel() {
             if (searchHitPaths.has(node.path)) continue
             if (expandedIds.has(node.id)) continue
             expandedIds.add(node.id)
-            graphExpansions.push({
-              title: node.title,
-              path: node.path,
-              relevance,
-            })
+            graphExpansions.push({ title: node.title, path: node.path, relevance })
           }
         }
-        // Sort graph expansions by relevance descending
         graphExpansions.sort((a, b) => b.relevance - a.relevance)
 
-        // --- Phase 3 & 4: Budget control with priority queue ---
-        // Use ~60% of max context for page content, rest for prompt + history + response
-        const TOTAL_BUDGET = Math.floor(llmConfig.maxContextSize * 0.6)
-        const MAX_PAGE_SIZE = Math.min(Math.floor(TOTAL_BUDGET * 0.3), 30_000)
+        // ── Phase 3 & 4: Page budget control ───────────────────
         let usedChars = 0
-
         type PageEntry = { title: string; path: string; content: string; priority: number }
         const relevantPages: PageEntry[] = []
 
-        // Helper to add a page within budget
-        const tryAddPage = async (
-          title: string,
-          filePath: string,
-          priority: number,
-        ): Promise<boolean> => {
-          if (usedChars >= TOTAL_BUDGET) return false
+        const tryAddPage = async (title: string, filePath: string, priority: number): Promise<boolean> => {
+          if (usedChars >= PAGE_BUDGET) return false
           try {
             const raw = await readFile(filePath)
             const relativePath = filePath.replace(project.path + "/", "")
             const truncated = raw.length > MAX_PAGE_SIZE
               ? raw.slice(0, MAX_PAGE_SIZE) + "\n\n[...truncated...]"
               : raw
-            if (usedChars + truncated.length > TOTAL_BUDGET) return false
+            if (usedChars + truncated.length > PAGE_BUDGET) return false
             usedChars += truncated.length
             relevantPages.push({ title, path: relativePath, content: truncated, priority })
             return true
-          } catch {
-            return false
-          }
+          } catch { return false }
         }
 
-        // P0: Title matches from search
+        // P0: Title matches
         for (const r of topSearchResults.filter((r) => r.titleMatch)) {
           await tryAddPage(r.title, r.path, 0)
         }
-        // P1: Content matches from search
+        // P1: Content matches
         for (const r of topSearchResults.filter((r) => !r.titleMatch)) {
           await tryAddPage(r.title, r.path, 1)
         }
-        // P2: Graph expansions (already sorted by relevance)
+        // P2: Graph expansions
         for (const exp of graphExpansions) {
           await tryAddPage(exp.title, exp.path, 2)
         }
-        // P3: Overview fallback if nothing found
+        // P3: Overview fallback
         if (relevantPages.length === 0) {
           await tryAddPage("Overview", `${project.path}/wiki/overview.md`, 3)
         }
 
-        // Build numbered wiki context so AI can cite by number
         const pagesContext = relevantPages.length > 0
           ? relevantPages.map((p, i) =>
               `### [${i + 1}] ${p.title}\nPath: ${p.path}\n\n${p.content}`
             ).join("\n\n---\n\n")
           : "(No wiki pages found)"
 
-        // Build page list for reference
         const pageList = relevantPages.map((p, i) =>
           `[${i + 1}] ${p.title} (${p.path})`
         ).join("\n")
@@ -177,14 +201,27 @@ export function ChatPanel() {
           ].filter(Boolean).join("\n"),
         })
 
-        // Store page mapping for SourceFilesBar to use
         lastQueryPages = relevantPages.map((p) => ({ title: p.title, path: p.path }))
       }
 
-      // Only include user and assistant messages in conversation history (not internal system messages)
-      const allMessages = useChatStore.getState().messages
+      // ── Conversation history with budget control ─────────────
+      // Keep newest messages first, drop oldest if over budget
+      const HISTORY_BUDGET_CHARS = llmConfig.maxContextSize
+        ? Math.floor(llmConfig.maxContextSize * 0.2)
+        : 40960
+      const rawMessages = useChatStore.getState().messages
         .filter((m) => m.role === "user" || m.role === "assistant")
-      const llmMessages = [...systemMessages, ...chatMessagesToLLM(allMessages)]
+      const trimmedMessages: typeof rawMessages = []
+      let historyChars = 0
+      // Iterate from newest to oldest
+      for (let i = rawMessages.length - 1; i >= 0; i--) {
+        const msg = rawMessages[i]
+        const msgSize = msg.content.length
+        if (historyChars + msgSize > HISTORY_BUDGET_CHARS) break
+        trimmedMessages.unshift(msg)
+        historyChars += msgSize
+      }
+      const llmMessages = [...systemMessages, ...chatMessagesToLLM(trimmedMessages)]
 
       const controller = new AbortController()
       abortRef.current = controller
