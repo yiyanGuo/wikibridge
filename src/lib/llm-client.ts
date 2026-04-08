@@ -27,8 +27,8 @@ export async function streamChat(
   const { onToken, onDone, onError } = callbacks
   const providerConfig = getProviderConfig(config)
 
-  // Create a combined signal: user abort OR 5-minute timeout
-  const timeoutMs = 5 * 60 * 1000 // 5 minutes for initial response
+  // Create a combined signal: user abort OR 15-minute timeout
+  const timeoutMs = 15 * 60 * 1000 // 15 minutes — some models with large context need a long time
   let combinedSignal = signal
   let timeoutController: AbortController | undefined
 
