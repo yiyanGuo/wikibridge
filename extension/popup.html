@@ -4,14 +4,12 @@
   <meta charset="utf-8">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    html, body {
+    body {
       width: 480px;
-      height: 580px;
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       font-size: 13px;
       color: #1a1a2e;
       background: #fafafa;
-      overflow: hidden;
     }
     .header {
       padding: 12px 16px;
@@ -23,36 +21,30 @@
     }
     .header h1 { font-size: 14px; font-weight: 600; }
     .header .icon { font-size: 18px; }
-    .content {
-      padding: 12px 16px;
-      flex: 1;
-      overflow-y: auto;
-      display: flex;
-      flex-direction: column;
-    }
+    .content { padding: 12px 16px; }
     .status {
       padding: 8px 12px;
       border-radius: 6px;
       font-size: 12px;
-      margin-bottom: 12px;
+      margin-bottom: 10px;
     }
     .status.connected { background: #ecfdf5; color: #065f46; }
     .status.disconnected { background: #fef2f2; color: #991b1b; }
     .status.sending { background: #eff6ff; color: #1e40af; }
     .status.success { background: #ecfdf5; color: #065f46; }
     .status.error { background: #fef2f2; color: #991b1b; }
-    .field { margin-bottom: 10px; }
+    .field { margin-bottom: 8px; }
     .field label {
       display: block;
       font-size: 11px;
       font-weight: 600;
       color: #6b7280;
       text-transform: uppercase;
-      margin-bottom: 4px;
+      margin-bottom: 3px;
     }
-    .field input, .field textarea, .field select {
+    .field input, .field select {
       width: 100%;
-      padding: 8px;
+      padding: 6px 8px;
       border: 1px solid #e5e7eb;
       border-radius: 6px;
       font-size: 13px;
@@ -60,28 +52,38 @@
       outline: none;
       background: white;
     }
-    .field input:focus, .field textarea:focus, .field select:focus {
+    .field input:focus, .field select:focus {
       border-color: #6366f1;
       box-shadow: 0 0 0 2px rgba(99,102,241,0.1);
     }
-    .field textarea { resize: vertical; min-height: 60px; }
     .field select { cursor: pointer; }
-    .preview {
+    .url-preview {
+      padding: 4px 8px;
+      background: #f3f4f6;
+      border-radius: 4px;
+      font-size: 11px;
+      color: #6b7280;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    #contentPreview {
       padding: 10px;
       background: #f3f4f6;
+      border: 1px solid #e5e7eb;
       border-radius: 6px;
       font-size: 12px;
-      color: #4b5563;
-      line-height: 1.5;
-      max-height: 280px;
-      overflow-y: auto;
+      color: #374151;
+      line-height: 1.6;
+      height: 300px;
+      overflow-y: scroll;
       white-space: pre-wrap;
       word-break: break-word;
     }
-    .preview::-webkit-scrollbar { width: 6px; }
-    .preview::-webkit-scrollbar-track { background: transparent; }
-    .preview::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 3px; }
-    .preview::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
+    #contentPreview::-webkit-scrollbar { width: 8px; }
+    #contentPreview::-webkit-scrollbar-track { background: #f3f4f6; border-radius: 0 6px 6px 0; }
+    #contentPreview::-webkit-scrollbar-thumb { background: #c5c5c5; border-radius: 4px; }
+    #contentPreview::-webkit-scrollbar-thumb:hover { background: #999; }
     .btn {
       width: 100%;
       padding: 10px;
@@ -91,34 +93,21 @@
       font-weight: 600;
       cursor: pointer;
       transition: all 0.15s;
+      margin-top: 10px;
     }
-    .btn-primary {
-      background: #4f46e5;
-      color: white;
-    }
+    .btn-primary { background: #4f46e5; color: white; }
     .btn-primary:hover { background: #4338ca; }
-    .btn-primary:disabled {
-      background: #9ca3af;
-      cursor: not-allowed;
-    }
+    .btn-primary:disabled { background: #9ca3af; cursor: not-allowed; }
     .footer {
-      padding: 8px 16px;
+      padding: 6px 16px;
       border-top: 1px solid #e5e7eb;
       font-size: 10px;
       color: #9ca3af;
       text-align: center;
     }
-    .project-badge {
-      display: inline-block;
-      font-size: 10px;
-      background: rgba(255,255,255,0.2);
-      padding: 2px 6px;
-      border-radius: 4px;
-      margin-left: auto;
-    }
   </style>
 </head>
-<body style="display:flex;flex-direction:column;">
+<body>
   <div class="header">
     <span class="icon">📚</span>
     <h1>LLM Wiki Clipper</h1>
@@ -141,12 +130,12 @@
 
     <div class="field">
       <label>URL</label>
-      <div class="preview" id="urlPreview">—</div>
+      <div class="url-preview" id="urlPreview">—</div>
     </div>
 
-    <div class="field" style="flex:1;display:flex;flex-direction:column;min-height:0;">
+    <div class="field">
       <label>Content Preview</label>
-      <div class="preview" id="contentPreview" style="flex:1;max-height:none;">Extracting content...</div>
+      <div id="contentPreview">Extracting content...</div>
     </div>
 
     <button class="btn btn-primary" id="clipBtn" disabled>
