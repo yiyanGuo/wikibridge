@@ -10,9 +10,10 @@
 </p>
 
 <p align="center">
+  <a href="#what-is-this">What is this?</a> •
+  <a href="#what-we-changed--added">Features</a> •
+  <a href="#tech-stack">Tech Stack</a> •
   <a href="#installation">Installation</a> •
-  <a href="#features">Features</a> •
-  <a href="#how-it-works">How It Works</a> •
   <a href="#credits">Credits</a> •
   <a href="#license">License</a>
 </p>
