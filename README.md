@@ -24,15 +24,23 @@
 
 ---
 
+<p align="center">
+  <img src="assets/3-knowledge_graph.jpg" width="100%" alt="Knowledge Graph">
+</p>
+
 ## What is this?
 
 LLM Wiki is a cross-platform desktop application that turns your documents into an organized, interlinked knowledge base — automatically. Instead of traditional RAG (retrieve-and-answer from scratch every time), the LLM **incrementally builds and maintains a persistent wiki** from your sources. Knowledge is compiled once and kept current, not re-derived on every query.
 
-This project is based on [Karpathy's LLM Wiki pattern](https://github.com/karpathy/llm-wiki) — a methodology for building personal knowledge bases using LLMs. We implemented the core ideas as a full desktop application with significant enhancements.
+This project is based on [Karpathy's LLM Wiki pattern](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f) — a methodology for building personal knowledge bases using LLMs. We implemented the core ideas as a full desktop application with significant enhancements.
+
+<p align="center">
+  <img src="assets/llm_wiki_arch.jpg" width="100%" alt="LLM Wiki Architecture">
+</p>
 
 ## Credits
 
-The foundational methodology comes from **Andrej Karpathy**'s [llm-wiki.md](https://github.com/karpathy/llm-wiki), which describes the pattern of using LLMs to incrementally build and maintain a personal wiki. The original document is an abstract design pattern; this project is a concrete implementation with substantial extensions.
+The foundational methodology comes from **Andrej Karpathy**'s [llm-wiki.md](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f), which describes the pattern of using LLMs to incrementally build and maintain a personal wiki. The original document is an abstract design pattern; this project is a concrete implementation with substantial extensions.
 
 ## What We Kept from the Original
 
@@ -46,6 +54,10 @@ The core architecture follows Karpathy's design faithfully:
 - **YAML frontmatter** on every wiki page
 - **Obsidian compatibility** — the wiki directory works as an Obsidian vault
 - **Human curates, LLM maintains** — the fundamental role division
+
+<p align="center">
+  <img src="assets/5-obsidian_compatibility.jpg" width="100%" alt="Obsidian Compatibility">
+</p>
 
 ## What We Changed & Added
 
@@ -93,6 +105,10 @@ Additional ingest enhancements beyond the original:
 - **Language-aware generation** — LLM responds in the user's configured language (English or Chinese)
 
 ### 4. Knowledge Graph with Relevance Model
+
+<p align="center">
+  <img src="assets/3-knowledge_graph.jpg" width="100%" alt="Knowledge Graph">
+</p>
 
 The original mentions `[[wikilinks]]` for cross-references but has no graph analysis. We built a **full knowledge graph visualization and relevance engine**:
 
@@ -178,6 +194,10 @@ The original suggests staying involved during ingest. We added an **asynchronous
 
 ### 10. Deep Research
 
+<p align="center">
+  <img src="assets/1-deepresearch.jpg" width="100%" alt="Deep Research">
+</p>
+
 Not in the original. When the LLM identifies knowledge gaps:
 
 - **Web search** (Tavily API) finds relevant sources
@@ -188,6 +208,10 @@ Not in the original. When the LLM identifies knowledge gaps:
 - **Research Panel** — dedicated sidebar panel showing real-time progress per task
 
 ### 11. Browser Extension (Web Clipper)
+
+<p align="center">
+  <img src="assets/4-chrome_extension_webclipper.jpg" width="100%" alt="Chrome Extension Web Clipper">
+</p>
 
 The original mentions Obsidian Web Clipper. We built a **dedicated Chrome Extension** (Manifest V3):
 
