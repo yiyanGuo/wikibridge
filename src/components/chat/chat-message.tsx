@@ -1,7 +1,10 @@
 import { useCallback, useEffect, useRef, useState, useMemo } from "react"
 import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
-import { Bot, User, FileText, BookmarkPlus } from "lucide-react"
+import {
+  Bot, User, FileText, BookmarkPlus, ChevronDown, ChevronRight,
+  Users, Lightbulb, BookOpen, HelpCircle, GitMerge, BarChart3, Layout, Globe,
+} from "lucide-react"
 import { useWikiStore } from "@/stores/wiki-store"
 import { readFile, writeFile, listDirectory } from "@/commands/fs"
 import { lastQueryPages } from "@/components/chat/chat-panel"
@@ -81,7 +84,7 @@ export function ChatMessage({ message }: ChatMessageProps) {
             <MarkdownContent content={message.content} />
           )}
         </div>
-        {isAssistant && <SourceFilesBar content={message.content} />}
+        {isAssistant && <CitedReferencesPanel content={message.content} />}
         {isAssistant && (
           <SaveToWikiButton content={message.content} visible={hovered} />
         )}
@@ -192,37 +195,95 @@ interface CitedPage {
   path: string
 }
 
-function SourceFilesBar({ content }: { content: string }) {
+const REF_TYPE_CONFIG: Record<string, { icon: typeof FileText; color: string }> = {
+  entity: { icon: Users, color: "text-blue-500" },
+  concept: { icon: Lightbulb, color: "text-purple-500" },
+  source: { icon: BookOpen, color: "text-orange-500" },
+  query: { icon: HelpCircle, color: "text-green-500" },
+  synthesis: { icon: GitMerge, color: "text-red-500" },
+  comparison: { icon: BarChart3, color: "text-teal-500" },
+  overview: { icon: Layout, color: "text-yellow-500" },
+  clip: { icon: Globe, color: "text-blue-400" },
+}
+
+function getRefType(path: string): string {
+  if (path.includes("/entities/")) return "entity"
+  if (path.includes("/concepts/")) return "concept"
+  if (path.includes("/sources/")) return "source"
+  if (path.includes("/queries/")) return "query"
+  if (path.includes("/synthesis/")) return "synthesis"
+  if (path.includes("/comparisons/")) return "comparison"
+  if (path.includes("overview")) return "overview"
+  if (path.includes("raw/sources/")) return "clip"
+  return "source"
+}
+
+function CitedReferencesPanel({ content }: { content: string }) {
   const project = useWikiStore((s) => s.project)
   const setSelectedFile = useWikiStore((s) => s.setSelectedFile)
+  const [expanded, setExpanded] = useState(false)
 
   const citedPages = useMemo(() => extractCitedPages(content), [content])
 
   if (citedPages.length === 0) return null
 
+  const MAX_COLLAPSED = 3
+  const visiblePages = expanded ? citedPages : citedPages.slice(0, MAX_COLLAPSED)
+  const hasMore = citedPages.length > MAX_COLLAPSED
+
   return (
-    <div className="flex flex-wrap items-center gap-1 px-1">
-      <span className="text-[10px] text-muted-foreground">Sources:</span>
-      {citedPages.map((page) => (
-        <button
-          key={page.path}
-          type="button"
-          onClick={() => {
-            if (project) {
-              const fullPath = page.path.startsWith("/") ? page.path : `${project.path}/${page.path}`
-              setSelectedFile(fullPath)
-            }
-          }}
-          className="inline-flex items-center gap-0.5 rounded bg-accent/50 px-1.5 py-0.5 text-[11px] font-medium text-primary hover:bg-accent transition-colors"
-          title={page.path}
-        >
-          <FileText className="h-3 w-3" />
-          {page.title}
-        </button>
-      ))}
+    <div className="rounded-md border border-border/60 bg-muted/30 text-xs mb-1">
+      <button
+        type="button"
+        onClick={() => hasMore && setExpanded(!expanded)}
+        className="flex w-full items-center gap-1.5 px-2 py-1 text-muted-foreground hover:text-foreground transition-colors"
+      >
+        <FileText className="h-3 w-3 shrink-0" />
+        <span className="font-medium">References ({citedPages.length})</span>
+        {hasMore && (
+          expanded
+            ? <ChevronDown className="h-3 w-3 ml-auto" />
+            : <ChevronRight className="h-3 w-3 ml-auto" />
+        )}
+      </button>
+      <div className="px-2 pb-1.5">
+        {visiblePages.map((page, i) => {
+          const refType = getRefType(page.path)
+          const config = REF_TYPE_CONFIG[refType] ?? REF_TYPE_CONFIG.source
+          const Icon = config.icon
+          return (
+            <button
+              key={page.path}
+              type="button"
+              onClick={() => {
+                if (project) {
+                  const fullPath = page.path.startsWith("/") ? page.path : `${project.path}/${page.path}`
+                  setSelectedFile(fullPath)
+                }
+              }}
+              className="flex w-full items-center gap-1.5 rounded px-1 py-0.5 text-left hover:bg-accent/50 transition-colors"
+              title={page.path}
+            >
+              <span className="text-[10px] text-muted-foreground/60 w-4 shrink-0 text-right">[{i + 1}]</span>
+              <Icon className={`h-3 w-3 shrink-0 ${config.color}`} />
+              <span className="truncate text-foreground/80">{page.title}</span>
+            </button>
+          )
+        })}
+        {hasMore && !expanded && (
+          <button
+            type="button"
+            onClick={() => setExpanded(true)}
+            className="w-full text-center text-[10px] text-muted-foreground hover:text-primary pt-0.5"
+          >
+            +{citedPages.length - MAX_COLLAPSED} more...
+          </button>
+        )}
+      </div>
     </div>
   )
 }
+
 
 /**
  * Extract cited wiki pages from the hidden <!-- cited: 1, 3, 5 --> comment.
