@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState, useMemo } from "react"
 import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
 import {
-  Bot, User, FileText, BookmarkPlus, ChevronDown, ChevronRight,
+  Bot, User, FileText, BookmarkPlus, ChevronDown, ChevronRight, RefreshCw,
   Users, Lightbulb, BookOpen, HelpCircle, GitMerge, BarChart3, Layout, Globe,
 } from "lucide-react"
 import { useWikiStore } from "@/stores/wiki-store"
@@ -99,7 +99,7 @@ export function ChatMessage({ message, isLastAssistant, onRegenerate }: ChatMess
                 className="inline-flex items-center gap-1 rounded px-2 py-0.5 text-[11px] text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
                 title="Regenerate this response"
               >
-                🔄 Regenerate
+                <RefreshCw className="h-3 w-3" /> Regenerate
               </button>
             )}
           </div>
