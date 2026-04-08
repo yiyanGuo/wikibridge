@@ -147,50 +147,85 @@ export function SourcesView() {
         // cache file may not exist
       }
 
-      // Step 4: Delete related wiki pages
+      // Step 4: Delete or update related wiki pages
+      // If a page has multiple sources, only remove this filename from sources[]; don't delete the page
+      const actuallyDeleted: string[] = []
       for (const pagePath of relatedPages) {
         try {
+          const content = await readFile(pagePath)
+          // Parse sources from frontmatter
+          const sourcesMatch = content.match(/^sources:\s*\[([^\]]*)\]/m)
+          if (sourcesMatch) {
+            const sourcesList = sourcesMatch[1]
+              .split(",")
+              .map((s) => s.trim().replace(/["']/g, ""))
+              .filter((s) => s.length > 0)
+
+            if (sourcesList.length > 1) {
+              // Multiple sources — just remove this file from the list, keep the page
+              const updatedSources = sourcesList.filter(
+                (s) => s.toLowerCase() !== fileName.toLowerCase()
+              )
+              const updatedContent = content.replace(
+                /^sources:\s*\[([^\]]*)\]/m,
+                `sources: [${updatedSources.map((s) => `"${s}"`).join(", ")}]`
+              )
+              await writeFile(pagePath, updatedContent)
+              continue // Don't delete this page
+            }
+          }
+
+          // Single source or no sources field — delete the page
           await deleteFile(pagePath)
+          actuallyDeleted.push(pagePath)
         } catch (err) {
-          console.error(`Failed to delete wiki page ${pagePath}:`, err)
+          console.error(`Failed to process wiki page ${pagePath}:`, err)
         }
       }
 
-      // Step 5: Clean index.md — remove entries referencing deleted pages
-      try {
-        const indexPath = `${project.path}/wiki/index.md`
-        const indexContent = await readFile(indexPath)
-        const updatedIndex = indexContent
-          .split("\n")
-          .filter((line) => !deletedSlugs.some((slug) => line.toLowerCase().includes(slug.toLowerCase())))
-          .join("\n")
-        await writeFile(indexPath, updatedIndex)
-      } catch {
-        // non-critical
+      // Step 5: Clean index.md — remove entries for actually deleted pages only
+      const deletedPageSlugs = actuallyDeleted.map((p) => {
+        const name = p.split("/").pop()?.replace(".md", "") ?? ""
+        return name
+      }).filter(Boolean)
+
+      if (deletedPageSlugs.length > 0) {
+        try {
+          const indexPath = `${project.path}/wiki/index.md`
+          const indexContent = await readFile(indexPath)
+          const updatedIndex = indexContent
+            .split("\n")
+            .filter((line) => !deletedPageSlugs.some((slug) => line.toLowerCase().includes(slug.toLowerCase())))
+            .join("\n")
+          await writeFile(indexPath, updatedIndex)
+        } catch {
+          // non-critical
+        }
       }
 
       // Step 6: Clean [[wikilinks]] to deleted pages from remaining wiki files
-      try {
-        const wikiTree = await listDirectory(`${project.path}/wiki`)
-        const allMdFiles = flattenMdFiles(wikiTree)
-        for (const file of allMdFiles) {
-          try {
-            const content = await readFile(file.path)
-            let updated = content
-            for (const slug of deletedSlugs) {
-              // Replace [[slug]] and [[slug|display text]] with just the display text
-              const linkRegex = new RegExp(`\\[\\[${slug.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(?:\\|([^\\]]+))?\\]\\]`, "gi")
-              updated = updated.replace(linkRegex, (_match, displayText) => displayText || slug)
+      if (deletedPageSlugs.length > 0) {
+        try {
+          const wikiTree = await listDirectory(`${project.path}/wiki`)
+          const allMdFiles = flattenMdFiles(wikiTree)
+          for (const file of allMdFiles) {
+            try {
+              const content = await readFile(file.path)
+              let updated = content
+              for (const slug of deletedPageSlugs) {
+                const linkRegex = new RegExp(`\\[\\[${slug.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(?:\\|([^\\]]+))?\\]\\]`, "gi")
+                updated = updated.replace(linkRegex, (_match, displayText) => displayText || slug)
+              }
+              if (updated !== content) {
+                await writeFile(file.path, updated)
+              }
+            } catch {
+              // skip
             }
-            if (updated !== content) {
-              await writeFile(file.path, updated)
-            }
-          } catch {
-            // skip unreadable files
           }
+        } catch {
+          // non-critical
         }
-      } catch {
-        // non-critical
       }
 
       // Step 7: Append deletion record to log.md
@@ -198,7 +233,8 @@ export function SourcesView() {
         const logPath = `${project.path}/wiki/log.md`
         const logContent = await readFile(logPath).catch(() => "# Wiki Log\n")
         const date = new Date().toISOString().slice(0, 10)
-        const logEntry = `\n## [${date}] delete | ${fileName}\n\nDeleted source file and ${relatedPages.length} related wiki pages.\n`
+        const keptCount = relatedPages.length - actuallyDeleted.length
+        const logEntry = `\n## [${date}] delete | ${fileName}\n\nDeleted source file and ${actuallyDeleted.length} wiki pages.${keptCount > 0 ? ` ${keptCount} shared pages kept (have other sources).` : ""}\n`
         await writeFile(logPath, logContent.trimEnd() + logEntry)
       } catch {
         // non-critical
@@ -211,7 +247,7 @@ export function SourcesView() {
       useWikiStore.getState().bumpDataVersion()
 
       // Clear selected file if it was the deleted one
-      if (selectedFile === node.path || relatedPages.includes(selectedFile ?? "")) {
+      if (selectedFile === node.path || actuallyDeleted.includes(selectedFile ?? "")) {
         setSelectedFile(null)
       }
     } catch (err) {
