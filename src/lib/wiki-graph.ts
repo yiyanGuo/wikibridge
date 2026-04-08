@@ -149,8 +149,8 @@ export async function buildWikiGraph(
   const edges: GraphEdge[] = dedupedEdges.map((e) => {
     let weight = 1
     if (retrievalGraph) {
-      const nodeA = retrievalGraph.get(e.source)
-      const nodeB = retrievalGraph.get(e.target)
+      const nodeA = retrievalGraph.nodes.get(e.source)
+      const nodeB = retrievalGraph.nodes.get(e.target)
       if (nodeA && nodeB) {
         weight = calculateRelevance(nodeA, nodeB, retrievalGraph)
       }
