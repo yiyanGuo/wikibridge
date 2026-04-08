@@ -18,14 +18,14 @@ export function setupAutoSave(): void {
     }, 1000)
   })
 
-  // Auto-save chat messages (debounced 2s, skip during streaming)
+  // Auto-save chat conversations and messages (debounced 2s, skip during streaming)
   useChatStore.subscribe((state) => {
     if (state.isStreaming) return
     if (chatTimer) clearTimeout(chatTimer)
     chatTimer = setTimeout(() => {
       const project = useWikiStore.getState().project
       if (project) {
-        saveChatHistory(project.path, state.messages).catch(() => {})
+        saveChatHistory(project.path, state.conversations, state.messages).catch(() => {})
       }
     }, 2000)
   })

@@ -102,8 +102,14 @@ function App() {
     // Load persisted chat history
     try {
       const savedChat = await loadChatHistory(proj.path)
-      if (savedChat.length > 0) {
-        useChatStore.getState().setMessages(savedChat)
+      if (savedChat.conversations.length > 0) {
+        useChatStore.getState().setConversations(savedChat.conversations)
+        useChatStore.getState().setMessages(savedChat.messages)
+        // Set most recent conversation as active
+        const sorted = [...savedChat.conversations].sort((a, b) => b.updatedAt - a.updatedAt)
+        if (sorted[0]) {
+          useChatStore.getState().setActiveConversation(sorted[0].id)
+        }
       }
     } catch {
       // ignore, start fresh

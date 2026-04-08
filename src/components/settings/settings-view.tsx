@@ -1,4 +1,5 @@
 import { useWikiStore } from "@/stores/wiki-store"
+import { useChatStore } from "@/stores/chat-store"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -20,12 +21,16 @@ const LANGUAGES = [
   { value: "zh", label: "中文" },
 ]
 
+const HISTORY_OPTIONS = [2, 4, 6, 8, 10, 20]
+
 export function SettingsView() {
   const { t } = useTranslation()
   const llmConfig = useWikiStore((s) => s.llmConfig)
   const setLlmConfig = useWikiStore((s) => s.setLlmConfig)
   const searchApiConfig = useWikiStore((s) => s.searchApiConfig)
   const setSearchApiConfig = useWikiStore((s) => s.setSearchApiConfig)
+  const maxHistoryMessages = useChatStore((s) => s.maxHistoryMessages)
+  const setMaxHistoryMessages = useChatStore((s) => s.setMaxHistoryMessages)
 
   const [provider, setProvider] = useState(llmConfig.provider)
   const [apiKey, setApiKey] = useState(llmConfig.apiKey)
@@ -257,6 +262,35 @@ export function SettingsView() {
                 />
               </div>
             )}
+          </div>
+
+          {/* Chat History section */}
+          <div className="space-y-4 rounded-lg border p-4">
+            <h3 className="font-semibold">Chat History</h3>
+            <p className="text-xs text-muted-foreground">
+              Number of previous messages included when talking to AI. More = better context but uses more tokens.
+            </p>
+            <div className="space-y-2">
+              <Label>Max conversation messages sent to AI</Label>
+              <div className="flex flex-wrap gap-2">
+                {HISTORY_OPTIONS.map((n) => (
+                  <button
+                    key={n}
+                    onClick={() => setMaxHistoryMessages(n)}
+                    className={`rounded-md border px-3 py-1.5 text-sm transition-colors ${
+                      maxHistoryMessages === n
+                        ? "border-primary bg-primary text-primary-foreground"
+                        : "border-border hover:bg-accent"
+                    }`}
+                  >
+                    {n}
+                  </button>
+                ))}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Currently: {maxHistoryMessages} messages ({maxHistoryMessages / 2} rounds of conversation)
+              </p>
+            </div>
           </div>
 
           <Button onClick={handleSave} className="w-full">

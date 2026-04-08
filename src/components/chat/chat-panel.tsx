@@ -1,5 +1,5 @@
-import { useRef, useEffect, useCallback } from "react"
-import { BookOpen } from "lucide-react"
+import { useRef, useEffect, useCallback, useState } from "react"
+import { BookOpen, Plus, Trash2, MessageSquare } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { ChatMessage, StreamingMessage, useSourceFiles } from "./chat-message"
 import { ChatInput } from "./chat-input"
@@ -16,9 +16,104 @@ import type { FileNode } from "@/types/wiki"
 // Store the page mapping from the last query so SourceFilesBar can show which pages were cited
 export let lastQueryPages: { title: string; path: string }[] = []
 
+function formatDate(timestamp: number): string {
+  const d = new Date(timestamp)
+  const now = new Date()
+  const isToday = d.toDateString() === now.toDateString()
+  if (isToday) {
+    return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+  }
+  return d.toLocaleDateString([], { month: "short", day: "numeric" })
+}
+
+function ConversationSidebar() {
+  const conversations = useChatStore((s) => s.conversations)
+  const activeConversationId = useChatStore((s) => s.activeConversationId)
+  const messages = useChatStore((s) => s.messages)
+  const createConversation = useChatStore((s) => s.createConversation)
+  const deleteConversation = useChatStore((s) => s.deleteConversation)
+  const setActiveConversation = useChatStore((s) => s.setActiveConversation)
+
+  const [hoveredId, setHoveredId] = useState<string | null>(null)
+
+  const sorted = [...conversations].sort((a, b) => b.updatedAt - a.updatedAt)
+
+  function getMessageCount(convId: string): number {
+    return messages.filter((m) => m.conversationId === convId).length
+  }
+
+  return (
+    <div className="flex h-full w-[200px] flex-shrink-0 flex-col border-r bg-muted/30">
+      <div className="border-b p-2">
+        <Button
+          variant="outline"
+          size="sm"
+          className="w-full gap-2"
+          onClick={() => createConversation()}
+        >
+          <Plus className="h-3.5 w-3.5" />
+          New Chat
+        </Button>
+      </div>
+
+      <div className="flex-1 overflow-y-auto py-1">
+        {sorted.length === 0 ? (
+          <p className="px-3 py-4 text-xs text-muted-foreground text-center">
+            No conversations yet
+          </p>
+        ) : (
+          sorted.map((conv) => {
+            const isActive = conv.id === activeConversationId
+            const msgCount = getMessageCount(conv.id)
+            return (
+              <div
+                key={conv.id}
+                className={`group relative mx-1 my-0.5 flex cursor-pointer flex-col rounded-md px-2 py-1.5 text-sm transition-colors ${
+                  isActive
+                    ? "bg-primary/10 text-primary"
+                    : "hover:bg-accent text-foreground"
+                }`}
+                onClick={() => setActiveConversation(conv.id)}
+                onMouseEnter={() => setHoveredId(conv.id)}
+                onMouseLeave={() => setHoveredId(null)}
+              >
+                <div className="flex items-start justify-between gap-1">
+                  <span className="line-clamp-2 flex-1 text-xs font-medium leading-snug">
+                    {conv.title}
+                  </span>
+                  {hoveredId === conv.id && (
+                    <button
+                      className="flex-shrink-0 rounded p-0.5 text-muted-foreground hover:text-destructive"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        deleteConversation(conv.id)
+                      }}
+                    >
+                      <Trash2 className="h-3 w-3" />
+                    </button>
+                  )}
+                </div>
+                <div className="mt-0.5 flex items-center gap-1.5 text-[10px] text-muted-foreground">
+                  <span>{formatDate(conv.updatedAt)}</span>
+                  {msgCount > 0 && (
+                    <>
+                      <span>·</span>
+                      <span>{msgCount} msgs</span>
+                    </>
+                  )}
+                </div>
+              </div>
+            )
+          })
+        )}
+      </div>
+    </div>
+  )
+}
+
 export function ChatPanel() {
   useSourceFiles() // Keep source file cache warm
-  const messages = useChatStore((s) => s.messages)
+  const activeConversationId = useChatStore((s) => s.activeConversationId)
   const isStreaming = useChatStore((s) => s.isStreaming)
   const streamingContent = useChatStore((s) => s.streamingContent)
   const mode = useChatStore((s) => s.mode)
@@ -26,6 +121,14 @@ export function ChatPanel() {
   const setStreaming = useChatStore((s) => s.setStreaming)
   const appendStreamToken = useChatStore((s) => s.appendStreamToken)
   const finalizeStream = useChatStore((s) => s.finalizeStream)
+  const createConversation = useChatStore((s) => s.createConversation)
+  const maxHistoryMessages = useChatStore((s) => s.maxHistoryMessages)
+
+  // Derive active messages via selector to re-render on message changes
+  const allMessages = useChatStore((s) => s.messages)
+  const activeMessages = activeConversationId
+    ? allMessages.filter((m) => m.conversationId === activeConversationId)
+    : []
 
   const project = useWikiStore((s) => s.project)
   const llmConfig = useWikiStore((s) => s.llmConfig)
@@ -41,10 +144,16 @@ export function ChatPanel() {
     if (container) {
       container.scrollTop = container.scrollHeight
     }
-  }, [messages, streamingContent])
+  }, [activeMessages, streamingContent])
 
   const handleSend = useCallback(
     async (text: string) => {
+      // Auto-create a conversation if none is active
+      let convId = useChatStore.getState().activeConversationId
+      if (!convId) {
+        convId = createConversation()
+      }
+
       addMessage("user", text)
       setStreaming(true)
 
@@ -55,17 +164,9 @@ export function ChatPanel() {
         const maxCtx = llmConfig.maxContextSize || 204800
 
         // ── Budget allocation ──────────────────────────────────
-        // Total context split into parts:
-        //   System prompt fixed:  ~0.5%
-        //   purpose.md:           ~0.2%
-        //   wiki/index.md:        5% (max)
-        //   Wiki page content:    60%
-        //   Conversation history: 20%
-        //   Reserved for LLM:    ~15%
         const INDEX_BUDGET = Math.floor(maxCtx * 0.05)
         const PAGE_BUDGET = Math.floor(maxCtx * 0.6)
         const MAX_PAGE_SIZE = Math.min(Math.floor(PAGE_BUDGET * 0.3), 30_000)
-        const HISTORY_BUDGET = Math.floor(maxCtx * 0.2)
 
         const [rawIndex, purpose] = await Promise.all([
           readFile(`${project.path}/wiki/index.md`).catch(() => ""),
@@ -79,7 +180,6 @@ export function ChatPanel() {
         // ── Trim index by relevance if over budget ─────────────
         let index = rawIndex
         if (rawIndex.length > INDEX_BUDGET) {
-          // Keep lines that match any search token, plus section headers
           const { tokenizeQuery } = await import("@/lib/search")
           const tokens = tokenizeQuery(text)
           const lines = rawIndex.split("\n")
@@ -204,24 +304,13 @@ export function ChatPanel() {
         lastQueryPages = relevantPages.map((p) => ({ title: p.title, path: p.path }))
       }
 
-      // ── Conversation history with budget control ─────────────
-      // Keep newest messages first, drop oldest if over budget
-      const HISTORY_BUDGET_CHARS = llmConfig.maxContextSize
-        ? Math.floor(llmConfig.maxContextSize * 0.2)
-        : 40960
-      const rawMessages = useChatStore.getState().messages
+      // ── Conversation history with count limit ────────────────
+      // Only include messages from the active conversation, last N messages
+      const activeConvMessages = useChatStore.getState().getActiveMessages()
         .filter((m) => m.role === "user" || m.role === "assistant")
-      const trimmedMessages: typeof rawMessages = []
-      let historyChars = 0
-      // Iterate from newest to oldest
-      for (let i = rawMessages.length - 1; i >= 0; i--) {
-        const msg = rawMessages[i]
-        const msgSize = msg.content.length
-        if (historyChars + msgSize > HISTORY_BUDGET_CHARS) break
-        trimmedMessages.unshift(msg)
-        historyChars += msgSize
-      }
-      const llmMessages = [...systemMessages, ...chatMessagesToLLM(trimmedMessages)]
+        .slice(-maxHistoryMessages)
+
+      const llmMessages = [...systemMessages, ...chatMessagesToLLM(activeConvMessages)]
 
       const controller = new AbortController()
       abortRef.current = controller
@@ -239,7 +328,6 @@ export function ChatPanel() {
           onDone: () => {
             finalizeStream(accumulated)
             abortRef.current = null
-            // Check if LLM marked this answer as save-worthy
             checkSaveWorthy(accumulated, text)
           },
           onError: (err) => {
@@ -250,7 +338,7 @@ export function ChatPanel() {
         controller.signal,
       )
     },
-    [llmConfig, addMessage, setStreaming, appendStreamToken, finalizeStream],
+    [llmConfig, addMessage, setStreaming, appendStreamToken, finalizeStream, createConversation, maxHistoryMessages],
   )
 
   const handleStop = useCallback(() => {
@@ -273,48 +361,64 @@ export function ChatPanel() {
     }
   }, [project, llmConfig, setFileTree])
 
-  const hasAssistantMessages = messages.some((m) => m.role === "assistant")
+  const hasAssistantMessages = activeMessages.some((m) => m.role === "assistant")
   const showWriteButton = mode === "ingest" && !isStreaming && hasAssistantMessages
 
   return (
-    <div className="flex h-full flex-col">
-      <div
-        ref={scrollContainerRef}
-        className="flex-1 overflow-y-auto px-3 py-2"
-      >
-        <div className="flex flex-col gap-3">
-          {messages.map((msg) => (
-            <ChatMessage key={msg.id} message={msg} />
-          ))}
-          {isStreaming && <StreamingMessage content={streamingContent} />}
-          <div ref={bottomRef} />
-        </div>
+    <div className="flex h-full flex-row overflow-hidden">
+      <ConversationSidebar />
+
+      <div className="flex flex-1 flex-col overflow-hidden">
+        {!activeConversationId ? (
+          <div className="flex flex-1 items-center justify-center text-muted-foreground">
+            <div className="text-center">
+              <MessageSquare className="mx-auto mb-3 h-8 w-8 opacity-30" />
+              <p className="text-sm">Start a new conversation</p>
+              <p className="mt-1 text-xs opacity-60">Click "New Chat" to begin</p>
+            </div>
+          </div>
+        ) : (
+          <>
+            <div
+              ref={scrollContainerRef}
+              className="flex-1 overflow-y-auto px-3 py-2"
+            >
+              <div className="flex flex-col gap-3">
+                {activeMessages.map((msg) => (
+                  <ChatMessage key={msg.id} message={msg} />
+                ))}
+                {isStreaming && <StreamingMessage content={streamingContent} />}
+                <div ref={bottomRef} />
+              </div>
+            </div>
+
+            {showWriteButton && (
+              <div className="border-t px-3 py-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleWriteToWiki}
+                  className="w-full gap-2"
+                >
+                  <BookOpen className="h-4 w-4" />
+                  Write to Wiki
+                </Button>
+              </div>
+            )}
+          </>
+        )}
+
+        <ChatInput
+          onSend={handleSend}
+          onStop={handleStop}
+          isStreaming={isStreaming}
+          placeholder={
+            mode === "ingest"
+              ? "Discuss the source or ask follow-up questions..."
+              : "Type a message..."
+          }
+        />
       </div>
-
-      {showWriteButton && (
-        <div className="border-t px-3 py-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleWriteToWiki}
-            className="w-full gap-2"
-          >
-            <BookOpen className="h-4 w-4" />
-            Write to Wiki
-          </Button>
-        </div>
-      )}
-
-      <ChatInput
-        onSend={handleSend}
-        onStop={handleStop}
-        isStreaming={isStreaming}
-        placeholder={
-          mode === "ingest"
-            ? "Discuss the source or ask follow-up questions..."
-            : "Type a message..."
-        }
-      />
     </div>
   )
 }
@@ -331,7 +435,6 @@ function checkSaveWorthy(response: string, question: string) {
   const firstLine = response.split("\n").find((l) => l.trim() && !l.startsWith("<!--"))?.replace(/^#+\s*/, "").trim() ?? "Chat answer"
   const title = firstLine.slice(0, 60)
 
-  // Store the content reference so the review action can save it
   const contentToSave = response
   const questionText = question
 
@@ -347,7 +450,6 @@ function checkSaveWorthy(response: string, question: string) {
 }
 
 function encodeContent(text: string): string {
-  // Use base64-like encoding to safely store content in action string
   return btoa(encodeURIComponent(text))
 }
 
