@@ -1,6 +1,7 @@
 import { readFile, listDirectory } from "@/commands/fs"
 import type { FileNode } from "@/types/wiki"
 import { buildRetrievalGraph, calculateRelevance } from "./graph-relevance"
+import { normalizePath } from "@/lib/path-utils"
 
 export interface GraphNode {
   id: string
@@ -63,7 +64,7 @@ function fileNameToId(fileName: string): string {
 export async function buildWikiGraph(
   projectPath: string,
 ): Promise<{ nodes: GraphNode[]; edges: GraphEdge[] }> {
-  const wikiRoot = `${projectPath}/wiki`
+  const wikiRoot = `${normalizePath(projectPath)}/wiki`
 
   let tree: FileNode[]
   try {
@@ -141,7 +142,7 @@ export async function buildWikiGraph(
   try {
     const { useWikiStore } = await import("@/stores/wiki-store")
     const dv = useWikiStore.getState().dataVersion
-    retrievalGraph = await buildRetrievalGraph(projectPath, dv)
+    retrievalGraph = await buildRetrievalGraph(normalizePath(projectPath), dv)
   } catch {
     // ignore — weights will default to 1
   }

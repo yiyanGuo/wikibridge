@@ -5,6 +5,7 @@ import { useWikiStore } from "@/stores/wiki-store"
 import { readFile } from "@/commands/fs"
 import { searchWiki, type SearchResult } from "@/lib/search"
 import { useTranslation } from "react-i18next"
+import { normalizePath } from "@/lib/path-utils"
 
 export function SearchView() {
   const { t } = useTranslation()
@@ -26,7 +27,7 @@ export function SearchView() {
       }
       setSearching(true)
       try {
-        const found = await searchWiki(project.path, q)
+        const found = await searchWiki(normalizePath(project.path), q)
         setResults(found)
       } catch (err) {
         console.error("Search failed:", err)

@@ -1,5 +1,6 @@
 import { readFile, listDirectory } from "@/commands/fs"
 import type { FileNode } from "@/types/wiki"
+import { normalizePath } from "@/lib/path-utils"
 
 export interface SearchResult {
   path: string
@@ -113,6 +114,7 @@ export async function searchWiki(
   query: string,
 ): Promise<SearchResult[]> {
   if (!query.trim()) return []
+  const pp = normalizePath(projectPath)
 
   const tokens = tokenizeQuery(query)
   // Fallback: if all tokens were filtered out, use the trimmed query as a single token
@@ -121,7 +123,7 @@ export async function searchWiki(
 
   // Search wiki pages
   try {
-    const wikiTree = await listDirectory(`${projectPath}/wiki`)
+    const wikiTree = await listDirectory(`${pp}/wiki`)
     const wikiFiles = flattenMdFiles(wikiTree)
     await searchFiles(wikiFiles, effectiveTokens, query, results)
   } catch {
@@ -130,7 +132,7 @@ export async function searchWiki(
 
   // Also search raw sources (extracted text)
   try {
-    const rawTree = await listDirectory(`${projectPath}/raw/sources`)
+    const rawTree = await listDirectory(`${pp}/raw/sources`)
     const rawFiles = flattenAllFiles(rawTree)
     await searchFiles(rawFiles, effectiveTokens, query, results)
   } catch {

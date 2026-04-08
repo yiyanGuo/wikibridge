@@ -2,6 +2,7 @@ import { readFile, writeFile } from "@/commands/fs"
 import { streamChat } from "./llm-client"
 import { useWikiStore, type LlmConfig } from "@/stores/wiki-store"
 import { LANGUAGE_RULE } from "./ingest"
+import { normalizePath } from "@/lib/path-utils"
 
 /**
  * Lightweight post-save enrichment: ask LLM to add [[wikilinks]] to a saved wiki page.
@@ -12,9 +13,11 @@ export async function enrichWithWikilinks(
   filePath: string,
   llmConfig: LlmConfig,
 ): Promise<void> {
+  const pp = normalizePath(projectPath)
+  const fp = normalizePath(filePath)
   const [content, index] = await Promise.all([
-    readFile(filePath),
-    readFile(`${projectPath}/wiki/index.md`).catch(() => ""),
+    readFile(fp),
+    readFile(`${pp}/wiki/index.md`).catch(() => ""),
   ])
 
   if (!content || !index) return
@@ -63,7 +66,7 @@ export async function enrichWithWikilinks(
   }
 
   // Write the enriched version back
-  await writeFile(filePath, enriched)
+  await writeFile(fp, enriched)
 
   // Refresh graph
   useWikiStore.getState().bumpDataVersion()

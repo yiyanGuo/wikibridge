@@ -4,6 +4,7 @@ import { autoIngest } from "./ingest"
 import { writeFile, readFile, listDirectory } from "@/commands/fs"
 import { useWikiStore, type LlmConfig, type SearchApiConfig } from "@/stores/wiki-store"
 import { useResearchStore } from "@/stores/research-store"
+import { normalizePath } from "@/lib/path-utils"
 
 let processing = false
 
@@ -58,6 +59,7 @@ async function executeResearch(
   llmConfig: LlmConfig,
   searchConfig: SearchApiConfig,
 ) {
+  const pp = normalizePath(projectPath)
   const store = useResearchStore.getState()
 
   try {
@@ -91,7 +93,7 @@ async function executeResearch(
 
     if (webResults.length === 0) {
       store.updateTask(taskId, { status: "done", synthesis: "No web results found." })
-      onTaskFinished(projectPath, llmConfig, searchConfig)
+      onTaskFinished(pp, llmConfig, searchConfig)
       return
     }
 
@@ -105,7 +107,7 @@ async function executeResearch(
     // Read existing wiki index to enable cross-referencing
     let wikiIndex = ""
     try {
-      wikiIndex = await readFile(`${projectPath}/wiki/index.md`)
+      wikiIndex = await readFile(`${pp}/wiki/index.md`)
     } catch {
       // no index yet
     }
@@ -158,7 +160,7 @@ async function executeResearch(
 
     // Check if errored during streaming
     if (useResearchStore.getState().tasks.find((t) => t.id === taskId)?.status === "error") {
-      onTaskFinished(projectPath, llmConfig, searchConfig)
+      onTaskFinished(pp, llmConfig, searchConfig)
       return
     }
 
@@ -168,7 +170,7 @@ async function executeResearch(
     const date = new Date().toISOString().slice(0, 10)
     const slug = topic.toLowerCase().replace(/[^a-z0-9\s-]/g, "").trim().replace(/\s+/g, "-").slice(0, 50)
     const fileName = `research-${slug}-${date}.md`
-    const filePath = `${projectPath}/wiki/queries/${fileName}`
+    const filePath = `${pp}/wiki/queries/${fileName}`
 
     const references = webResults
       .map((r, i) => `${i + 1}. [${r.title}](${r.url}) — ${r.source}`)
@@ -203,7 +205,7 @@ async function executeResearch(
 
     // Refresh tree
     try {
-      const tree = await listDirectory(projectPath)
+      const tree = await listDirectory(pp)
       useWikiStore.getState().setFileTree(tree)
       useWikiStore.getState().bumpDataVersion()
     } catch {
@@ -211,7 +213,7 @@ async function executeResearch(
     }
 
     // Auto-ingest the research result to generate entities, concepts, cross-references
-    autoIngest(projectPath, `${projectPath}/${savedPath}`, llmConfig).catch((err) => {
+    autoIngest(pp, `${pp}/${savedPath}`, llmConfig).catch((err) => {
       console.error("Failed to auto-ingest research result:", err)
     })
   } catch (err) {
@@ -222,7 +224,7 @@ async function executeResearch(
     })
   }
 
-  onTaskFinished(projectPath, llmConfig, searchConfig)
+  onTaskFinished(pp, llmConfig, searchConfig)
 }
 
 function onTaskFinished(

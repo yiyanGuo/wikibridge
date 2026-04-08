@@ -5,6 +5,7 @@ import { useWikiStore } from "@/stores/wiki-store"
 import { useChatStore } from "@/stores/chat-store"
 import { useActivityStore } from "@/stores/activity-store"
 import { useReviewStore, type ReviewItem } from "@/stores/review-store"
+import { getFileName, normalizePath } from "@/lib/path-utils"
 
 const FILE_BLOCK_REGEX = /---FILE:\s*([^\n-]+?)\s*---\n([\s\S]*?)---END FILE---/g
 
@@ -20,8 +21,10 @@ export async function autoIngest(
   llmConfig: LlmConfig,
   signal?: AbortSignal,
 ): Promise<string[]> {
+  const pp = normalizePath(projectPath)
+  const sp = normalizePath(sourcePath)
   const activity = useActivityStore.getState()
-  const fileName = sourcePath.split("/").pop() ?? sourcePath
+  const fileName = getFileName(sp)
   const activityId = activity.addItem({
     type: "ingest",
     title: fileName,
@@ -31,11 +34,11 @@ export async function autoIngest(
   })
 
   const [sourceContent, schema, purpose, index, overview] = await Promise.all([
-    tryReadFile(sourcePath),
-    tryReadFile(`${projectPath}/schema.md`),
-    tryReadFile(`${projectPath}/purpose.md`),
-    tryReadFile(`${projectPath}/wiki/index.md`),
-    tryReadFile(`${projectPath}/wiki/overview.md`),
+    tryReadFile(sp),
+    tryReadFile(`${pp}/schema.md`),
+    tryReadFile(`${pp}/purpose.md`),
+    tryReadFile(`${pp}/wiki/index.md`),
+    tryReadFile(`${pp}/wiki/overview.md`),
   ])
 
   const truncatedContent = sourceContent.length > 50000
@@ -110,12 +113,12 @@ export async function autoIngest(
 
   // ── Step 3: Write files ───────────────────────────────────────
   activity.updateItem(activityId, { detail: "Writing files..." })
-  const writtenPaths = await writeFileBlocks(projectPath, generation)
+  const writtenPaths = await writeFileBlocks(pp, generation)
 
   // Ensure source summary page exists (LLM may not have generated it correctly)
   const sourceBaseName = fileName.replace(/\.[^.]+$/, "")
   const sourceSummaryPath = `wiki/sources/${sourceBaseName}.md`
-  const sourceSummaryFullPath = `${projectPath}/${sourceSummaryPath}`
+  const sourceSummaryFullPath = `${pp}/${sourceSummaryPath}`
   const hasSourceSummary = writtenPaths.some((p) => p.startsWith("wiki/sources/"))
 
   if (!hasSourceSummary) {
@@ -146,7 +149,7 @@ export async function autoIngest(
 
   if (writtenPaths.length > 0) {
     try {
-      const tree = await listDirectory(projectPath)
+      const tree = await listDirectory(pp)
       useWikiStore.getState().setFileTree(tree)
       useWikiStore.getState().bumpDataVersion()
     } catch {
@@ -155,7 +158,7 @@ export async function autoIngest(
   }
 
   // ── Step 4: Parse review items ────────────────────────────────
-  const reviewItems = parseReviewBlocks(generation, sourcePath)
+  const reviewItems = parseReviewBlocks(generation, sp)
   if (reviewItems.length > 0) {
     useReviewStore.getState().addItems(reviewItems)
   }
@@ -431,20 +434,22 @@ export async function startIngest(
   llmConfig: LlmConfig,
   signal?: AbortSignal,
 ): Promise<void> {
+  const pp = normalizePath(projectPath)
+  const sp = normalizePath(sourcePath)
   const store = getStore()
   store.setMode("ingest")
-  store.setIngestSource(sourcePath)
+  store.setIngestSource(sp)
   store.clearMessages()
   store.setStreaming(false)
 
   const [sourceContent, schema, purpose, index] = await Promise.all([
-    tryReadFile(sourcePath),
-    tryReadFile(`${projectPath}/wiki/schema.md`),
-    tryReadFile(`${projectPath}/wiki/purpose.md`),
-    tryReadFile(`${projectPath}/wiki/index.md`),
+    tryReadFile(sp),
+    tryReadFile(`${pp}/wiki/schema.md`),
+    tryReadFile(`${pp}/wiki/purpose.md`),
+    tryReadFile(`${pp}/wiki/index.md`),
   ])
 
-  const fileName = sourcePath.split("/").pop() ?? sourcePath
+  const fileName = getFileName(sp)
 
   const systemPrompt = [
     "You are a knowledgeable assistant helping to build a wiki from source documents.",
@@ -503,11 +508,12 @@ export async function executeIngestWrites(
   userGuidance?: string,
   signal?: AbortSignal,
 ): Promise<string[]> {
+  const pp = normalizePath(projectPath)
   const store = getStore()
 
   const [schema, index] = await Promise.all([
-    tryReadFile(`${projectPath}/wiki/schema.md`),
-    tryReadFile(`${projectPath}/wiki/index.md`),
+    tryReadFile(`${pp}/wiki/schema.md`),
+    tryReadFile(`${pp}/wiki/index.md`),
   ])
 
   const conversationHistory = store.messages
@@ -579,7 +585,7 @@ export async function executeIngestWrites(
 
     if (!relativePath) continue
 
-    const fullPath = `${projectPath}/${relativePath}`
+    const fullPath = `${pp}/${relativePath}`
 
     try {
       if (relativePath === "wiki/log.md" || relativePath.endsWith("/log.md")) {

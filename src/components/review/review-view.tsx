@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button"
 import { useReviewStore, type ReviewItem } from "@/stores/review-store"
 import { useWikiStore } from "@/stores/wiki-store"
 import { writeFile, readFile, listDirectory, deleteFile } from "@/commands/fs"
+import { normalizePath } from "@/lib/path-utils"
 
 const typeConfig: Record<ReviewItem["type"], { icon: typeof AlertTriangle; label: string; color: string }> = {
   contradiction: { icon: AlertTriangle, label: "Contradiction", color: "text-amber-500" },
@@ -33,6 +34,7 @@ export function ReviewView() {
   const setFileTree = useWikiStore((s) => s.setFileTree)
 
   const handleResolve = useCallback(async (id: string, action: string) => {
+    const pp = project ? normalizePath(project.path) : ""
     // Deep Research — must be checked FIRST before any fuzzy matching
     if (action === "__deep_research__" && project) {
       const searchConfig = useWikiStore.getState().searchApiConfig
@@ -45,7 +47,7 @@ export function ReviewView() {
         const llmConfig = useWikiStore.getState().llmConfig
         // Use pre-generated search queries if available, otherwise fall back to title
         const topic = item.title.replace(/^(Save to Wiki|Create|Research)[:\s]*/i, "").trim() || item.description.split("\n")[0]
-        queueResearch(project.path, topic, llmConfig, searchConfig, item.searchQueries)
+        queueResearch(pp, topic, llmConfig, searchConfig, item.searchQueries)
         resolveItem(id, "Queued for research")
       } else {
         resolveItem(id, action)
@@ -71,13 +73,13 @@ export function ReviewView() {
         const slug = title.toLowerCase().replace(/[^a-z0-9\s-]/g, "").trim().replace(/\s+/g, "-").slice(0, 50)
         const date = new Date().toISOString().slice(0, 10)
         const fileName = `${slug}-${date}.md`
-        const filePath = `${project.path}/wiki/queries/${fileName}`
+        const filePath = `${pp}/wiki/queries/${fileName}`
 
         const frontmatter = `---\ntype: query\ntitle: "${title.replace(/"/g, '\\"')}"\ncreated: ${date}\ntags: []\n---\n\n`
         await writeFile(filePath, frontmatter + cleanContent)
 
         // Update index
-        const indexPath = `${project.path}/wiki/index.md`
+        const indexPath = `${pp}/wiki/index.md`
         let indexContent = ""
         try { indexContent = await readFile(indexPath) } catch { indexContent = "# Wiki Index\n" }
         const entry = `- [[queries/${slug}-${date}|${title}]]`
@@ -89,13 +91,13 @@ export function ReviewView() {
         await writeFile(indexPath, indexContent)
 
         // Append log
-        const logPath = `${project.path}/wiki/log.md`
+        const logPath = `${pp}/wiki/log.md`
         let logContent = ""
         try { logContent = await readFile(logPath) } catch { logContent = "# Wiki Log\n" }
         await writeFile(logPath, logContent.trimEnd() + `\n- ${date}: Saved query page \`${fileName}\`\n`)
 
         // Refresh tree
-        const tree = await listDirectory(project.path)
+        const tree = await listDirectory(pp)
         setFileTree(tree)
 
         resolveItem(id, "Saved to Wiki")
@@ -107,8 +109,8 @@ export function ReviewView() {
       // Open a page for editing
       const page = action.slice(5)
       const candidates = [
-        `${project.path}/wiki/${page}`,
-        `${project.path}/wiki/${page}.md`,
+        `${pp}/wiki/${page}`,
+        `${pp}/wiki/${page}.md`,
       ]
       for (const path of candidates) {
         try {
@@ -127,7 +129,7 @@ export function ReviewView() {
       const filePath = action.slice(7)
       try {
         await deleteFile(filePath)
-        const tree = await listDirectory(project.path)
+        const tree = await listDirectory(pp)
         setFileTree(tree)
         resolveItem(id, "Deleted")
       } catch (err) {
@@ -149,7 +151,7 @@ export function ReviewView() {
       if (item) {
         const llmConfig = useWikiStore.getState().llmConfig
         const topic = action.replace(/^research\s*/i, "").trim() || item.description.split("\n")[0]
-        queueResearch(project.path, topic, llmConfig, searchConfig)
+        queueResearch(pp, topic, llmConfig, searchConfig)
         resolveItem(id, "Queued for deep research")
       } else {
         resolveItem(id, action)
@@ -157,7 +159,7 @@ export function ReviewView() {
     } else if (action.startsWith("__create_page__:") && project) {
       // Explicit create page fallback
       const realAction = action.slice("__create_page__:".length)
-      await createPageFromReview(id, realAction, items, project.path)
+      await createPageFromReview(id, realAction, items, pp)
     } else if (actionLooksLikeCreate(action) && project) {
       // Create a wiki page from the review item's content
       const item = items.find((i) => i.id === id)
@@ -171,14 +173,14 @@ export function ReviewView() {
           const pageType = detectPageType(action, item.type)
           const dir = pageType === "query" ? "queries" : pageType === "entity" ? "entities" : pageType === "concept" ? "concepts" : "queries"
           const fileName = `${slug}-${date}.md`
-          const filePath = `${project.path}/wiki/${dir}/${fileName}`
+          const filePath = `${pp}/wiki/${dir}/${fileName}`
 
           const frontmatter = `---\ntype: ${pageType}\ntitle: "${title.replace(/"/g, '\\"')}"\ncreated: ${date}\ntags: []\nrelated: []\n---\n\n`
           const body = `# ${title}\n\n${item.description}\n`
           await writeFile(filePath, frontmatter + body)
 
           // Update index
-          const indexPath = `${project.path}/wiki/index.md`
+          const indexPath = `${pp}/wiki/index.md`
           let indexContent = ""
           try { indexContent = await readFile(indexPath) } catch { indexContent = "# Wiki Index\n" }
           const sectionHeader = `## ${dir.charAt(0).toUpperCase() + dir.slice(1)}`
@@ -191,13 +193,13 @@ export function ReviewView() {
           await writeFile(indexPath, indexContent)
 
           // Log
-          const logPath = `${project.path}/wiki/log.md`
+          const logPath = `${pp}/wiki/log.md`
           let logContent = ""
           try { logContent = await readFile(logPath) } catch { logContent = "# Wiki Log\n" }
           await writeFile(logPath, logContent.trimEnd() + `\n- ${date}: Created ${pageType} page \`${fileName}\` from review\n`)
 
           // Refresh
-          const tree = await listDirectory(project.path)
+          const tree = await listDirectory(pp)
           setFileTree(tree)
           useWikiStore.getState().bumpDataVersion()
 

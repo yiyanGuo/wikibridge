@@ -3,6 +3,7 @@ import { streamChat } from "@/lib/llm-client"
 import type { LlmConfig } from "@/stores/wiki-store"
 import type { FileNode } from "@/types/wiki"
 import { useActivityStore } from "@/stores/activity-store"
+import { getFileName, normalizePath } from "@/lib/path-utils"
 
 export interface LintResult {
   type: "orphan" | "broken-link" | "no-outlinks" | "semantic"
@@ -60,7 +61,7 @@ function buildSlugMap(
 // ── Structural lint ───────────────────────────────────────────────────────────
 
 export async function runStructuralLint(projectPath: string): Promise<LintResult[]> {
-  const wikiRoot = `${projectPath}/wiki`
+  const wikiRoot = `${normalizePath(projectPath)}/wiki`
   let tree: FileNode[]
   try {
     tree = await listDirectory(wikiRoot)
@@ -130,7 +131,7 @@ export async function runStructuralLint(projectPath: string): Promise<LintResult
 
     // Broken links
     for (const link of p.outlinks) {
-      const exists = slugMap.has(link) || slugMap.has(link.split("/").pop() ?? "")
+      const exists = slugMap.has(link) || slugMap.has(getFileName(link).replace(/\.md$/, ""))
       if (!exists) {
         results.push({
           type: "broken-link",
@@ -154,6 +155,7 @@ export async function runSemanticLint(
   projectPath: string,
   llmConfig: LlmConfig,
 ): Promise<LintResult[]> {
+  const pp = normalizePath(projectPath)
   const activity = useActivityStore.getState()
   const activityId = activity.addItem({
     type: "lint",
@@ -163,7 +165,7 @@ export async function runSemanticLint(
     filesWritten: [],
   })
 
-  const wikiRoot = `${projectPath}/wiki`
+  const wikiRoot = `${pp}/wiki`
   let tree: FileNode[]
   try {
     tree = await listDirectory(wikiRoot)

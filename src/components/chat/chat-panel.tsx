@@ -12,6 +12,7 @@ import { searchWiki } from "@/lib/search"
 import { buildRetrievalGraph, getRelatedNodes } from "@/lib/graph-relevance"
 import { useReviewStore } from "@/stores/review-store"
 import type { FileNode } from "@/types/wiki"
+import { normalizePath, getFileName, getRelativePath } from "@/lib/path-utils"
 
 // Store the page mapping from the last query so SourceFilesBar can show which pages were cited
 export let lastQueryPages: { title: string; path: string }[] = []
@@ -167,6 +168,7 @@ export function ChatPanel() {
       const systemMessages: LLMMessage[] = []
       let queryRefs: { title: string; path: string }[] = []
       if (project) {
+        const pp = normalizePath(project.path)
         const dataVersion = useWikiStore.getState().dataVersion
         const maxCtx = llmConfig.maxContextSize || 204800
 
@@ -176,12 +178,12 @@ export function ChatPanel() {
         const MAX_PAGE_SIZE = Math.min(Math.floor(PAGE_BUDGET * 0.3), 30_000)
 
         const [rawIndex, purpose] = await Promise.all([
-          readFile(`${project.path}/wiki/index.md`).catch(() => ""),
-          readFile(`${project.path}/purpose.md`).catch(() => ""),
+          readFile(`${pp}/wiki/index.md`).catch(() => ""),
+          readFile(`${pp}/purpose.md`).catch(() => ""),
         ])
 
         // ── Phase 1: Tokenized search → top 10 ────────────────
-        const searchResults = await searchWiki(project.path, text)
+        const searchResults = await searchWiki(pp, text)
         const topSearchResults = searchResults.slice(0, 10)
 
         // ── Trim index by relevance if over budget ─────────────
@@ -212,13 +214,13 @@ export function ChatPanel() {
         }
 
         // ── Phase 2: Graph 1-level expansion ───────────────────
-        const graph = await buildRetrievalGraph(project.path, dataVersion)
+        const graph = await buildRetrievalGraph(pp, dataVersion)
         const expandedIds = new Set<string>()
         const searchHitPaths = new Set(topSearchResults.map((r) => r.path))
         const graphExpansions: { title: string; path: string; relevance: number }[] = []
 
         for (const result of topSearchResults) {
-          const fileName = result.path.split("/").pop() ?? ""
+          const fileName = getFileName(result.path)
           const nodeId = fileName.replace(/\.md$/, "")
           const related = getRelatedNodes(nodeId, graph, 3)
           for (const { node, relevance } of related) {
@@ -240,7 +242,7 @@ export function ChatPanel() {
           if (usedChars >= PAGE_BUDGET) return false
           try {
             const raw = await readFile(filePath)
-            const relativePath = filePath.replace(project.path + "/", "")
+            const relativePath = getRelativePath(filePath, pp)
             const truncated = raw.length > MAX_PAGE_SIZE
               ? raw.slice(0, MAX_PAGE_SIZE) + "\n\n[...truncated...]"
               : raw
@@ -265,7 +267,7 @@ export function ChatPanel() {
         }
         // P3: Overview fallback
         if (relevantPages.length === 0) {
-          await tryAddPage("Overview", `${project.path}/wiki/overview.md`, 3)
+          await tryAddPage("Overview", `${pp}/wiki/overview.md`, 3)
         }
 
         const pagesContext = relevantPages.length > 0
@@ -376,10 +378,11 @@ export function ChatPanel() {
 
   const handleWriteToWiki = useCallback(async () => {
     if (!project) return
+    const pp = normalizePath(project.path)
     try {
-      await executeIngestWrites(project.path, llmConfig, undefined, undefined)
+      await executeIngestWrites(pp, llmConfig, undefined, undefined)
       try {
-        const tree = await listDirectory(project.path)
+        const tree = await listDirectory(pp)
         setFileTree(tree)
       } catch {
         // ignore

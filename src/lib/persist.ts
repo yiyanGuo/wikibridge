@@ -1,6 +1,7 @@
 import { writeFile, readFile, createDirectory } from "@/commands/fs"
 import type { ReviewItem } from "@/stores/review-store"
 import type { DisplayMessage, Conversation } from "@/stores/chat-store"
+import { normalizePath } from "@/lib/path-utils"
 
 async function ensureDir(projectPath: string): Promise<void> {
   await createDirectory(`${projectPath}/.llm-wiki`).catch(() => {})
@@ -8,13 +9,15 @@ async function ensureDir(projectPath: string): Promise<void> {
 }
 
 export async function saveReviewItems(projectPath: string, items: ReviewItem[]): Promise<void> {
-  await ensureDir(projectPath)
-  await writeFile(`${projectPath}/.llm-wiki/review.json`, JSON.stringify(items, null, 2))
+  const pp = normalizePath(projectPath)
+  await ensureDir(pp)
+  await writeFile(`${pp}/.llm-wiki/review.json`, JSON.stringify(items, null, 2))
 }
 
 export async function loadReviewItems(projectPath: string): Promise<ReviewItem[]> {
+  const pp = normalizePath(projectPath)
   try {
-    const content = await readFile(`${projectPath}/.llm-wiki/review.json`)
+    const content = await readFile(`${pp}/.llm-wiki/review.json`)
     return JSON.parse(content) as ReviewItem[]
   } catch {
     return []
@@ -31,11 +34,12 @@ export async function saveChatHistory(
   conversations: Conversation[],
   messages: DisplayMessage[]
 ): Promise<void> {
-  await ensureDir(projectPath)
+  const pp = normalizePath(projectPath)
+  await ensureDir(pp)
 
   // Save conversation list
   await writeFile(
-    `${projectPath}/.llm-wiki/conversations.json`,
+    `${pp}/.llm-wiki/conversations.json`,
     JSON.stringify(conversations, null, 2)
   )
 
@@ -51,22 +55,23 @@ export async function saveChatHistory(
     // Keep last 100 messages per conversation
     const toSave = msgs.slice(-100)
     await writeFile(
-      `${projectPath}/.llm-wiki/chats/${convId}.json`,
+      `${pp}/.llm-wiki/chats/${convId}.json`,
       JSON.stringify(toSave, null, 2)
     )
   }
 }
 
 export async function loadChatHistory(projectPath: string): Promise<PersistedChatData> {
+  const pp = normalizePath(projectPath)
   try {
     // Try new format: separate files per conversation
-    const convContent = await readFile(`${projectPath}/.llm-wiki/conversations.json`)
+    const convContent = await readFile(`${pp}/.llm-wiki/conversations.json`)
     const conversations = JSON.parse(convContent) as Conversation[]
 
     const allMessages: DisplayMessage[] = []
     for (const conv of conversations) {
       try {
-        const msgContent = await readFile(`${projectPath}/.llm-wiki/chats/${conv.id}.json`)
+        const msgContent = await readFile(`${pp}/.llm-wiki/chats/${conv.id}.json`)
         const msgs = JSON.parse(msgContent) as DisplayMessage[]
         allMessages.push(...msgs)
       } catch {
@@ -78,7 +83,7 @@ export async function loadChatHistory(projectPath: string): Promise<PersistedCha
   } catch {
     // Fall back to old format
     try {
-      const content = await readFile(`${projectPath}/.llm-wiki/chat-history.json`)
+      const content = await readFile(`${pp}/.llm-wiki/chat-history.json`)
       const parsed = JSON.parse(content)
 
       if (Array.isArray(parsed)) {

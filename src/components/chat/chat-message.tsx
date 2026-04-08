@@ -13,6 +13,7 @@ import type { FileNode } from "@/types/wiki"
 
 import { convertLatexToUnicode } from "@/lib/latex-to-unicode"
 import { enrichWithWikilinks } from "@/lib/enrich-wikilinks"
+import { normalizePath, getFileName } from "@/lib/path-utils"
 
 // Module-level cache of source file names
 let cachedSourceFiles: string[] = []
@@ -22,7 +23,8 @@ export function useSourceFiles() {
 
   useEffect(() => {
     if (!project) return
-    listDirectory(`${project.path}/raw/sources`)
+    const pp = normalizePath(project.path)
+    listDirectory(`${pp}/raw/sources`)
       .then((tree) => {
         cachedSourceFiles = flattenNames(tree)
       })
@@ -118,6 +120,7 @@ function SaveToWikiButton({ content, visible }: { content: string; visible: bool
 
   const handleSave = useCallback(async () => {
     if (!project || saving) return
+    const pp = normalizePath(project.path)
     setSaving(true)
     try {
       // Generate slug from first line or first 50 chars
@@ -131,7 +134,7 @@ function SaveToWikiButton({ content, visible }: { content: string; visible: bool
         .slice(0, 50)
       const date = new Date().toISOString().slice(0, 10)
       const fileName = `${slug}-${date}.md`
-      const filePath = `${project.path}/wiki/queries/${fileName}`
+      const filePath = `${pp}/wiki/queries/${fileName}`
 
       // Strip hidden sources comment from content
       const cleanContent = content.replace(/<!--\s*sources:.*?-->/g, "").trimEnd()
@@ -149,7 +152,7 @@ function SaveToWikiButton({ content, visible }: { content: string; visible: bool
       await writeFile(filePath, frontmatter + cleanContent)
 
       // Update index.md — append under ## Queries section
-      const indexPath = `${project.path}/wiki/index.md`
+      const indexPath = `${pp}/wiki/index.md`
       let indexContent = ""
       try {
         indexContent = await readFile(indexPath)
@@ -168,7 +171,7 @@ function SaveToWikiButton({ content, visible }: { content: string; visible: bool
       await writeFile(indexPath, indexContent)
 
       // Append to log.md
-      const logPath = `${project.path}/wiki/log.md`
+      const logPath = `${pp}/wiki/log.md`
       let logContent = ""
       try {
         logContent = await readFile(logPath)
@@ -179,7 +182,7 @@ function SaveToWikiButton({ content, visible }: { content: string; visible: bool
       await writeFile(logPath, logContent.trimEnd() + "\n" + logEntry)
 
       // Refresh file tree and update graph
-      const tree = await listDirectory(project.path)
+      const tree = await listDirectory(pp)
       setFileTree(tree)
       useWikiStore.getState().bumpDataVersion()
 
@@ -190,7 +193,7 @@ function SaveToWikiButton({ content, visible }: { content: string; visible: bool
       const llmConfig = useWikiStore.getState().llmConfig
       if (llmConfig.apiKey || llmConfig.provider === "ollama") {
         const { autoIngest } = await import("@/lib/ingest")
-        autoIngest(project.path, filePath, llmConfig).catch((err) =>
+        autoIngest(pp, filePath, llmConfig).catch((err) =>
           console.error("Failed to auto-ingest saved query:", err)
         )
       }
@@ -288,17 +291,18 @@ function CitedReferencesPanel({ content, savedReferences }: { content: string; s
               type="button"
               onClick={async () => {
                 if (!project) return
+                const pp = normalizePath(project.path)
                 // Try the given path first, then search all wiki subdirectories
-                const id = page.path.replace(/^wiki\//, "").replace(/\.md$/, "").split("/").pop() ?? ""
+                const id = getFileName(page.path.replace(/^wiki\//, "").replace(/\.md$/, ""))
                 const candidates = [
-                  `${project.path}/${page.path}`,
-                  `${project.path}/wiki/entities/${id}.md`,
-                  `${project.path}/wiki/concepts/${id}.md`,
-                  `${project.path}/wiki/sources/${id}.md`,
-                  `${project.path}/wiki/queries/${id}.md`,
-                  `${project.path}/wiki/synthesis/${id}.md`,
-                  `${project.path}/wiki/comparisons/${id}.md`,
-                  `${project.path}/wiki/${id}.md`,
+                  `${pp}/${page.path}`,
+                  `${pp}/wiki/entities/${id}.md`,
+                  `${pp}/wiki/concepts/${id}.md`,
+                  `${pp}/wiki/sources/${id}.md`,
+                  `${pp}/wiki/queries/${id}.md`,
+                  `${pp}/wiki/synthesis/${id}.md`,
+                  `${pp}/wiki/comparisons/${id}.md`,
+                  `${pp}/wiki/${id}.md`,
                 ]
                 for (const candidate of candidates) {
                   try {
@@ -310,7 +314,7 @@ function CitedReferencesPanel({ content, savedReferences }: { content: string; s
                   }
                 }
                 // Last resort: set the original path anyway
-                setSelectedFile(`${project.path}/${page.path}`)
+                setSelectedFile(`${pp}/${page.path}`)
               }}
               className="flex w-full items-center gap-1.5 rounded px-1 py-0.5 text-left hover:bg-accent/50 transition-colors"
               title={page.path}
@@ -605,10 +609,11 @@ function SourceRef({ fileName }: { fileName: string }) {
     e.preventDefault()
     e.stopPropagation()
     if (!project) return
+    const pp = normalizePath(project.path)
 
     // Try exact match first, then search with the name as given
     const candidates = [
-      `${project.path}/raw/sources/${fileName}`,
+      `${pp}/raw/sources/${fileName}`,
     ]
 
     // If fileName has no extension, try to find a matching file
@@ -616,7 +621,7 @@ function SourceRef({ fileName }: { fileName: string }) {
       for (const sf of cachedSourceFiles) {
         const stem = sf.replace(/\.[^.]+$/, "")
         if (stem === fileName || sf.startsWith(fileName)) {
-          candidates.unshift(`${project.path}/raw/sources/${sf}`)
+          candidates.unshift(`${pp}/raw/sources/${sf}`)
         }
       }
     }
@@ -662,14 +667,15 @@ function WikiLink({ pageName, children }: { pageName: string; children: React.Re
 
   useEffect(() => {
     if (!project) return
+    const pp = normalizePath(project.path)
     const candidates = [
-      `${project.path}/wiki/entities/${pageName}.md`,
-      `${project.path}/wiki/concepts/${pageName}.md`,
-      `${project.path}/wiki/sources/${pageName}.md`,
-      `${project.path}/wiki/queries/${pageName}.md`,
-      `${project.path}/wiki/comparisons/${pageName}.md`,
-      `${project.path}/wiki/synthesis/${pageName}.md`,
-      `${project.path}/wiki/${pageName}.md`,
+      `${pp}/wiki/entities/${pageName}.md`,
+      `${pp}/wiki/concepts/${pageName}.md`,
+      `${pp}/wiki/sources/${pageName}.md`,
+      `${pp}/wiki/queries/${pageName}.md`,
+      `${pp}/wiki/comparisons/${pageName}.md`,
+      `${pp}/wiki/synthesis/${pageName}.md`,
+      `${pp}/wiki/${pageName}.md`,
     ]
 
     let cancelled = false

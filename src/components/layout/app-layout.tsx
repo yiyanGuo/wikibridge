@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react"
 import { useWikiStore } from "@/stores/wiki-store"
 import { listDirectory } from "@/commands/fs"
+import { normalizePath } from "@/lib/path-utils"
 import { IconSidebar } from "./icon-sidebar"
 import { SidebarPanel } from "./sidebar-panel"
 import { ContentArea } from "./content-area"
@@ -27,7 +28,7 @@ export function AppLayout({ onSwitchProject }: AppLayoutProps) {
   const loadFileTree = useCallback(async () => {
     if (!project) return
     try {
-      const tree = await listDirectory(project.path)
+      const tree = await listDirectory(normalizePath(project.path))
       setFileTree(tree)
     } catch (err) {
       console.error("Failed to load file tree:", err)

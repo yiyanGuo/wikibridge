@@ -1,5 +1,6 @@
 import { readFile, listDirectory } from "@/commands/fs"
 import type { FileNode } from "@/types/wiki"
+import { normalizePath } from "@/lib/path-utils"
 
 // ---------------------------------------------------------------------------
 // Types
@@ -160,7 +161,7 @@ export async function buildRetrievalGraph(
     return cachedGraph
   }
 
-  const wikiRoot = `${projectPath}/wiki`
+  const wikiRoot = `${normalizePath(projectPath)}/wiki`
   let tree: FileNode[]
   try {
     tree = await listDirectory(wikiRoot)

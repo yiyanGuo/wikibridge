@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { useWikiStore } from "@/stores/wiki-store"
 import { readFile } from "@/commands/fs"
 import { buildWikiGraph, type GraphNode, type GraphEdge } from "@/lib/wiki-graph"
+import { normalizePath } from "@/lib/path-utils"
 
 const NODE_TYPE_COLORS: Record<string, string> = {
   entity: "#60a5fa",    // blue-400
@@ -247,7 +248,7 @@ export function GraphView() {
     setLoading(true)
     setError(null)
     try {
-      const result = await buildWikiGraph(project.path)
+      const result = await buildWikiGraph(normalizePath(project.path))
       setNodes(result.nodes)
       setEdges(result.edges)
       lastLoadedVersion.current = useWikiStore.getState().dataVersion

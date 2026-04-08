@@ -6,6 +6,7 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { useWikiStore } from "@/stores/wiki-store"
 import { readFile, listDirectory } from "@/commands/fs"
 import type { FileNode } from "@/types/wiki"
+import { normalizePath } from "@/lib/path-utils"
 
 interface WikiPageInfo {
   path: string
@@ -37,8 +38,9 @@ export function KnowledgeTree() {
 
   const loadPages = useCallback(async () => {
     if (!project) return
+    const pp = normalizePath(project.path)
     try {
-      const wikiTree = await listDirectory(`${project.path}/wiki`)
+      const wikiTree = await listDirectory(`${pp}/wiki`)
       const mdFiles = flattenMdFiles(wikiTree)
 
       const pageInfos: WikiPageInfo[] = []
@@ -178,7 +180,8 @@ function RawSourcesSection() {
 
   useEffect(() => {
     if (!project) return
-    listDirectory(`${project.path}/raw/sources`)
+    const pp = normalizePath(project.path)
+    listDirectory(`${pp}/raw/sources`)
       .then((tree) => setSources(flattenAllFiles(tree)))
       .catch(() => setSources([]))
   }, [project])

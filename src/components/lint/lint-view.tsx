@@ -16,6 +16,7 @@ import { useWikiStore } from "@/stores/wiki-store"
 import { useReviewStore } from "@/stores/review-store"
 import { runStructuralLint, runSemanticLint, type LintResult } from "@/lib/lint"
 import { readFile, writeFile, deleteFile, listDirectory } from "@/commands/fs"
+import { normalizePath } from "@/lib/path-utils"
 
 const typeConfig: Record<string, { icon: typeof AlertTriangle; label: string }> = {
   orphan: { icon: Unlink, label: "Orphan Page" },
@@ -41,14 +42,15 @@ export function LintView() {
 
   const handleRunLint = useCallback(async () => {
     if (!project || running) return
+    const pp = normalizePath(project.path)
     setRunning(true)
     setResults([])
     try {
-      const structural = await runStructuralLint(project.path)
+      const structural = await runStructuralLint(pp)
       let all = structural
 
       if (runSemantic && (llmConfig.apiKey || llmConfig.provider === "ollama")) {
-        const semantic = await runSemanticLint(project.path, llmConfig)
+        const semantic = await runSemanticLint(pp, llmConfig)
         all = [...structural, ...semantic]
       }
 
@@ -63,9 +65,10 @@ export function LintView() {
 
   async function handleOpenPage(page: string) {
     if (!project) return
+    const pp = normalizePath(project.path)
     const candidates = [
-      `${project.path}/wiki/${page}`,
-      `${project.path}/wiki/${page}.md`,
+      `${pp}/wiki/${page}`,
+      `${pp}/wiki/${page}.md`,
     ]
     setActiveView("wiki")
     for (const path of candidates) {
@@ -84,6 +87,7 @@ export function LintView() {
 
   async function handleFix(result: LintResult, index: number) {
     if (!project) return
+    const pp = normalizePath(project.path)
     const id = `${result.type}-${index}`
     setFixingId(id)
 
@@ -91,7 +95,7 @@ export function LintView() {
       switch (result.type) {
         case "orphan": {
           // Add a link to this page from index.md
-          const indexPath = `${project.path}/wiki/index.md`
+          const indexPath = `${pp}/wiki/index.md`
           let indexContent = ""
           try { indexContent = await readFile(indexPath) } catch { indexContent = "# Wiki Index\n" }
 
@@ -108,7 +112,7 @@ export function LintView() {
 
         case "broken-link": {
           // Option: remove the broken link from the page, or send to Review for manual fix
-          const pagePath = `${project.path}/wiki/${result.page}`
+          const pagePath = `${pp}/wiki/${result.page}`
           useReviewStore.getState().addItem({
             type: "confirm",
             title: `Fix broken link in ${result.page}`,
@@ -158,7 +162,7 @@ export function LintView() {
       }
 
       // Refresh tree
-      const tree = await listDirectory(project.path)
+      const tree = await listDirectory(pp)
       setFileTree(tree)
       bumpDataVersion()
     } catch (err) {
@@ -170,14 +174,15 @@ export function LintView() {
 
   async function handleDeleteOrphan(result: LintResult, index: number) {
     if (!project) return
-    const pagePath = `${project.path}/wiki/${result.page}`
+    const pp = normalizePath(project.path)
+    const pagePath = `${pp}/wiki/${result.page}`
     const confirmed = window.confirm(`Delete orphan page "${result.page}"?`)
     if (!confirmed) return
 
     try {
       await deleteFile(pagePath)
       setResults((prev) => prev.filter((_, i) => i !== index))
-      const tree = await listDirectory(project.path)
+      const tree = await listDirectory(pp)
       setFileTree(tree)
       bumpDataVersion()
     } catch (err) {

@@ -10,6 +10,7 @@ import {
 } from "lucide-react"
 import { getFileCategory, getCodeLanguage } from "@/lib/file-types"
 import type { FileCategory } from "@/lib/file-types"
+import { getFileName } from "@/lib/path-utils"
 
 interface FilePreviewProps {
   filePath: string
@@ -18,7 +19,7 @@ interface FilePreviewProps {
 
 export function FilePreview({ filePath, textContent }: FilePreviewProps) {
   const category = getFileCategory(filePath)
-  const fileName = filePath.split("/").pop() ?? filePath
+  const fileName = getFileName(filePath)
 
   switch (category) {
     case "image":

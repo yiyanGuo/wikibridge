@@ -5,6 +5,7 @@ import { readFile, writeFile } from "@/commands/fs"
 import { getFileCategory, isBinary } from "@/lib/file-types"
 import { WikiEditor } from "@/components/editor/wiki-editor"
 import { FilePreview } from "@/components/editor/file-preview"
+import { getFileName } from "@/lib/path-utils"
 
 export function PreviewPanel() {
   const selectedFile = useWikiStore((s) => s.selectedFile)
@@ -59,7 +60,7 @@ export function PreviewPanel() {
   }
 
   const category = getFileCategory(selectedFile)
-  const fileName = selectedFile.split("/").pop() ?? selectedFile
+  const fileName = getFileName(selectedFile)
 
   return (
     <div className="flex h-full flex-col">

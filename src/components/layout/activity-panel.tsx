@@ -5,6 +5,7 @@ import {
 } from "lucide-react"
 import { useActivityStore, type ActivityItem } from "@/stores/activity-store"
 import { useWikiStore } from "@/stores/wiki-store"
+import { normalizePath, getFileName } from "@/lib/path-utils"
 
 const FILE_TYPE_ICONS: Record<string, typeof FileText> = {
   sources: BookOpen,
@@ -95,7 +96,8 @@ function ActivityRow({ item }: { item: ActivityItem }) {
 
   function handleFileClick(filePath: string) {
     if (!project) return
-    const fullPath = filePath.startsWith("/") ? filePath : `${project.path}/${filePath}`
+    const pp = normalizePath(project.path)
+    const fullPath = filePath.startsWith("/") ? normalizePath(filePath) : `${pp}/${filePath}`
     setSelectedFile(fullPath)
   }
 
@@ -118,7 +120,7 @@ function ActivityRow({ item }: { item: ActivityItem }) {
         <div className="mt-1.5 ml-5 flex flex-col gap-0.5">
           {item.filesWritten.map((filePath) => {
             const { icon: Icon, type } = getFileTypeInfo(filePath)
-            const fileName = filePath.split("/").pop() ?? filePath
+            const fileName = getFileName(filePath)
             return (
               <button
                 key={filePath}

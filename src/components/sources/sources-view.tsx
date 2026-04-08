@@ -8,6 +8,7 @@ import { copyFile, listDirectory, readFile, writeFile, deleteFile, findRelatedWi
 import type { FileNode } from "@/types/wiki"
 import { startIngest, autoIngest } from "@/lib/ingest"
 import { useTranslation } from "react-i18next"
+import { normalizePath, getFileName } from "@/lib/path-utils"
 
 export function SourcesView() {
   const { t } = useTranslation()
@@ -25,8 +26,9 @@ export function SourcesView() {
 
   const loadSources = useCallback(async () => {
     if (!project) return
+    const pp = normalizePath(project.path)
     try {
-      const tree = await listDirectory(`${project.path}/raw/sources`)
+      const tree = await listDirectory(`${pp}/raw/sources`)
       const files = flattenFiles(tree)
       setSources(files)
     } catch {
@@ -80,12 +82,13 @@ export function SourcesView() {
     if (!selected || selected.length === 0) return
 
     setImporting(true)
+    const pp = normalizePath(project.path)
     const paths = Array.isArray(selected) ? selected : [selected]
 
     const importedPaths: string[] = []
     for (const sourcePath of paths) {
-      const originalName = sourcePath.split("/").pop() || sourcePath.split("\\").pop() || "unknown"
-      const destPath = await getUniqueDestPath(`${project.path}/raw/sources`, originalName)
+      const originalName = getFileName(sourcePath) || "unknown"
+      const destPath = await getUniqueDestPath(`${pp}/raw/sources`, originalName)
       try {
         await copyFile(sourcePath, destPath)
         importedPaths.push(destPath)
@@ -102,8 +105,8 @@ export function SourcesView() {
     // Auto-ingest each imported file (runs in background, progress shown in activity panel)
     if (llmConfig.apiKey || llmConfig.provider === "ollama") {
       for (const destPath of importedPaths) {
-        const name = destPath.split("/").pop() ?? destPath
-        autoIngest(project.path, destPath, llmConfig).catch((err) =>
+        const name = getFileName(destPath)
+        autoIngest(pp, destPath, llmConfig).catch((err) =>
           console.error(`Failed to auto-ingest ${name}:`, err)
         )
       }
@@ -123,6 +126,7 @@ export function SourcesView() {
 
   async function handleDelete(node: FileNode) {
     if (!project) return
+    const pp = normalizePath(project.path)
     const fileName = node.name
     const confirmed = window.confirm(
       t("sources.deleteConfirm", { name: fileName })
@@ -131,9 +135,9 @@ export function SourcesView() {
 
     try {
       // Step 1: Find related wiki pages before deleting
-      const relatedPages = await findRelatedWikiPages(project.path, fileName)
+      const relatedPages = await findRelatedWikiPages(pp, fileName)
       const deletedSlugs = relatedPages.map((p) => {
-        const name = p.split("/").pop()?.replace(".md", "") ?? ""
+        const name = getFileName(p).replace(".md", "")
         return name
       }).filter(Boolean)
 
@@ -142,7 +146,7 @@ export function SourcesView() {
 
       // Step 3: Delete preprocessed cache
       try {
-        await deleteFile(`${project.path}/raw/sources/.cache/${fileName}.txt`)
+        await deleteFile(`${pp}/raw/sources/.cache/${fileName}.txt`)
       } catch {
         // cache file may not exist
       }
@@ -185,13 +189,13 @@ export function SourcesView() {
 
       // Step 5: Clean index.md — remove entries for actually deleted pages only
       const deletedPageSlugs = actuallyDeleted.map((p) => {
-        const name = p.split("/").pop()?.replace(".md", "") ?? ""
+        const name = getFileName(p).replace(".md", "")
         return name
       }).filter(Boolean)
 
       if (deletedPageSlugs.length > 0) {
         try {
-          const indexPath = `${project.path}/wiki/index.md`
+          const indexPath = `${pp}/wiki/index.md`
           const indexContent = await readFile(indexPath)
           const updatedIndex = indexContent
             .split("\n")
@@ -206,7 +210,7 @@ export function SourcesView() {
       // Step 6: Clean [[wikilinks]] to deleted pages from remaining wiki files
       if (deletedPageSlugs.length > 0) {
         try {
-          const wikiTree = await listDirectory(`${project.path}/wiki`)
+          const wikiTree = await listDirectory(`${pp}/wiki`)
           const allMdFiles = flattenMdFiles(wikiTree)
           for (const file of allMdFiles) {
             try {
@@ -230,7 +234,7 @@ export function SourcesView() {
 
       // Step 7: Append deletion record to log.md
       try {
-        const logPath = `${project.path}/wiki/log.md`
+        const logPath = `${pp}/wiki/log.md`
         const logContent = await readFile(logPath).catch(() => "# Wiki Log\n")
         const date = new Date().toISOString().slice(0, 10)
         const keptCount = relatedPages.length - actuallyDeleted.length
@@ -242,7 +246,7 @@ export function SourcesView() {
 
       // Step 8: Refresh everything
       await loadSources()
-      const tree = await listDirectory(project.path)
+      const tree = await listDirectory(pp)
       setFileTree(tree)
       useWikiStore.getState().bumpDataVersion()
 
@@ -262,7 +266,7 @@ export function SourcesView() {
     try {
       setChatExpanded(true)
       setActiveView("wiki")
-      await startIngest(project.path, node.path, llmConfig)
+      await startIngest(normalizePath(project.path), node.path, llmConfig)
     } catch (err) {
       console.error("Failed to start ingest:", err)
     } finally {
