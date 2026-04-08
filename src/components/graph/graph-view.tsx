@@ -249,12 +249,12 @@ export function GraphView() {
         const content = await readFile(node.path)
         setSelectedFile(node.path)
         setFileContent(content)
-        setActiveView("wiki")
+        // Stay on graph view — preview opens in right panel
       } catch (err) {
         console.error("Failed to open wiki page:", err)
       }
     },
-    [nodes, setSelectedFile, setFileContent, setActiveView],
+    [nodes, setSelectedFile, setFileContent],
   )
 
   // Count nodes by type for legend
