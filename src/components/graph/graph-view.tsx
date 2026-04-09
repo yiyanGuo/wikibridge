@@ -3,11 +3,11 @@ import Graph from "graphology"
 import { SigmaContainer, useLoadGraph, useRegisterEvents, useSigma } from "@react-sigma/core"
 import "@react-sigma/core/lib/style.css"
 import forceAtlas2 from "graphology-layout-forceatlas2"
-import { Network, RefreshCw, ZoomIn, ZoomOut, Maximize } from "lucide-react"
+import { Network, RefreshCw, ZoomIn, ZoomOut, Maximize, Layers, Tag } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useWikiStore } from "@/stores/wiki-store"
 import { readFile } from "@/commands/fs"
-import { buildWikiGraph, type GraphNode, type GraphEdge } from "@/lib/wiki-graph"
+import { buildWikiGraph, type GraphNode, type GraphEdge, type CommunityInfo } from "@/lib/wiki-graph"
 import { normalizePath } from "@/lib/path-utils"
 
 const NODE_TYPE_COLORS: Record<string, string> = {
@@ -31,6 +31,23 @@ const NODE_TYPE_LABELS: Record<string, string> = {
   comparison: "Comparison",
   other: "Other",
 }
+
+const COMMUNITY_COLORS = [
+  "#60a5fa",  // blue-400
+  "#4ade80",  // green-400
+  "#fb923c",  // orange-400
+  "#c084fc",  // purple-400
+  "#f87171",  // red-400
+  "#2dd4bf",  // teal-400
+  "#facc15",  // yellow-400
+  "#f472b6",  // pink-400
+  "#a78bfa",  // violet-400
+  "#38bdf8",  // sky-400
+  "#34d399",  // emerald-400
+  "#fbbf24",  // amber-400
+]
+
+type ColorMode = "type" | "community"
 
 const BASE_NODE_SIZE = 8
 const MAX_NODE_SIZE = 28
@@ -68,7 +85,7 @@ function nodeSize(linkCount: number, maxLinks: number): number {
 const positionCache = new Map<string, { x: number; y: number }>()
 let lastLayoutDataKey = ""
 
-function GraphLoader({ nodes, edges }: { nodes: GraphNode[]; edges: GraphEdge[] }) {
+function GraphLoader({ nodes, edges, colorMode }: { nodes: GraphNode[]; edges: GraphEdge[]; colorMode: ColorMode }) {
   const loadGraph = useLoadGraph()
 
   useEffect(() => {
@@ -79,16 +96,19 @@ function GraphLoader({ nodes, edges }: { nodes: GraphNode[]; edges: GraphEdge[] 
     const maxLinks = Math.max(...nodes.map((n) => n.linkCount), 1)
 
     for (const node of nodes) {
-      // Reuse cached positions if available, otherwise random
       const cached = positionCache.get(node.id)
+      const color = colorMode === "community"
+        ? COMMUNITY_COLORS[node.community % COMMUNITY_COLORS.length]
+        : nodeColor(node.type)
       graph.addNode(node.id, {
         x: cached?.x ?? Math.random() * 100,
         y: cached?.y ?? Math.random() * 100,
         size: nodeSize(node.linkCount, maxLinks),
-        color: nodeColor(node.type),
+        color,
         label: node.label,
         nodeType: node.type,
         nodePath: node.path,
+        community: node.community,
       })
     }
 
@@ -135,7 +155,7 @@ function GraphLoader({ nodes, edges }: { nodes: GraphNode[]; edges: GraphEdge[] 
     }
 
     loadGraph(graph)
-  }, [loadGraph, nodes, edges])
+  }, [loadGraph, nodes, edges, colorMode])
 
   return null
 }
@@ -238,9 +258,11 @@ export function GraphView() {
 
   const [nodes, setNodes] = useState<GraphNode[]>([])
   const [edges, setEdges] = useState<GraphEdge[]>([])
+  const [communities, setCommunities] = useState<CommunityInfo[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [hoveredType, setHoveredType] = useState<string | null>(null)
+  const [colorMode, setColorMode] = useState<ColorMode>("type")
   const lastLoadedVersion = useRef(-1)
 
   const loadGraph = useCallback(async () => {
@@ -251,6 +273,7 @@ export function GraphView() {
       const result = await buildWikiGraph(normalizePath(project.path))
       setNodes(result.nodes)
       setEdges(result.edges)
+      setCommunities(result.communities)
       lastLoadedVersion.current = useWikiStore.getState().dataVersion
     } catch (err) {
       const message = err instanceof Error ? err.message : "Failed to build graph"
@@ -339,10 +362,29 @@ export function GraphView() {
             <span className="rounded bg-muted px-1.5 py-0.5">{edges.length} links</span>
           </div>
         </div>
-        <Button variant="ghost" size="sm" onClick={loadGraph} className="text-xs gap-1">
-          <RefreshCw className="h-3.5 w-3.5" />
-          Reload
-        </Button>
+        <div className="flex items-center gap-1">
+          <Button
+            variant={colorMode === "type" ? "secondary" : "ghost"}
+            size="sm"
+            onClick={() => setColorMode("type")}
+            className="text-xs gap-1 h-7"
+          >
+            <Tag className="h-3 w-3" />
+            Type
+          </Button>
+          <Button
+            variant={colorMode === "community" ? "secondary" : "ghost"}
+            size="sm"
+            onClick={() => setColorMode("community")}
+            className="text-xs gap-1 h-7"
+          >
+            <Layers className="h-3 w-3" />
+            Community
+          </Button>
+          <Button variant="ghost" size="sm" onClick={loadGraph} className="text-xs gap-1 h-7">
+            <RefreshCw className="h-3.5 w-3.5" />
+          </Button>
+        </div>
       </div>
 
       {/* Graph canvas */}
@@ -391,38 +433,69 @@ export function GraphView() {
             },
           }}
         >
-          <GraphLoader nodes={nodes} edges={edges} />
+          <GraphLoader nodes={nodes} edges={edges} colorMode={colorMode} />
           <EventHandler onNodeClick={handleNodeClick} />
           <ZoomControls />
         </SigmaContainer>
 
         {/* Legend */}
-        <div className="absolute bottom-3 left-3 rounded-lg border bg-background/90 backdrop-blur-sm px-3 py-2 text-xs shadow-sm">
-          <div className="mb-1.5 font-semibold text-foreground">Node Types</div>
-          <div className="flex flex-col gap-0.5">
-            {Object.entries(NODE_TYPE_LABELS)
-              .filter(([type]) => (typeCounts[type] ?? 0) > 0)
-              .map(([type, label]) => (
-                <div
-                  key={type}
-                  className="flex items-center gap-2 rounded px-1 py-0.5 transition-colors hover:bg-accent/50"
-                  onMouseEnter={() => setHoveredType(type)}
-                  onMouseLeave={() => setHoveredType(null)}
-                >
-                  <span
-                    className="inline-block h-3 w-3 rounded-full shrink-0 shadow-sm"
-                    style={{
-                      backgroundColor: NODE_TYPE_COLORS[type],
-                      boxShadow: `0 0 4px ${hexToRgba(NODE_TYPE_COLORS[type] ?? "#94a3b8", 0.4)}`,
-                    }}
-                  />
-                  <span className={hoveredType === type ? "text-foreground font-medium" : "text-muted-foreground"}>
-                    {label}
-                  </span>
-                  <span className="text-muted-foreground/60 ml-auto">{typeCounts[type]}</span>
-                </div>
-              ))}
-          </div>
+        <div className="absolute bottom-3 left-3 rounded-lg border bg-background/90 backdrop-blur-sm px-3 py-2 text-xs shadow-sm max-w-[260px]">
+          {colorMode === "type" ? (
+            <>
+              <div className="mb-1.5 font-semibold text-foreground">Node Types</div>
+              <div className="flex flex-col gap-0.5">
+                {Object.entries(NODE_TYPE_LABELS)
+                  .filter(([type]) => (typeCounts[type] ?? 0) > 0)
+                  .map(([type, label]) => (
+                    <div
+                      key={type}
+                      className="flex items-center gap-2 rounded px-1 py-0.5 transition-colors hover:bg-accent/50"
+                      onMouseEnter={() => setHoveredType(type)}
+                      onMouseLeave={() => setHoveredType(null)}
+                    >
+                      <span
+                        className="inline-block h-3 w-3 rounded-full shrink-0 shadow-sm"
+                        style={{
+                          backgroundColor: NODE_TYPE_COLORS[type],
+                          boxShadow: `0 0 4px ${hexToRgba(NODE_TYPE_COLORS[type] ?? "#94a3b8", 0.4)}`,
+                        }}
+                      />
+                      <span className={hoveredType === type ? "text-foreground font-medium" : "text-muted-foreground"}>
+                        {label}
+                      </span>
+                      <span className="text-muted-foreground/60 ml-auto">{typeCounts[type]}</span>
+                    </div>
+                  ))}
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="mb-1.5 font-semibold text-foreground">Communities</div>
+              <div className="flex flex-col gap-0.5">
+                {communities.map((c) => (
+                  <div
+                    key={c.id}
+                    className="flex items-center gap-2 rounded px-1 py-0.5 transition-colors hover:bg-accent/50"
+                  >
+                    <span
+                      className="inline-block h-3 w-3 rounded-full shrink-0 shadow-sm"
+                      style={{
+                        backgroundColor: COMMUNITY_COLORS[c.id % COMMUNITY_COLORS.length],
+                        boxShadow: `0 0 4px ${hexToRgba(COMMUNITY_COLORS[c.id % COMMUNITY_COLORS.length], 0.4)}`,
+                      }}
+                    />
+                    <span className="text-muted-foreground truncate" title={c.topNodes.join(", ")}>
+                      {c.topNodes[0] ?? `Cluster ${c.id}`}
+                    </span>
+                    <span className="text-muted-foreground/60 ml-auto shrink-0">{c.nodeCount}</span>
+                    {c.cohesion < 0.15 && c.nodeCount >= 3 && (
+                      <span className="text-amber-500 shrink-0" title={`Low cohesion: ${c.cohesion.toFixed(2)}`}>!</span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
         </div>
       </div>
 
