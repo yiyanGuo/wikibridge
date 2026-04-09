@@ -4,9 +4,11 @@ import { commonmark } from "@milkdown/kit/preset/commonmark"
 import { gfm } from "@milkdown/kit/preset/gfm"
 import { history } from "@milkdown/kit/plugin/history"
 import { listener, listenerCtx } from "@milkdown/kit/plugin/listener"
+import { math } from "@milkdown/plugin-math"
 import { nord } from "@milkdown/theme-nord"
 import { Milkdown, MilkdownProvider, useEditor } from "@milkdown/react"
 import "@milkdown/theme-nord/style.css"
+import "katex/dist/katex.min.css"
 import { convertLatexToUnicode } from "@/lib/latex-to-unicode"
 
 interface WikiEditorInnerProps {
@@ -28,6 +30,7 @@ function WikiEditorInner({ content, onSave }: WikiEditorInnerProps) {
         })
         .use(commonmark)
         .use(gfm)
+        .use(math)
         .use(history)
         .use(listener),
     [content],

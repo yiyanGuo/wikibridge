@@ -1,5 +1,8 @@
 import { useState } from "react"
 import ReactMarkdown from "react-markdown"
+import remarkMath from "remark-math"
+import rehypeKatex from "rehype-katex"
+import "katex/dist/katex.min.css"
 import {
   Search, Loader2, CheckCircle2, AlertCircle, ChevronRight, ChevronDown, X,
   ExternalLink, FileText, Send,
@@ -182,7 +185,7 @@ function ResearchTaskCard({ task, onRemove }: { task: ResearchTask; onRemove: (i
             <div className="mb-2">
               <div className="mb-1 font-medium text-muted-foreground">Synthesis</div>
               <div className="max-h-64 overflow-y-auto rounded bg-muted/30 p-2 prose prose-xs prose-invert max-w-none">
-                <ReactMarkdown>{task.synthesis}</ReactMarkdown>
+                <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>{task.synthesis}</ReactMarkdown>
                 {task.status === "synthesizing" && (
                   <span className="animate-pulse">▊</span>
                 )}
