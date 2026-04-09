@@ -198,6 +198,16 @@ export async function buildWikiGraph(
     })
   }
 
+  // Filter out query nodes (research results, saved chat answers) — they are
+  // intermediate artifacts, not knowledge structure. The entities/concepts
+  // extracted from them via auto-ingest are what belong in the graph.
+  const HIDDEN_TYPES = new Set(["query"])
+  for (const [id, node] of nodeMap) {
+    if (HIDDEN_TYPES.has(node.type)) {
+      nodeMap.delete(id)
+    }
+  }
+
   // Count link references
   const linkCounts = new Map<string, number>()
   for (const [id] of nodeMap) {
