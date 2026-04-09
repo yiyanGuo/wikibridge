@@ -51,7 +51,7 @@ async function tavilySearch(
   return (data.results ?? []).map((r: { title: string; url: string; content: string }) => ({
     title: r.title ?? "Untitled",
     url: r.url ?? "",
-    snippet: r.content?.slice(0, 300) ?? "",
+    snippet: r.content ?? "",
     source: new URL(r.url).hostname.replace("www.", ""),
   }))
 }

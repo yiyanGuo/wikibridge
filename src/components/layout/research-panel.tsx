@@ -161,7 +161,26 @@ function SynthesisBlock({ synthesis, isStreaming }: { synthesis: string; isStrea
           </div>
         )}
         {answer && (
-          <ReactMarkdown remarkPlugins={[remarkGfm, remarkMath]} rehypePlugins={[rehypeKatex]}>
+          <ReactMarkdown
+            remarkPlugins={[remarkGfm, remarkMath]}
+            rehypePlugins={[rehypeKatex]}
+            components={{
+              table: ({ children, ...props }) => (
+                <div className="my-2 overflow-x-auto rounded border border-border">
+                  <table className="w-full border-collapse text-xs" {...props}>{children}</table>
+                </div>
+              ),
+              thead: ({ children, ...props }) => (
+                <thead className="bg-muted" {...props}>{children}</thead>
+              ),
+              th: ({ children, ...props }) => (
+                <th className="border border-border/80 px-3 py-1.5 text-left font-semibold bg-muted" {...props}>{children}</th>
+              ),
+              td: ({ children, ...props }) => (
+                <td className="border border-border/60 px-3 py-1.5" {...props}>{children}</td>
+              ),
+            }}
+          >
             {answer}
           </ReactMarkdown>
         )}
