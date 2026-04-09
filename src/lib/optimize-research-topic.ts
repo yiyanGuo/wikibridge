@@ -35,13 +35,12 @@ export async function optimizeResearchTopic(
     "The topic should precisely describe what information would fill this knowledge gap.",
     "The search queries should be optimized for web search engines — keyword-rich, specific, not generic.",
     "",
-    "## Output Format (STRICT — follow exactly)",
-    "TOPIC: <one sentence describing the research direction>",
-    "QUERY: <search query 1>",
-    "QUERY: <search query 2>",
-    "QUERY: <search query 3>",
-    "",
-    "Output ONLY these lines, nothing else.",
+    "## Output Format (STRICT — follow exactly, no other text)",
+    "Respond with EXACTLY 4 lines, no more:",
+    "TOPIC: <one sentence>",
+    "QUERY: <query 1>",
+    "QUERY: <query 2>",
+    "QUERY: <query 3>",
   ].filter(Boolean).join("\n")
 
   let result = ""
@@ -61,7 +60,10 @@ export async function optimizeResearchTopic(
   const queryMatches = [...result.matchAll(/^QUERY:\s*(.+)$/gm)]
 
   const topic = topicMatch?.[1]?.trim() ?? gapTitle
-  const searchQueries = queryMatches.map((m) => m[1].trim()).filter((q) => q.length > 0)
+  const searchQueries = queryMatches
+    .slice(0, 3)
+    .map((m) => m[1].trim())
+    .filter((q) => q.length > 0)
 
   return {
     topic,
