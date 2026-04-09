@@ -3,12 +3,13 @@ import Graph from "graphology"
 import { SigmaContainer, useLoadGraph, useRegisterEvents, useSigma } from "@react-sigma/core"
 import "@react-sigma/core/lib/style.css"
 import forceAtlas2 from "graphology-layout-forceatlas2"
-import { Network, RefreshCw, ZoomIn, ZoomOut, Maximize, Layers, Tag, Lightbulb, AlertTriangle, Link2, X } from "lucide-react"
+import { Network, RefreshCw, ZoomIn, ZoomOut, Maximize, Layers, Tag, Lightbulb, AlertTriangle, Link2, X, Search } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useWikiStore } from "@/stores/wiki-store"
 import { readFile } from "@/commands/fs"
 import { buildWikiGraph, type GraphNode, type GraphEdge, type CommunityInfo } from "@/lib/wiki-graph"
 import { findSurprisingConnections, detectKnowledgeGaps, type SurprisingConnection, type KnowledgeGap } from "@/lib/graph-insights"
+import { queueResearch } from "@/lib/deep-research"
 import { normalizePath } from "@/lib/path-utils"
 
 const NODE_TYPE_COLORS: Record<string, string> = {
@@ -629,6 +630,12 @@ export function GraphView() {
                     const isActive = highlightedNodes.size > 0 &&
                       [...ids].every((id) => highlightedNodes.has(id)) &&
                       [...highlightedNodes].every((id) => ids.has(id))
+                    // Build research topic from gap context
+                    const researchTopic = gap.type === "sparse-community"
+                      ? `Knowledge area: ${gap.title.replace("Sparse cluster: ", "")}`
+                      : gap.type === "bridge-node"
+                        ? `Key concept: ${gap.title.replace("Key bridge: ", "")}`
+                        : gap.title
                     return (
                       <div
                         key={i}
@@ -638,6 +645,25 @@ export function GraphView() {
                         <div className="font-medium text-foreground">{gap.title}</div>
                         <div className="text-muted-foreground mt-0.5">{gap.description}</div>
                         <div className="text-muted-foreground/80 mt-1 italic">{gap.suggestion}</div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="mt-1.5 h-6 text-[10px] gap-1"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            const store = useWikiStore.getState()
+                            if (!store.project) return
+                            queueResearch(
+                              normalizePath(store.project.path),
+                              researchTopic,
+                              store.llmConfig,
+                              store.searchApiConfig,
+                            )
+                          }}
+                        >
+                          <Search className="h-3 w-3" />
+                          Deep Research
+                        </Button>
                       </div>
                     )
                   })}
