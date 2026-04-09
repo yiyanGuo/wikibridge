@@ -590,21 +590,23 @@ export function GraphView() {
                     return (
                       <div
                         key={i}
-                        className={`rounded border px-2 py-1.5 cursor-pointer transition-colors relative group ${isActive ? "bg-blue-500/15 border-blue-500/40" : "bg-muted/30 hover:bg-muted/50"}`}
+                        className={`rounded border px-2 py-1.5 cursor-pointer transition-colors ${isActive ? "bg-blue-500/15 border-blue-500/40" : "bg-muted/30 hover:bg-muted/50"}`}
                         onClick={() => setHighlightedNodes(isActive ? new Set() : ids)}
                       >
-                        <button
-                          className="absolute top-1 right-1 hidden group-hover:block p-0.5 rounded hover:bg-muted"
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            setDismissedInsights((prev) => new Set([...prev, conn.key]))
-                            if (isActive) setHighlightedNodes(new Set())
-                          }}
-                        >
-                          <X className="h-3 w-3 text-muted-foreground" />
-                        </button>
-                        <div className="font-medium text-foreground">
-                          {conn.source.label} ↔ {conn.target.label}
+                        <div className="flex items-start justify-between gap-1">
+                          <div className="font-medium text-foreground">
+                            {conn.source.label} ↔ {conn.target.label}
+                          </div>
+                          <button
+                            className="shrink-0 p-0.5 rounded hover:bg-destructive/20 text-muted-foreground hover:text-destructive"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setDismissedInsights((prev) => new Set([...prev, conn.key]))
+                              if (isActive) setHighlightedNodes(new Set())
+                            }}
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
                         </div>
                         <div className="text-muted-foreground mt-0.5">
                           {conn.reasons.join(", ")}
