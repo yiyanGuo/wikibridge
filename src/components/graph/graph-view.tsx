@@ -455,221 +455,245 @@ export function GraphView() {
         </div>
       </div>
 
-      {/* Graph canvas */}
-      <div className="relative flex-1 overflow-hidden bg-slate-50 dark:bg-slate-950">
-        <SigmaContainer
-          style={{ width: "100%", height: "100%", background: "transparent" }}
-          settings={{
-            renderEdgeLabels: true,
-            defaultEdgeColor: "#cbd5e1",
-            defaultNodeColor: "#94a3b8",
-            labelSize: 13,
-            labelWeight: "bold",
-            labelColor: { color: "#1e293b" },
-            labelDensity: 0.4,
-            labelRenderedSizeThreshold: 6,
-            stagePadding: 30,
-            nodeReducer: (_node, attrs) => {
-              const result = { ...attrs }
-              if (attrs.insightHighlight) {
-                result.size = (attrs.size ?? BASE_NODE_SIZE) * 1.5
-                result.zIndex = 10
-                result.forceLabel = true
-              }
-              if (attrs.hovering) {
-                result.size = (attrs.size ?? BASE_NODE_SIZE) * 1.4
-                result.zIndex = 10
-                result.forceLabel = true
-              }
-              if (attrs.dimmed) {
-                result.color = mixColor(attrs.color ?? "#94a3b8", "#e2e8f0", 0.75)
-                result.label = ""
-                result.size = (attrs.size ?? BASE_NODE_SIZE) * 0.6
-              }
-              return result
-            },
-            edgeReducer: (_edge, attrs) => {
-              const result = { ...attrs }
-              if (attrs.dimmed) {
-                result.color = "#f1f5f9"
-                result.size = 0.3
-              }
-              if (attrs.highlighted) {
-                // Highlighted edges: show stronger with weight-based thickness
-                const w = attrs.weight ?? 1
-                result.color = "#1e293b"
-                result.size = Math.max(2, (attrs.size ?? 1) * 1.5)
-                result.label = `relevance: ${w.toFixed(1)}`
-                result.forceLabel = true
-              }
-              return result
-            },
-          }}
-        >
-          <GraphLoader nodes={nodes} edges={edges} colorMode={colorMode} />
-          <EventHandler onNodeClick={handleNodeClick} />
-          <HighlightManager highlightedNodes={highlightedNodes} />
-          <ZoomControls />
-        </SigmaContainer>
+      {/* Graph canvas + Insights side panel */}
+      <div className="flex flex-1 min-h-0">
+        {/* Graph canvas */}
+        <div className="relative flex-1 min-w-0 overflow-hidden bg-slate-50 dark:bg-slate-950">
+          <SigmaContainer
+            style={{ width: "100%", height: "100%", background: "transparent" }}
+            settings={{
+              renderEdgeLabels: true,
+              defaultEdgeColor: "#cbd5e1",
+              defaultNodeColor: "#94a3b8",
+              labelSize: 13,
+              labelWeight: "bold",
+              labelColor: { color: "#1e293b" },
+              labelDensity: 0.4,
+              labelRenderedSizeThreshold: 6,
+              stagePadding: 30,
+              nodeReducer: (_node, attrs) => {
+                const result = { ...attrs }
+                if (attrs.insightHighlight) {
+                  result.size = (attrs.size ?? BASE_NODE_SIZE) * 1.5
+                  result.zIndex = 10
+                  result.forceLabel = true
+                }
+                if (attrs.hovering) {
+                  result.size = (attrs.size ?? BASE_NODE_SIZE) * 1.4
+                  result.zIndex = 10
+                  result.forceLabel = true
+                }
+                if (attrs.dimmed) {
+                  result.color = mixColor(attrs.color ?? "#94a3b8", "#e2e8f0", 0.75)
+                  result.label = ""
+                  result.size = (attrs.size ?? BASE_NODE_SIZE) * 0.6
+                }
+                return result
+              },
+              edgeReducer: (_edge, attrs) => {
+                const result = { ...attrs }
+                if (attrs.dimmed) {
+                  result.color = "#f1f5f9"
+                  result.size = 0.3
+                }
+                if (attrs.highlighted) {
+                  const w = attrs.weight ?? 1
+                  result.color = "#1e293b"
+                  result.size = Math.max(2, (attrs.size ?? 1) * 1.5)
+                  result.label = `relevance: ${w.toFixed(1)}`
+                  result.forceLabel = true
+                }
+                return result
+              },
+            }}
+          >
+            <GraphLoader nodes={nodes} edges={edges} colorMode={colorMode} />
+            <EventHandler onNodeClick={handleNodeClick} />
+            <HighlightManager highlightedNodes={highlightedNodes} />
+            <ZoomControls />
+          </SigmaContainer>
 
-        {/* Legend */}
-        <div className="absolute bottom-3 left-3 rounded-lg border bg-background/90 backdrop-blur-sm px-3 py-2 text-xs shadow-sm max-w-[260px]">
-          {colorMode === "type" ? (
-            <>
-              <div className="mb-1.5 font-semibold text-foreground">Node Types</div>
-              <div className="flex flex-col gap-0.5">
-                {Object.entries(NODE_TYPE_LABELS)
-                  .filter(([type]) => (typeCounts[type] ?? 0) > 0)
-                  .map(([type, label]) => (
+          {/* Legend */}
+          <div className="absolute bottom-3 left-3 rounded-lg border bg-background/90 backdrop-blur-sm px-3 py-2 text-xs shadow-sm max-w-[260px]">
+            {colorMode === "type" ? (
+              <>
+                <div className="mb-1.5 font-semibold text-foreground">Node Types</div>
+                <div className="flex flex-col gap-0.5">
+                  {Object.entries(NODE_TYPE_LABELS)
+                    .filter(([type]) => (typeCounts[type] ?? 0) > 0)
+                    .map(([type, label]) => (
+                      <div
+                        key={type}
+                        className="flex items-center gap-2 rounded px-1 py-0.5 transition-colors hover:bg-accent/50"
+                        onMouseEnter={() => setHoveredType(type)}
+                        onMouseLeave={() => setHoveredType(null)}
+                      >
+                        <span
+                          className="inline-block h-3 w-3 rounded-full shrink-0 shadow-sm"
+                          style={{
+                            backgroundColor: NODE_TYPE_COLORS[type],
+                            boxShadow: `0 0 4px ${hexToRgba(NODE_TYPE_COLORS[type] ?? "#94a3b8", 0.4)}`,
+                          }}
+                        />
+                        <span className={hoveredType === type ? "text-foreground font-medium" : "text-muted-foreground"}>
+                          {label}
+                        </span>
+                        <span className="text-muted-foreground/60 ml-auto">{typeCounts[type]}</span>
+                      </div>
+                    ))}
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="mb-1.5 font-semibold text-foreground">Communities</div>
+                <div className="flex flex-col gap-0.5">
+                  {communities.map((c) => (
                     <div
-                      key={type}
+                      key={c.id}
                       className="flex items-center gap-2 rounded px-1 py-0.5 transition-colors hover:bg-accent/50"
-                      onMouseEnter={() => setHoveredType(type)}
-                      onMouseLeave={() => setHoveredType(null)}
                     >
                       <span
                         className="inline-block h-3 w-3 rounded-full shrink-0 shadow-sm"
                         style={{
-                          backgroundColor: NODE_TYPE_COLORS[type],
-                          boxShadow: `0 0 4px ${hexToRgba(NODE_TYPE_COLORS[type] ?? "#94a3b8", 0.4)}`,
+                          backgroundColor: COMMUNITY_COLORS[c.id % COMMUNITY_COLORS.length],
+                          boxShadow: `0 0 4px ${hexToRgba(COMMUNITY_COLORS[c.id % COMMUNITY_COLORS.length], 0.4)}`,
                         }}
                       />
-                      <span className={hoveredType === type ? "text-foreground font-medium" : "text-muted-foreground"}>
-                        {label}
+                      <span className="text-muted-foreground truncate" title={c.topNodes.join(", ")}>
+                        {c.topNodes[0] ?? `Cluster ${c.id}`}
                       </span>
-                      <span className="text-muted-foreground/60 ml-auto">{typeCounts[type]}</span>
+                      <span className="text-muted-foreground/60 ml-auto shrink-0">{c.nodeCount}</span>
+                      {c.cohesion < 0.15 && c.nodeCount >= 3 && (
+                        <span className="text-amber-500 shrink-0" title={`Low cohesion: ${c.cohesion.toFixed(2)}`}>!</span>
+                      )}
                     </div>
                   ))}
-              </div>
-            </>
-          ) : (
-            <>
-              <div className="mb-1.5 font-semibold text-foreground">Communities</div>
-              <div className="flex flex-col gap-0.5">
-                {communities.map((c) => (
-                  <div
-                    key={c.id}
-                    className="flex items-center gap-2 rounded px-1 py-0.5 transition-colors hover:bg-accent/50"
-                  >
-                    <span
-                      className="inline-block h-3 w-3 rounded-full shrink-0 shadow-sm"
-                      style={{
-                        backgroundColor: COMMUNITY_COLORS[c.id % COMMUNITY_COLORS.length],
-                        boxShadow: `0 0 4px ${hexToRgba(COMMUNITY_COLORS[c.id % COMMUNITY_COLORS.length], 0.4)}`,
-                      }}
-                    />
-                    <span className="text-muted-foreground truncate" title={c.topNodes.join(", ")}>
-                      {c.topNodes[0] ?? `Cluster ${c.id}`}
-                    </span>
-                    <span className="text-muted-foreground/60 ml-auto shrink-0">{c.nodeCount}</span>
-                    {c.cohesion < 0.15 && c.nodeCount >= 3 && (
-                      <span className="text-amber-500 shrink-0" title={`Low cohesion: ${c.cohesion.toFixed(2)}`}>!</span>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </>
-          )}
+                </div>
+              </>
+            )}
+          </div>
         </div>
 
-        {/* Insights Panel */}
+        {/* Insights Side Panel */}
         {showInsights && (
-          <div className="absolute bottom-3 right-14 w-72 max-h-[60%] overflow-y-auto rounded-lg border bg-background/95 backdrop-blur-sm px-3 py-2 text-xs shadow-lg">
-            {surprisingConns.length > 0 && (
-              <div className="mb-3">
-                <div className="flex items-center gap-1.5 mb-1.5 font-semibold text-foreground">
-                  <Link2 className="h-3.5 w-3.5 text-blue-500" />
-                  Surprising Connections
+          <div className="w-80 shrink-0 border-l bg-background overflow-y-auto">
+            <div className="px-4 py-3 border-b">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Lightbulb className="h-4 w-4 text-amber-500" />
+                  <span className="text-sm font-medium">Insights</span>
                 </div>
-                <div className="flex flex-col gap-1.5">
-                  {surprisingConns
-                  .filter((conn) => !dismissedInsights.has(conn.key))
-                  .map((conn, i) => {
-                    const ids = new Set([conn.source.id, conn.target.id])
-                    const isActive = highlightedNodes.size === ids.size &&
-                      [...ids].every((id) => highlightedNodes.has(id))
-                    return (
-                      <div
-                        key={i}
-                        className={`rounded border px-2 py-1.5 cursor-pointer transition-colors ${isActive ? "bg-blue-500/15 border-blue-500/40" : "bg-muted/30 hover:bg-muted/50"}`}
-                        onClick={() => setHighlightedNodes(isActive ? new Set() : ids)}
-                      >
-                        <div className="flex items-start justify-between gap-1">
-                          <div className="font-medium text-foreground">
-                            {conn.source.label} ↔ {conn.target.label}
+                <button
+                  className="p-1 rounded hover:bg-muted text-muted-foreground"
+                  onClick={() => {
+                    setShowInsights(false)
+                    setHighlightedNodes(new Set())
+                  }}
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+
+            <div className="p-3 flex flex-col gap-4">
+              {/* Surprising Connections */}
+              {surprisingConns.filter((c) => !dismissedInsights.has(c.key)).length > 0 && (
+                <div>
+                  <div className="flex items-center gap-1.5 mb-2 text-xs font-semibold text-foreground">
+                    <Link2 className="h-3.5 w-3.5 text-blue-500" />
+                    Surprising Connections
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    {surprisingConns
+                      .filter((conn) => !dismissedInsights.has(conn.key))
+                      .map((conn, i) => {
+                        const ids = new Set([conn.source.id, conn.target.id])
+                        const isActive = highlightedNodes.size === ids.size &&
+                          [...ids].every((id) => highlightedNodes.has(id))
+                        return (
+                          <div
+                            key={i}
+                            className={`rounded-lg border p-3 text-sm cursor-pointer transition-colors ${isActive ? "bg-blue-500/10 border-blue-500/40" : "hover:bg-muted/50"}`}
+                            onClick={() => setHighlightedNodes(isActive ? new Set() : ids)}
+                          >
+                            <div className="flex items-start justify-between gap-2 mb-1">
+                              <span className="font-medium text-foreground text-xs">
+                                {conn.source.label} ↔ {conn.target.label}
+                              </span>
+                              <button
+                                className="shrink-0 rounded p-0.5 text-muted-foreground hover:bg-destructive/20 hover:text-destructive"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  setDismissedInsights((prev) => new Set([...prev, conn.key]))
+                                  if (isActive) setHighlightedNodes(new Set())
+                                }}
+                              >
+                                <X className="h-3.5 w-3.5" />
+                              </button>
+                            </div>
+                            <p className="text-xs text-muted-foreground">
+                              {conn.reasons.join(", ")}
+                            </p>
                           </div>
-                          <button
-                            className="shrink-0 p-0.5 rounded hover:bg-destructive/20 text-muted-foreground hover:text-destructive"
+                        )
+                      })}
+                  </div>
+                </div>
+              )}
+
+              {/* Knowledge Gaps */}
+              {knowledgeGaps.length > 0 && (
+                <div>
+                  <div className="flex items-center gap-1.5 mb-2 text-xs font-semibold text-foreground">
+                    <AlertTriangle className="h-3.5 w-3.5 text-amber-500" />
+                    Knowledge Gaps
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    {knowledgeGaps.map((gap, i) => {
+                      const ids = new Set(gap.nodeIds)
+                      const isActive = highlightedNodes.size > 0 &&
+                        [...ids].every((id) => highlightedNodes.has(id)) &&
+                        [...highlightedNodes].every((id) => ids.has(id))
+                      const researchTopic = gap.type === "sparse-community"
+                        ? `Knowledge area: ${gap.title.replace("Sparse cluster: ", "")}`
+                        : gap.type === "bridge-node"
+                          ? `Key concept: ${gap.title.replace("Key bridge: ", "")}`
+                          : gap.title
+                      return (
+                        <div
+                          key={i}
+                          className={`rounded-lg border p-3 text-sm cursor-pointer transition-colors ${isActive ? "bg-amber-500/10 border-amber-500/40" : "hover:bg-muted/50"}`}
+                          onClick={() => setHighlightedNodes(isActive ? new Set() : ids)}
+                        >
+                          <div className="font-medium text-xs text-foreground mb-1">{gap.title}</div>
+                          <p className="text-xs text-muted-foreground mb-2">{gap.description}</p>
+                          <p className="text-xs text-muted-foreground/80 italic mb-2">{gap.suggestion}</p>
+                          <Button
+                            variant="default"
+                            size="sm"
+                            className="h-7 text-xs gap-1"
                             onClick={(e) => {
                               e.stopPropagation()
-                              setDismissedInsights((prev) => new Set([...prev, conn.key]))
-                              if (isActive) setHighlightedNodes(new Set())
+                              const store = useWikiStore.getState()
+                              if (!store.project) return
+                              queueResearch(
+                                normalizePath(store.project.path),
+                                researchTopic,
+                                store.llmConfig,
+                                store.searchApiConfig,
+                              )
                             }}
                           >
-                            <X className="h-3 w-3" />
-                          </button>
+                            <Search className="h-3.5 w-3.5" />
+                            Deep Research
+                          </Button>
                         </div>
-                        <div className="text-muted-foreground mt-0.5">
-                          {conn.reasons.join(", ")}
-                        </div>
-                      </div>
-                    )
-                  })}
+                      )
+                    })}
+                  </div>
                 </div>
-              </div>
-            )}
-            {knowledgeGaps.length > 0 && (
-              <div>
-                <div className="flex items-center gap-1.5 mb-1.5 font-semibold text-foreground">
-                  <AlertTriangle className="h-3.5 w-3.5 text-amber-500" />
-                  Knowledge Gaps
-                </div>
-                <div className="flex flex-col gap-1.5">
-                  {knowledgeGaps.map((gap, i) => {
-                    const ids = new Set(gap.nodeIds)
-                    const isActive = highlightedNodes.size > 0 &&
-                      [...ids].every((id) => highlightedNodes.has(id)) &&
-                      [...highlightedNodes].every((id) => ids.has(id))
-                    // Build research topic from gap context
-                    const researchTopic = gap.type === "sparse-community"
-                      ? `Knowledge area: ${gap.title.replace("Sparse cluster: ", "")}`
-                      : gap.type === "bridge-node"
-                        ? `Key concept: ${gap.title.replace("Key bridge: ", "")}`
-                        : gap.title
-                    return (
-                      <div
-                        key={i}
-                        className={`rounded border px-2 py-1.5 cursor-pointer transition-colors ${isActive ? "bg-amber-500/15 border-amber-500/40" : "bg-muted/30 hover:bg-muted/50"}`}
-                        onClick={() => setHighlightedNodes(isActive ? new Set() : ids)}
-                      >
-                        <div className="font-medium text-foreground">{gap.title}</div>
-                        <div className="text-muted-foreground mt-0.5">{gap.description}</div>
-                        <div className="text-muted-foreground/80 mt-1 italic">{gap.suggestion}</div>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="mt-1.5 h-6 text-[10px] gap-1"
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            const store = useWikiStore.getState()
-                            if (!store.project) return
-                            queueResearch(
-                              normalizePath(store.project.path),
-                              researchTopic,
-                              store.llmConfig,
-                              store.searchApiConfig,
-                            )
-                          }}
-                        >
-                          <Search className="h-3 w-3" />
-                          Deep Research
-                        </Button>
-                      </div>
-                    )
-                  })}
-                </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
         )}
       </div>
