@@ -161,6 +161,46 @@ function GraphLoader({ nodes, edges, colorMode }: { nodes: GraphNode[]; edges: G
   return null
 }
 
+function HighlightManager({ highlightedNodes }: { highlightedNodes: Set<string> }) {
+  const sigma = useSigma()
+
+  useEffect(() => {
+    const graph = sigma.getGraph()
+    if (highlightedNodes.size === 0) {
+      graph.forEachNode((n) => {
+        graph.removeNodeAttribute(n, "insightHighlight")
+        graph.removeNodeAttribute(n, "dimmed")
+      })
+      graph.forEachEdge((e) => {
+        graph.removeEdgeAttribute(e, "dimmed")
+        graph.removeEdgeAttribute(e, "highlighted")
+      })
+    } else {
+      graph.forEachNode((n) => {
+        if (highlightedNodes.has(n)) {
+          graph.setNodeAttribute(n, "insightHighlight", true)
+          graph.removeNodeAttribute(n, "dimmed")
+        } else {
+          graph.setNodeAttribute(n, "dimmed", true)
+          graph.removeNodeAttribute(n, "insightHighlight")
+        }
+      })
+      graph.forEachEdge((e, _attrs, source, target) => {
+        if (highlightedNodes.has(source) && highlightedNodes.has(target)) {
+          graph.setEdgeAttribute(e, "highlighted", true)
+          graph.removeEdgeAttribute(e, "dimmed")
+        } else {
+          graph.setEdgeAttribute(e, "dimmed", true)
+          graph.removeEdgeAttribute(e, "highlighted")
+        }
+      })
+    }
+    sigma.refresh()
+  }, [sigma, highlightedNodes])
+
+  return null
+}
+
 function EventHandler({ onNodeClick }: { onNodeClick: (nodeId: string) => void }) {
   const registerEvents = useRegisterEvents()
   const sigma = useSigma()
@@ -267,6 +307,7 @@ export function GraphView() {
   const [hoveredType, setHoveredType] = useState<string | null>(null)
   const [colorMode, setColorMode] = useState<ColorMode>("type")
   const [showInsights, setShowInsights] = useState(false)
+  const [highlightedNodes, setHighlightedNodes] = useState<Set<string>>(new Set())
   const lastLoadedVersion = useRef(-1)
 
   const loadGraph = useCallback(async () => {
@@ -391,7 +432,12 @@ export function GraphView() {
             <Button
               variant={showInsights ? "secondary" : "ghost"}
               size="sm"
-              onClick={() => setShowInsights((v) => !v)}
+              onClick={() => {
+                setShowInsights((v) => {
+                  if (v) setHighlightedNodes(new Set())
+                  return !v
+                })
+              }}
               className="text-xs gap-1 h-7"
             >
               <Lightbulb className="h-3 w-3" />
@@ -423,6 +469,11 @@ export function GraphView() {
             stagePadding: 30,
             nodeReducer: (_node, attrs) => {
               const result = { ...attrs }
+              if (attrs.insightHighlight) {
+                result.size = (attrs.size ?? BASE_NODE_SIZE) * 1.5
+                result.zIndex = 10
+                result.forceLabel = true
+              }
               if (attrs.hovering) {
                 result.size = (attrs.size ?? BASE_NODE_SIZE) * 1.4
                 result.zIndex = 10
@@ -455,6 +506,7 @@ export function GraphView() {
         >
           <GraphLoader nodes={nodes} edges={edges} colorMode={colorMode} />
           <EventHandler onNodeClick={handleNodeClick} />
+          <HighlightManager highlightedNodes={highlightedNodes} />
           <ZoomControls />
         </SigmaContainer>
 
@@ -528,16 +580,25 @@ export function GraphView() {
                   Surprising Connections
                 </div>
                 <div className="flex flex-col gap-1.5">
-                  {surprisingConns.map((conn, i) => (
-                    <div key={i} className="rounded border px-2 py-1.5 bg-muted/30">
-                      <div className="font-medium text-foreground">
-                        {conn.source.label} ↔ {conn.target.label}
+                  {surprisingConns.map((conn, i) => {
+                    const ids = new Set([conn.source.id, conn.target.id])
+                    const isActive = highlightedNodes.size === ids.size &&
+                      [...ids].every((id) => highlightedNodes.has(id))
+                    return (
+                      <div
+                        key={i}
+                        className={`rounded border px-2 py-1.5 cursor-pointer transition-colors ${isActive ? "bg-blue-500/15 border-blue-500/40" : "bg-muted/30 hover:bg-muted/50"}`}
+                        onClick={() => setHighlightedNodes(isActive ? new Set() : ids)}
+                      >
+                        <div className="font-medium text-foreground">
+                          {conn.source.label} ↔ {conn.target.label}
+                        </div>
+                        <div className="text-muted-foreground mt-0.5">
+                          {conn.reasons.join(", ")}
+                        </div>
                       </div>
-                      <div className="text-muted-foreground mt-0.5">
-                        {conn.reasons.join(", ")}
-                      </div>
-                    </div>
-                  ))}
+                    )
+                  })}
                 </div>
               </div>
             )}
@@ -548,13 +609,23 @@ export function GraphView() {
                   Knowledge Gaps
                 </div>
                 <div className="flex flex-col gap-1.5">
-                  {knowledgeGaps.map((gap, i) => (
-                    <div key={i} className="rounded border px-2 py-1.5 bg-muted/30">
-                      <div className="font-medium text-foreground">{gap.title}</div>
-                      <div className="text-muted-foreground mt-0.5">{gap.description}</div>
-                      <div className="text-muted-foreground/80 mt-1 italic">{gap.suggestion}</div>
-                    </div>
-                  ))}
+                  {knowledgeGaps.map((gap, i) => {
+                    const ids = new Set(gap.nodeIds)
+                    const isActive = highlightedNodes.size > 0 &&
+                      [...ids].every((id) => highlightedNodes.has(id)) &&
+                      [...highlightedNodes].every((id) => ids.has(id))
+                    return (
+                      <div
+                        key={i}
+                        className={`rounded border px-2 py-1.5 cursor-pointer transition-colors ${isActive ? "bg-amber-500/15 border-amber-500/40" : "bg-muted/30 hover:bg-muted/50"}`}
+                        onClick={() => setHighlightedNodes(isActive ? new Set() : ids)}
+                      >
+                        <div className="font-medium text-foreground">{gap.title}</div>
+                        <div className="text-muted-foreground mt-0.5">{gap.description}</div>
+                        <div className="text-muted-foreground/80 mt-1 italic">{gap.suggestion}</div>
+                      </div>
+                    )
+                  })}
                 </div>
               </div>
             )}
