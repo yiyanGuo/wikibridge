@@ -9,6 +9,7 @@ export interface SurprisingConnection {
   target: GraphNode
   score: number
   reasons: string[]
+  key: string // stable ID for dismiss tracking
 }
 
 export interface KnowledgeGap {
@@ -39,6 +40,10 @@ export function findSurprisingConnections(
 
   // Structural pages that link to everything — exclude from analysis
   const STRUCTURAL_IDS = new Set(["index", "log", "overview"])
+
+  // Dynamic threshold: as wiki grows, require higher score to surface
+  const nodeCount = nodes.length
+  const dynamicThreshold = nodeCount < 20 ? 3 : nodeCount < 50 ? 4 : 5
 
   const scored: SurprisingConnection[] = []
 
@@ -90,8 +95,9 @@ export function findSurprisingConnections(
       reasons.push("weak but present connection")
     }
 
-    if (score >= 3 && reasons.length > 0) {
-      scored.push({ source, target, score, reasons })
+    if (score >= dynamicThreshold && reasons.length > 0) {
+      const key = [source.id, target.id].sort().join(":::")
+      scored.push({ source, target, score, reasons, key })
     }
   }
 

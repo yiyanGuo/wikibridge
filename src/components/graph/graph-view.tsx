@@ -3,7 +3,7 @@ import Graph from "graphology"
 import { SigmaContainer, useLoadGraph, useRegisterEvents, useSigma } from "@react-sigma/core"
 import "@react-sigma/core/lib/style.css"
 import forceAtlas2 from "graphology-layout-forceatlas2"
-import { Network, RefreshCw, ZoomIn, ZoomOut, Maximize, Layers, Tag, Lightbulb, AlertTriangle, Link2 } from "lucide-react"
+import { Network, RefreshCw, ZoomIn, ZoomOut, Maximize, Layers, Tag, Lightbulb, AlertTriangle, Link2, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useWikiStore } from "@/stores/wiki-store"
 import { readFile } from "@/commands/fs"
@@ -308,6 +308,7 @@ export function GraphView() {
   const [colorMode, setColorMode] = useState<ColorMode>("type")
   const [showInsights, setShowInsights] = useState(false)
   const [highlightedNodes, setHighlightedNodes] = useState<Set<string>>(new Set())
+  const [dismissedInsights, setDismissedInsights] = useState<Set<string>>(new Set())
   const lastLoadedVersion = useRef(-1)
 
   const loadGraph = useCallback(async () => {
@@ -428,7 +429,7 @@ export function GraphView() {
             <Layers className="h-3 w-3" />
             Community
           </Button>
-          {(surprisingConns.length > 0 || knowledgeGaps.length > 0) && (
+          {(surprisingConns.filter((c) => !dismissedInsights.has(c.key)).length > 0 || knowledgeGaps.length > 0) && (
             <Button
               variant={showInsights ? "secondary" : "ghost"}
               size="sm"
@@ -443,7 +444,7 @@ export function GraphView() {
               <Lightbulb className="h-3 w-3" />
               Insights
               <span className="rounded bg-muted px-1 text-[10px]">
-                {surprisingConns.length + knowledgeGaps.length}
+                {surprisingConns.filter((c) => !dismissedInsights.has(c.key)).length + knowledgeGaps.length}
               </span>
             </Button>
           )}
@@ -580,16 +581,28 @@ export function GraphView() {
                   Surprising Connections
                 </div>
                 <div className="flex flex-col gap-1.5">
-                  {surprisingConns.map((conn, i) => {
+                  {surprisingConns
+                  .filter((conn) => !dismissedInsights.has(conn.key))
+                  .map((conn, i) => {
                     const ids = new Set([conn.source.id, conn.target.id])
                     const isActive = highlightedNodes.size === ids.size &&
                       [...ids].every((id) => highlightedNodes.has(id))
                     return (
                       <div
                         key={i}
-                        className={`rounded border px-2 py-1.5 cursor-pointer transition-colors ${isActive ? "bg-blue-500/15 border-blue-500/40" : "bg-muted/30 hover:bg-muted/50"}`}
+                        className={`rounded border px-2 py-1.5 cursor-pointer transition-colors relative group ${isActive ? "bg-blue-500/15 border-blue-500/40" : "bg-muted/30 hover:bg-muted/50"}`}
                         onClick={() => setHighlightedNodes(isActive ? new Set() : ids)}
                       >
+                        <button
+                          className="absolute top-1 right-1 hidden group-hover:block p-0.5 rounded hover:bg-muted"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setDismissedInsights((prev) => new Set([...prev, conn.key]))
+                            if (isActive) setHighlightedNodes(new Set())
+                          }}
+                        >
+                          <X className="h-3 w-3 text-muted-foreground" />
+                        </button>
                         <div className="font-medium text-foreground">
                           {conn.source.label} ↔ {conn.target.label}
                         </div>
