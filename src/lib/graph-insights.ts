@@ -37,12 +37,16 @@ export function findSurprisingConnections(
   const degreeMap = new Map(nodes.map((n) => [n.id, n.linkCount]))
   const maxDegree = Math.max(...nodes.map((n) => n.linkCount), 1)
 
+  // Structural pages that link to everything — exclude from analysis
+  const STRUCTURAL_IDS = new Set(["index", "log", "overview"])
+
   const scored: SurprisingConnection[] = []
 
   for (const edge of edges) {
     const source = nodeMap.get(edge.source)
     const target = nodeMap.get(edge.target)
     if (!source || !target) continue
+    if (STRUCTURAL_IDS.has(source.id) || STRUCTURAL_IDS.has(target.id)) continue
 
     let score = 0
     const reasons: string[] = []
@@ -157,8 +161,11 @@ export function detectKnowledgeGaps(
     }
   }
 
+  const STRUCTURAL_IDS = new Set(["index", "log", "overview"])
+
   const bridgeNodes = nodes
     .filter((n) => {
+      if (STRUCTURAL_IDS.has(n.id)) return false
       const neighborComms = communityNeighbors.get(n.id)
       return neighborComms && neighborComms.size >= 3
     })
