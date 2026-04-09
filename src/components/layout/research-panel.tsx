@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useRef, useEffect, useMemo } from "react"
 import ReactMarkdown from "react-markdown"
 import remarkMath from "remark-math"
 import rehypeKatex from "rehype-katex"
@@ -97,6 +97,79 @@ export function ResearchPanel() {
   )
 }
 
+/** Separate <think>/<thinking> blocks from main content */
+function separateThinking(text: string): { thinking: string; answer: string } {
+  // Match <think>...</think> or <thinking>...</thinking>
+  const thinkRegex = /^<think(?:ing)?>([\s\S]*?)(?:<\/think(?:ing)?>|$)/i
+  const match = text.match(thinkRegex)
+  if (match) {
+    const thinking = match[1].trim()
+    const rest = text.slice(match[0].length).trim()
+    return { thinking, answer: rest }
+  }
+  return { thinking: "", answer: text }
+}
+
+function SynthesisBlock({ synthesis, isStreaming }: { synthesis: string; isStreaming: boolean }) {
+  const scrollRef = useRef<HTMLDivElement>(null)
+  const { thinking, answer } = useMemo(() => separateThinking(synthesis), [synthesis])
+  const [thinkingCollapsed, setThinkingCollapsed] = useState(false)
+
+  // Auto-collapse thinking when answer starts appearing
+  useEffect(() => {
+    if (answer.length > 0 && thinking.length > 0 && !thinkingCollapsed) {
+      setThinkingCollapsed(true)
+    }
+  }, [answer, thinking, thinkingCollapsed])
+
+  // Auto-scroll to bottom during streaming
+  useEffect(() => {
+    if (isStreaming && scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight
+    }
+  }, [synthesis, isStreaming])
+
+  return (
+    <div className="mb-2 flex flex-col min-h-0">
+      <div className="mb-1 font-medium text-muted-foreground">Synthesis</div>
+      <div
+        ref={scrollRef}
+        className="flex-1 overflow-y-auto rounded bg-muted/30 p-2 prose prose-xs prose-invert max-w-none"
+        style={{ maxHeight: "calc(100vh - 400px)", minHeight: "120px" }}
+      >
+        {thinking && (
+          <div className="mb-2">
+            <button
+              onClick={() => setThinkingCollapsed((v) => !v)}
+              className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-foreground"
+            >
+              {thinkingCollapsed ? (
+                <ChevronRight className="h-3 w-3" />
+              ) : (
+                <ChevronDown className="h-3 w-3" />
+              )}
+              Thinking{isStreaming && !answer ? "..." : ""}
+            </button>
+            {!thinkingCollapsed && (
+              <div className="mt-1 rounded border border-muted px-2 py-1 text-[10px] text-muted-foreground opacity-70 leading-relaxed whitespace-pre-wrap">
+                {isStreaming && !answer
+                  ? thinking.split("\n").slice(-5).join("\n")
+                  : thinking}
+              </div>
+            )}
+          </div>
+        )}
+        {answer && (
+          <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
+            {answer}
+          </ReactMarkdown>
+        )}
+        {isStreaming && <span className="animate-pulse">▊</span>}
+      </div>
+    </div>
+  )
+}
+
 function ResearchTaskCard({ task, onRemove }: { task: ResearchTask; onRemove: (id: string) => void }) {
   const [expanded, setExpanded] = useState(
     task.status === "synthesizing" || task.status === "searching"
@@ -182,15 +255,7 @@ function ResearchTaskCard({ task, onRemove }: { task: ResearchTask; onRemove: (i
 
           {/* Synthesis (streaming) */}
           {task.synthesis && (
-            <div className="mb-2">
-              <div className="mb-1 font-medium text-muted-foreground">Synthesis</div>
-              <div className="max-h-64 overflow-y-auto rounded bg-muted/30 p-2 prose prose-xs prose-invert max-w-none">
-                <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>{task.synthesis}</ReactMarkdown>
-                {task.status === "synthesizing" && (
-                  <span className="animate-pulse">▊</span>
-                )}
-              </div>
-            </div>
+            <SynthesisBlock synthesis={task.synthesis} isStreaming={task.status === "synthesizing"} />
           )}
 
           {/* Actions */}
