@@ -25,7 +25,7 @@
 ---
 
 <p align="center">
-  <img src="assets/3-knowledge_graph.jpg" width="100%" alt="Knowledge Graph">
+  <img src="assets/overview.jpg" width="100%" alt="Overview">
 </p>
 
 ## What is this?
@@ -139,6 +139,10 @@ Not in the original. Automatic discovery of knowledge clusters using the **Louva
 - **12-color palette** — distinct visual separation between clusters
 - **Community legend** — shows top node label, member count, and cohesion per cluster
 
+<p align="center">
+  <img src="assets/kg_community.jpg" width="100%" alt="Louvain Community Detection">
+</p>
+
 ### 6. Graph Insights — Surprising Connections & Knowledge Gaps
 
 Not in the original. The system **automatically analyzes graph structure** to surface actionable insights:
@@ -157,6 +161,10 @@ Not in the original. The system **automatically analyzes graph structure** to su
 - Click any insight card to **highlight** corresponding nodes and edges in the graph; click again to deselect
 - Knowledge gaps and bridge nodes have a **Deep Research button** — triggers LLM-optimized research with domain-aware topics (reads overview.md + purpose.md for context)
 - Research topic shown in **editable confirmation dialog** before starting — user can refine topic and search queries
+
+<p align="center">
+  <img src="assets/kg_insights.jpg" width="100%" alt="Graph Insights">
+</p>
 
 ### 7. Optimized Query Retrieval Pipeline
 
