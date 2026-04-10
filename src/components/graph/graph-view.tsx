@@ -250,30 +250,6 @@ function EventHandler({ onNodeClick }: { onNodeClick: (nodeId: string) => void }
   return null
 }
 
-function ResizeHandler() {
-  const sigma = useSigma()
-
-  useEffect(() => {
-    const container = sigma.getContainer()
-    if (!container) return
-
-    const observer = new ResizeObserver(() => {
-      // Schedule refresh after layout settles
-      requestAnimationFrame(() => {
-        try {
-          sigma.refresh()
-        } catch {
-          // Ignore — sigma may be in an invalid state during rapid resize
-        }
-      })
-    })
-    observer.observe(container)
-    return () => observer.disconnect()
-  }, [sigma])
-
-  return null
-}
-
 function ZoomControls() {
   const sigma = useSigma()
 
@@ -336,6 +312,8 @@ export function GraphView() {
   const [showInsights, setShowInsights] = useState(false)
   const [highlightedNodes, setHighlightedNodes] = useState<Set<string>>(new Set())
   const [dismissedInsights, setDismissedInsights] = useState<Set<string>>(new Set())
+  const [sigmaKey, setSigmaKey] = useState(0)
+  const graphContainerRef = useRef<HTMLDivElement>(null)
   // Research confirmation dialog
   const [researchDialog, setResearchDialog] = useState<{
     loading: boolean
@@ -428,6 +406,25 @@ export function GraphView() {
     )
     setResearchDialog(null)
   }, [researchDialog])
+
+  // Force SigmaContainer remount when graph container resizes (debounced)
+  // This prevents WebGL context loss ("could not find suitable program for node type circle")
+  useEffect(() => {
+    const el = graphContainerRef.current
+    if (!el) return
+    let timer: ReturnType<typeof setTimeout>
+    const observer = new ResizeObserver(() => {
+      clearTimeout(timer)
+      timer = setTimeout(() => {
+        setSigmaKey((k) => k + 1)
+      }, 300)
+    })
+    observer.observe(el)
+    return () => {
+      clearTimeout(timer)
+      observer.disconnect()
+    }
+  }, [])
 
   // Count nodes by type for legend
   const typeCounts = nodes.reduce<Record<string, number>>((acc, n) => {
@@ -534,10 +531,10 @@ export function GraphView() {
       {/* Graph canvas + Insights side panel */}
       <div className="flex flex-1 min-h-0">
         {/* Graph canvas */}
-        <div className="relative flex-1 min-w-0 overflow-hidden bg-slate-50 dark:bg-slate-950">
+        <div ref={graphContainerRef} className="relative flex-1 min-w-0 overflow-hidden bg-slate-50 dark:bg-slate-950">
           <ErrorBoundary>
           <SigmaContainer
-            key={showInsights ? "insights-open" : "insights-closed"}
+            key={sigmaKey}
             style={{ width: "100%", height: "100%", background: "transparent" }}
             settings={{
               renderEdgeLabels: true,
@@ -588,7 +585,6 @@ export function GraphView() {
             <GraphLoader nodes={nodes} edges={edges} colorMode={colorMode} />
             <EventHandler onNodeClick={handleNodeClick} />
             <HighlightManager highlightedNodes={highlightedNodes} />
-            <ResizeHandler />
             <ZoomControls />
           </SigmaContainer>
           </ErrorBoundary>
