@@ -57,7 +57,12 @@ export function AppLayout({ onSwitchProject }: AppLayoutProps) {
         }
         if (isDraggingRight.current) {
           const newWidth = rect.right - e.clientX
-          setRightWidth(Math.max(250, Math.min(rect.width * 0.5, newWidth)))
+          // Ensure center area keeps at least 300px
+          // Read left panel width from DOM to avoid stale closure
+          const leftEl = containerRef.current.firstElementChild as HTMLElement | null
+          const currentLeftWidth = leftEl?.offsetWidth ?? 220
+          const maxRight = rect.width - currentLeftWidth - 300
+          setRightWidth(Math.max(250, Math.min(maxRight, newWidth)))
         }
       }
 
