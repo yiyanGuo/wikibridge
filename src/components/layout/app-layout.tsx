@@ -53,7 +53,11 @@ export function AppLayout({ onSwitchProject }: AppLayoutProps) {
 
         if (isDraggingLeft.current) {
           const newWidth = e.clientX - rect.left
-          setLeftWidth(Math.max(150, Math.min(rect.width * 0.3, newWidth)))
+          // Ensure center area keeps at least 300px
+          const rightEl = containerRef.current.lastElementChild as HTMLElement | null
+          const currentRightWidth = rightEl?.offsetWidth ?? 0
+          const maxLeft = rect.width - currentRightWidth - 300
+          setLeftWidth(Math.max(150, Math.min(maxLeft, newWidth)))
         }
         if (isDraggingRight.current) {
           const newWidth = rect.right - e.clientX
