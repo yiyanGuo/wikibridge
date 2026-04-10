@@ -139,8 +139,12 @@ function SaveToWikiButton({ content, visible }: { content: string; visible: bool
       const fileName = `${slug}-${date}.md`
       const filePath = `${pp}/wiki/queries/${fileName}`
 
-      // Strip hidden sources comment from content
-      const cleanContent = content.replace(/<!--\s*sources:.*?-->/g, "").trimEnd()
+      // Strip hidden sources comment and thinking blocks from content
+      const cleanContent = content
+        .replace(/<!--\s*sources:.*?-->/g, "")
+        .replace(/<think(?:ing)?>\s*[\s\S]*?<\/think(?:ing)?>\s*/gi, "")
+        .replace(/<think(?:ing)?>\s*[\s\S]*$/gi, "")
+        .trimEnd()
 
       const frontmatter = [
         "---",

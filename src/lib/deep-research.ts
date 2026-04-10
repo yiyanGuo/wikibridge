@@ -176,6 +176,12 @@ async function executeResearch(
       .map((r, i) => `${i + 1}. [${r.title}](${r.url}) — ${r.source}`)
       .join("\n")
 
+    // Strip <think>/<thinking> blocks before saving
+    const cleanedSynthesis = accumulated
+      .replace(/<think(?:ing)?>\s*[\s\S]*?<\/think(?:ing)?>\s*/gi, "")
+      .replace(/<think(?:ing)?>\s*[\s\S]*$/gi, "") // unclosed thinking block
+      .trimStart()
+
     const pageContent = [
       "---",
       `type: query`,
@@ -187,7 +193,7 @@ async function executeResearch(
       "",
       `# Research: ${topic}`,
       "",
-      accumulated,
+      cleanedSynthesis,
       "",
       "## References",
       "",
