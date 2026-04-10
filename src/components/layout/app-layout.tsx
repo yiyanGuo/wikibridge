@@ -9,6 +9,7 @@ import { PreviewPanel } from "./preview-panel"
 import { ResearchPanel } from "./research-panel"
 import { ActivityPanel } from "./activity-panel"
 import { useResearchStore } from "@/stores/research-store"
+import { ErrorBoundary } from "@/components/error-boundary"
 
 interface AppLayoutProps {
   onSwitchProject: () => void
@@ -101,7 +102,9 @@ export function AppLayout({ onSwitchProject }: AppLayoutProps) {
 
         {/* Center: Chat or view (sources/settings/review) */}
         <div className="min-w-0 flex-1 overflow-hidden">
-          <ContentArea />
+          <ErrorBoundary>
+            <ContentArea />
+          </ErrorBoundary>
         </div>
 
         {/* Right panels */}
@@ -115,18 +118,20 @@ export function AppLayout({ onSwitchProject }: AppLayoutProps) {
               className="flex shrink-0 flex-col overflow-hidden border-l"
               style={{ width: rightWidth }}
             >
-              {/* File preview on top (if file selected) */}
-              {selectedFile && (
-                <div className={researchPanelOpen ? "flex-1 overflow-hidden border-b" : "flex-1 overflow-hidden"}>
-                  <PreviewPanel />
-                </div>
-              )}
-              {/* Research panel on bottom (if open) */}
-              {researchPanelOpen && (
-                <div className={selectedFile ? "h-1/2 shrink-0 overflow-hidden" : "flex-1 overflow-hidden"}>
-                  <ResearchPanel />
-                </div>
-              )}
+              <ErrorBoundary>
+                {/* File preview on top (if file selected) */}
+                {selectedFile && (
+                  <div className={researchPanelOpen ? "flex-1 overflow-hidden border-b" : "flex-1 overflow-hidden"}>
+                    <PreviewPanel />
+                  </div>
+                )}
+                {/* Research panel on bottom (if open) */}
+                {researchPanelOpen && (
+                  <div className={selectedFile ? "h-1/2 shrink-0 overflow-hidden" : "flex-1 overflow-hidden"}>
+                    <ResearchPanel />
+                  </div>
+                )}
+              </ErrorBoundary>
             </div>
           </>
         )}
