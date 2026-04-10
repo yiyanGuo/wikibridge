@@ -5,6 +5,7 @@ import "@react-sigma/core/lib/style.css"
 import forceAtlas2 from "graphology-layout-forceatlas2"
 import { Network, RefreshCw, ZoomIn, ZoomOut, Maximize, Layers, Tag, Lightbulb, AlertTriangle, Link2, X, Search, Loader2 } from "lucide-react"
 import { ErrorBoundary } from "@/components/error-boundary"
+import { useResearchStore } from "@/stores/research-store"
 import { Button } from "@/components/ui/button"
 import { useWikiStore } from "@/stores/wiki-store"
 import { readFile } from "@/commands/fs"
@@ -408,31 +409,26 @@ export function GraphView() {
     setResearchDialog(null)
   }, [researchDialog])
 
-  // Remove sigma during resize, rebuild after resize stops.
-  // Sigma's WebGL context crashes when the canvas is resized mid-render.
+  // Pre-emptively unmount sigma BEFORE layout changes that would resize the container.
+  // Sigma's WebGL context crashes when canvas is resized ("could not find suitable program").
+  // We watch the store values that cause right panel to appear/disappear.
+  const selectedFileForLayout = useWikiStore((s) => s.selectedFile)
+  const researchPanelForLayout = useResearchStore((s) => s.panelOpen)
+  const layoutKey = `${!!selectedFileForLayout}-${researchPanelForLayout}-${showInsights}`
+  const prevLayoutKey = useRef(layoutKey)
+
   useEffect(() => {
-    const el = graphContainerRef.current
-    if (!el) return
-    let timer: ReturnType<typeof setTimeout>
-    let lastWidth = el.offsetWidth
-    const observer = new ResizeObserver(() => {
-      const newWidth = el.offsetWidth
-      if (newWidth === lastWidth) return
-      lastWidth = newWidth
-      // Immediately hide sigma to prevent WebGL crash
+    if (prevLayoutKey.current !== layoutKey) {
+      prevLayoutKey.current = layoutKey
+      // Layout is about to change — unmount sigma immediately
       setIsResizing(true)
-      clearTimeout(timer)
-      timer = setTimeout(() => {
+      const timer = setTimeout(() => {
         setSigmaKey((k) => k + 1)
         setIsResizing(false)
-      }, 200)
-    })
-    observer.observe(el)
-    return () => {
-      clearTimeout(timer)
-      observer.disconnect()
+      }, 100)
+      return () => clearTimeout(timer)
     }
-  }, [])
+  }, [layoutKey])
 
   // Count nodes by type for legend
   const typeCounts = nodes.reduce<Record<string, number>>((acc, n) => {
