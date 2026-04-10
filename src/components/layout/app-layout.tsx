@@ -57,8 +57,8 @@ export function AppLayout({ onSwitchProject }: AppLayoutProps) {
         if (!containerRef.current) return
         const totalWidth = containerRef.current.getBoundingClientRect().width
         const minCenter = 300
-        // Account for drag handles (~6px total)
-        const handles = 6
+        // Account for drag handles (6px each, up to 2 when right panel open)
+        const handles = 12
 
         if (isDraggingLeft.current) {
           const newWidth = e.clientX - containerRef.current.getBoundingClientRect().left
@@ -107,7 +107,7 @@ export function AppLayout({ onSwitchProject }: AppLayoutProps) {
         />
 
         {/* Center: Chat or view (sources/settings/review) */}
-        <div className="min-w-0 flex-1 overflow-hidden">
+        <div className="flex-1 overflow-hidden" style={{ minWidth: 300 }}>
           <ContentArea />
         </div>
 
