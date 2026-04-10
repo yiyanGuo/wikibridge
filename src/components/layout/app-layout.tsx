@@ -87,6 +87,18 @@ export function AppLayout({ onSwitchProject }: AppLayoutProps) {
     []
   )
 
+  // Clamp widths at render time to guarantee they never overflow the container
+  const hasRightPanel = !!(selectedFile || researchPanelOpen)
+  const handleWidth = 6
+  const totalHandles = hasRightPanel ? handleWidth * 2 : handleWidth
+  const minCenter = 300
+
+  const safeLeftWidth = Math.max(150, Math.min(leftWidth, 500))
+  const maxRight = hasRightPanel
+    ? Math.max(250, (containerRef.current?.getBoundingClientRect().width ?? 1200) - safeLeftWidth - minCenter - totalHandles)
+    : 0
+  const safeRightWidth = hasRightPanel ? Math.max(250, Math.min(rightWidth, maxRight)) : 0
+
   return (
     <div className="flex h-screen bg-background text-foreground">
       <IconSidebar onSwitchProject={onSwitchProject} />
@@ -94,7 +106,7 @@ export function AppLayout({ onSwitchProject }: AppLayoutProps) {
         {/* Left: File tree + Activity */}
         <div
           className="flex shrink-0 flex-col overflow-hidden border-r"
-          style={{ width: leftWidth }}
+          style={{ width: safeLeftWidth }}
         >
           <div className="flex-1 overflow-hidden">
             <SidebarPanel />
@@ -107,12 +119,12 @@ export function AppLayout({ onSwitchProject }: AppLayoutProps) {
         />
 
         {/* Center: Chat or view (sources/settings/review) */}
-        <div className="flex-1 overflow-hidden" style={{ minWidth: 300 }}>
+        <div className="min-w-0 flex-1 overflow-hidden">
           <ContentArea />
         </div>
 
         {/* Right panels */}
-        {(selectedFile || researchPanelOpen) && (
+        {hasRightPanel && (
           <>
             <div
               className="w-1.5 shrink-0 cursor-col-resize bg-border/40 transition-colors hover:bg-primary/30 active:bg-primary/40"
@@ -120,7 +132,7 @@ export function AppLayout({ onSwitchProject }: AppLayoutProps) {
             />
             <div
               className="flex shrink-0 flex-col overflow-hidden border-l"
-              style={{ width: rightWidth }}
+              style={{ width: safeRightWidth }}
             >
               {/* File preview on top (if file selected) */}
               {selectedFile && (
