@@ -39,6 +39,12 @@ export function AppLayout({ onSwitchProject }: AppLayoutProps) {
     loadFileTree()
   }, [loadFileTree])
 
+  // Use refs to track latest widths so drag handler always reads fresh values
+  const leftWidthRef = useRef(leftWidth)
+  const rightWidthRef = useRef(rightWidth)
+  leftWidthRef.current = leftWidth
+  rightWidthRef.current = rightWidth
+
   const startDrag = useCallback(
     (side: "left" | "right") => (e: React.MouseEvent) => {
       e.preventDefault()
@@ -49,23 +55,19 @@ export function AppLayout({ onSwitchProject }: AppLayoutProps) {
 
       const handleMouseMove = (e: MouseEvent) => {
         if (!containerRef.current) return
-        const rect = containerRef.current.getBoundingClientRect()
+        const totalWidth = containerRef.current.getBoundingClientRect().width
+        const minCenter = 300
+        // Account for drag handles (~6px total)
+        const handles = 6
 
         if (isDraggingLeft.current) {
-          const newWidth = e.clientX - rect.left
-          // Ensure center area keeps at least 300px
-          const rightEl = containerRef.current.lastElementChild as HTMLElement | null
-          const currentRightWidth = rightEl?.offsetWidth ?? 0
-          const maxLeft = rect.width - currentRightWidth - 300
+          const newWidth = e.clientX - containerRef.current.getBoundingClientRect().left
+          const maxLeft = totalWidth - rightWidthRef.current - minCenter - handles
           setLeftWidth(Math.max(150, Math.min(maxLeft, newWidth)))
         }
         if (isDraggingRight.current) {
-          const newWidth = rect.right - e.clientX
-          // Ensure center area keeps at least 300px
-          // Read left panel width from DOM to avoid stale closure
-          const leftEl = containerRef.current.firstElementChild as HTMLElement | null
-          const currentLeftWidth = leftEl?.offsetWidth ?? 220
-          const maxRight = rect.width - currentLeftWidth - 300
+          const newWidth = containerRef.current.getBoundingClientRect().right - e.clientX
+          const maxRight = totalWidth - leftWidthRef.current - minCenter - handles
           setRightWidth(Math.max(250, Math.min(maxRight, newWidth)))
         }
       }
