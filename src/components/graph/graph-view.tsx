@@ -3,7 +3,8 @@ import Graph from "graphology"
 import { SigmaContainer, useLoadGraph, useRegisterEvents, useSigma } from "@react-sigma/core"
 import "@react-sigma/core/lib/style.css"
 import forceAtlas2 from "graphology-layout-forceatlas2"
-import { Network, RefreshCw, ZoomIn, ZoomOut, Maximize, Layers, Tag, Lightbulb, AlertTriangle, Link2, X, Search, Loader2, Pencil } from "lucide-react"
+import { Network, RefreshCw, ZoomIn, ZoomOut, Maximize, Layers, Tag, Lightbulb, AlertTriangle, Link2, X, Search, Loader2 } from "lucide-react"
+import { ErrorBoundary } from "@/components/error-boundary"
 import { Button } from "@/components/ui/button"
 import { useWikiStore } from "@/stores/wiki-store"
 import { readFile } from "@/commands/fs"
@@ -245,6 +246,30 @@ function EventHandler({ onNodeClick }: { onNodeClick: (nodeId: string) => void }
       },
     })
   }, [registerEvents, sigma, onNodeClick])
+
+  return null
+}
+
+function ResizeHandler() {
+  const sigma = useSigma()
+
+  useEffect(() => {
+    const container = sigma.getContainer()
+    if (!container) return
+
+    const observer = new ResizeObserver(() => {
+      // Schedule refresh after layout settles
+      requestAnimationFrame(() => {
+        try {
+          sigma.refresh()
+        } catch {
+          // Ignore — sigma may be in an invalid state during rapid resize
+        }
+      })
+    })
+    observer.observe(container)
+    return () => observer.disconnect()
+  }, [sigma])
 
   return null
 }
@@ -510,7 +535,9 @@ export function GraphView() {
       <div className="flex flex-1 min-h-0">
         {/* Graph canvas */}
         <div className="relative flex-1 min-w-0 overflow-hidden bg-slate-50 dark:bg-slate-950">
+          <ErrorBoundary>
           <SigmaContainer
+            key={showInsights ? "insights-open" : "insights-closed"}
             style={{ width: "100%", height: "100%", background: "transparent" }}
             settings={{
               renderEdgeLabels: true,
@@ -561,8 +588,10 @@ export function GraphView() {
             <GraphLoader nodes={nodes} edges={edges} colorMode={colorMode} />
             <EventHandler onNodeClick={handleNodeClick} />
             <HighlightManager highlightedNodes={highlightedNodes} />
+            <ResizeHandler />
             <ZoomControls />
           </SigmaContainer>
+          </ErrorBoundary>
 
           {/* Legend */}
           <div className="absolute bottom-3 left-3 rounded-lg border bg-background/90 backdrop-blur-sm px-3 py-2 text-xs shadow-sm max-w-[260px]">
