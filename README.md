@@ -99,6 +99,7 @@ Step 2 (Generation): LLM takes analysis → generates wiki files
 ```
 
 Additional ingest enhancements beyond the original:
+- **SHA256 incremental cache** — source file content is hashed before ingest; unchanged files are skipped automatically, saving LLM tokens and time
 - **Source traceability** — every generated wiki page includes a `sources: []` field in YAML frontmatter, linking back to the raw source files that contributed to it
 - **overview.md auto-update** — global summary page regenerated on every ingest to reflect the latest state of the wiki
 - **Guaranteed source summary** — fallback ensures a source summary page is always created, even if the LLM omits it
@@ -120,13 +121,26 @@ The original mentions `[[wikilinks]]` for cross-references but has no graph anal
 | Adamic-Adar | ×1.5 | Pages sharing common neighbors (weighted by neighbor degree) |
 | Type affinity | ×1.0 | Bonus for same page type (entity↔entity, concept↔concept) |
 
+**Louvain Community Detection:**
+- Automatic knowledge cluster discovery via graphology-communities-louvain
+- Type / Community coloring mode toggle — see pages by type or by discovered topic clusters
+- Per-community cohesion score (intra-edge density), low-cohesion clusters flagged with warning
+- 12-color palette, community legend with top node labels and member counts
+
+**Graph Insights Panel:**
+- Right-side expandable panel showing automatically discovered insights
+- **Surprising connections** — cross-community, cross-type, peripheral↔hub edges scored by composite metric; dismissable
+- **Knowledge gaps** — isolated pages (degree ≤ 1), sparse communities (cohesion < 0.15), bridge nodes (connecting 3+ clusters)
+- Click any insight to highlight corresponding nodes and edges in the graph
+- **Deep Research integration** — knowledge gaps and bridge nodes have a one-click Deep Research button that generates domain-aware search topics via LLM
+
 **Graph Visualization (sigma.js + graphology + ForceAtlas2):**
-- Node colors by page type, sizes scaled by link count (√ scaling)
+- Node colors by page type or community, sizes scaled by link count (√ scaling)
 - Edge thickness and color by relevance weight (green=strong, gray=weak)
 - Hover interaction: neighbors stay visible, non-neighbors dim, edges highlight with relevance score label
 - Zoom controls (ZoomIn, ZoomOut, Fit-to-screen)
 - Position caching prevents layout jumps when data updates
-- Legend showing node counts per type
+- Legend switches between type counts and community info based on coloring mode
 
 ### 5. Optimized Query Retrieval Pipeline
 
@@ -176,12 +190,14 @@ Not in the original. For LLMs that emit `<think>` blocks (DeepSeek, QwQ, etc.):
 - **Collapsed by default** — thinking blocks hidden after completion, click to expand
 - **Visual separation** — thinking content shown in distinct style, separate from the main response
 
-### 8. LaTeX → Unicode Conversion
+### 8. KaTeX Math Rendering
 
-Not in the original. Handles mathematical notation across all views:
+Not in the original. Full LaTeX math support across all views:
 
-- **100+ symbol mappings** — Greek letters (α, β, γ), operators (∑, ∏, ∫), arrows (→, ←, ↔), relations (≤, ≥, ≠), and more
-- **Inline conversion** — `$\alpha$` → α, `$\sum$` → ∑, rendered in chat, preview, and saved wiki pages
+- **KaTeX rendering** — inline `$...$` and block `$$...$$` formulas rendered via remark-math + rehype-katex
+- **Milkdown math plugin** — preview editor renders math natively via @milkdown/plugin-math
+- **Auto-detection** — bare `\begin{aligned}` and other LaTeX environments automatically wrapped with `$$` delimiters
+- **Unicode fallback** — 100+ symbol mappings (α, ∑, →, ≤, etc.) for simple inline notation outside math blocks
 
 ### 9. Review System (Async Human-in-the-Loop)
 
@@ -200,12 +216,15 @@ The original suggests staying involved during ingest. We added an **asynchronous
 
 Not in the original. When the LLM identifies knowledge gaps:
 
-- **Web search** (Tavily API) finds relevant sources
+- **Web search** (Tavily API) finds relevant sources with full content extraction (no truncation)
 - **Multiple search queries** per topic — LLM-generated at ingest time, optimized for search engines
+- **LLM-optimized research topics** — when triggered from Graph Insights, LLM reads overview.md + purpose.md to generate domain-specific topics and queries (not generic keywords)
+- **User confirmation dialog** — editable topic and search queries shown for review before research starts
 - **LLM synthesizes** findings into a wiki research page with cross-references to existing wiki
+- **Thinking display** — `<think>` blocks shown as collapsible sections during synthesis, auto-scroll to latest content
 - **Auto-ingest** — research results automatically processed to extract entities/concepts into the wiki
 - **Task queue** with 3 concurrent tasks
-- **Research Panel** — dedicated sidebar panel showing real-time progress per task
+- **Research Panel** — dedicated sidebar panel with dynamic height, real-time streaming progress
 
 ### 11. Browser Extension (Web Clipper)
 
