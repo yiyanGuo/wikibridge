@@ -16,6 +16,9 @@ src-tauri/gen/
 .env.local
 .env.*.local
 
+# Internal docs (not shipped)
+docs/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
