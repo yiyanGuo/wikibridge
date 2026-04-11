@@ -1,0 +1,5724 @@
+[
+  {
+    "query": "Geoffrey Hinton",
+    "intent": "exact",
+    "level": 1,
+    "expected": [
+      "geoffrey-hinton"
+    ],
+    "unexpected": [],
+    "notes": "exact entity name"
+  },
+  {
+    "query": "Yann LeCun CNN",
+    "intent": "exact",
+    "level": 1,
+    "expected": [
+      "yann-lecun",
+      "convolutional-neural-network"
+    ],
+    "unexpected": [],
+    "notes": ""
+  },
+  {
+    "query": "OpenAI GPT",
+    "intent": "exact",
+    "level": 1,
+    "expected": [
+      "openai",
+      "gpt4-technical-report"
+    ],
+    "unexpected": [],
+    "notes": ""
+  },
+  {
+    "query": "DeepMind AlphaFold",
+    "intent": "exact",
+    "level": 1,
+    "expected": [
+      "deepmind",
+      "alphafold-nature-paper"
+    ],
+    "unexpected": [],
+    "notes": ""
+  },
+  {
+    "query": "NVIDIA GPU CUDA",
+    "intent": "exact",
+    "level": 1,
+    "expected": [
+      "nvidia"
+    ],
+    "unexpected": [],
+    "notes": ""
+  },
+  {
+    "query": "PyTorch framework",
+    "intent": "exact",
+    "level": 1,
+    "expected": [
+      "pytorch"
+    ],
+    "unexpected": [],
+    "notes": ""
+  },
+  {
+    "query": "TensorFlow Google",
+    "intent": "exact",
+    "level": 1,
+    "expected": [
+      "tensorflow"
+    ],
+    "unexpected": [],
+    "notes": ""
+  },
+  {
+    "query": "Hugging Face transformers",
+    "intent": "exact",
+    "level": 1,
+    "expected": [
+      "hugging-face"
+    ],
+    "unexpected": [],
+    "notes": ""
+  },
+  {
+    "query": "Anthropic Claude",
+    "intent": "exact",
+    "level": 1,
+    "expected": [
+      "anthropic"
+    ],
+    "unexpected": [],
+    "notes": ""
+  },
+  {
+    "query": "Transformer architecture",
+    "intent": "exact",
+    "level": 1,
+    "expected": [
+      "transformer-architecture"
+    ],
+    "unexpected": [],
+    "notes": ""
+  },
+  {
+    "query": "backpropagation algorithm",
+    "intent": "exact",
+    "level": 1,
+    "expected": [
+      "backpropagation"
+    ],
+    "unexpected": [],
+    "notes": ""
+  },
+  {
+    "query": "LSTM network",
+    "intent": "exact",
+    "level": 1,
+    "expected": [
+      "lstm-network"
+    ],
+    "unexpected": [],
+    "notes": ""
+  },
+  {
+    "query": "batch normalization",
+    "intent": "exact",
+    "level": 1,
+    "expected": [
+      "batch-normalization"
+    ],
+    "unexpected": [],
+    "notes": ""
+  },
+  {
+    "query": "gradient descent optimization",
+    "intent": "exact",
+    "level": 1,
+    "expected": [
+      "gradient-descent"
+    ],
+    "unexpected": [],
+    "notes": ""
+  },
+  {
+    "query": "Tesla Energy Powerwall",
+    "intent": "exact",
+    "level": 1,
+    "expected": [
+      "tesla-energy"
+    ],
+    "unexpected": [],
+    "notes": ""
+  },
+  {
+    "query": "CATL 宁德时代",
+    "intent": "exact",
+    "level": 1,
+    "expected": [
+      "catl"
+    ],
+    "unexpected": [],
+    "notes": ""
+  },
+  {
+    "query": "ITER nuclear fusion",
+    "intent": "exact",
+    "level": 1,
+    "expected": [
+      "iter",
+      "nuclear-fusion"
+    ],
+    "unexpected": [],
+    "notes": ""
+  },
+  {
+    "query": "photovoltaic cell solar",
+    "intent": "exact",
+    "level": 1,
+    "expected": [
+      "photovoltaic-cell"
+    ],
+    "unexpected": [],
+    "notes": ""
+  },
+  {
+    "query": "carbon capture storage",
+    "intent": "exact",
+    "level": 1,
+    "expected": [
+      "carbon-capture"
+    ],
+    "unexpected": [],
+    "notes": ""
+  },
+  {
+    "query": "smart grid demand response",
+    "intent": "exact",
+    "level": 1,
+    "expected": [
+      "smart-grid"
+    ],
+    "unexpected": [],
+    "notes": ""
+  },
+  {
+    "query": "hydrogen fuel cell",
+    "intent": "exact",
+    "level": 1,
+    "expected": [
+      "hydrogen-fuel-cell"
+    ],
+    "unexpected": [],
+    "notes": ""
+  },
+  {
+    "query": "CRISPR gene editing",
+    "intent": "exact",
+    "level": 1,
+    "expected": [
+      "crispr-gene-editing",
+      "crispr-therapeutics"
+    ],
+    "unexpected": [],
+    "notes": ""
+  },
+  {
+    "query": "mRNA technology vaccine",
+    "intent": "exact",
+    "level": 1,
+    "expected": [
+      "mrna-technology"
+    ],
+    "unexpected": [],
+    "notes": ""
+  },
+  {
+    "query": "CAR-T cell therapy",
+    "intent": "exact",
+    "level": 1,
+    "expected": [
+      "car-t-therapy"
+    ],
+    "unexpected": [],
+    "notes": ""
+  },
+  {
+    "query": "protein folding AlphaFold",
+    "intent": "exact",
+    "level": 1,
+    "expected": [
+      "protein-folding",
+      "alphafold-nature-paper"
+    ],
+    "unexpected": [],
+    "notes": ""
+  },
+  {
+    "query": "Kubernetes container",
+    "intent": "exact",
+    "level": 1,
+    "expected": [
+      "kubernetes"
+    ],
+    "unexpected": [],
+    "notes": ""
+  },
+  {
+    "query": "Docker containerization",
+    "intent": "exact",
+    "level": 1,
+    "expected": [
+      "docker"
+    ],
+    "unexpected": [],
+    "notes": ""
+  },
+  {
+    "query": "microservices architecture",
+    "intent": "exact",
+    "level": 1,
+    "expected": [
+      "microservices"
+    ],
+    "unexpected": [],
+    "notes": ""
+  },
+  {
+    "query": "DevOps CI/CD",
+    "intent": "exact",
+    "level": 1,
+    "expected": [
+      "devops"
+    ],
+    "unexpected": [],
+    "notes": ""
+  },
+  {
+    "query": "design patterns singleton",
+    "intent": "exact",
+    "level": 1,
+    "expected": [
+      "design-patterns"
+    ],
+    "unexpected": [],
+    "notes": ""
+  },
+  {
+    "query": "cold war containment",
+    "intent": "exact",
+    "level": 1,
+    "expected": [
+      "cold-war"
+    ],
+    "unexpected": [],
+    "notes": ""
+  },
+  {
+    "query": "Bretton Woods system",
+    "intent": "exact",
+    "level": 1,
+    "expected": [
+      "bretton-woods"
+    ],
+    "unexpected": [],
+    "notes": ""
+  },
+  {
+    "query": "globalization trade",
+    "intent": "exact",
+    "level": 1,
+    "expected": [
+      "globalization"
+    ],
+    "unexpected": [],
+    "notes": ""
+  },
+  {
+    "query": "cognitive biases",
+    "intent": "exact",
+    "level": 1,
+    "expected": [
+      "cognitive-biases"
+    ],
+    "unexpected": [],
+    "notes": ""
+  },
+  {
+    "query": "dual process theory Kahneman",
+    "intent": "exact",
+    "level": 1,
+    "expected": [
+      "dual-process-theory",
+      "daniel-kahneman"
+    ],
+    "unexpected": [],
+    "notes": ""
+  },
+  {
+    "query": "spaced repetition Anki",
+    "intent": "exact",
+    "level": 1,
+    "expected": [
+      "spaced-repetition",
+      "anki"
+    ],
+    "unexpected": [],
+    "notes": ""
+  },
+  {
+    "query": "quantitative trading",
+    "intent": "exact",
+    "level": 1,
+    "expected": [
+      "quantitative-trading"
+    ],
+    "unexpected": [],
+    "notes": ""
+  },
+  {
+    "query": "blockchain distributed ledger",
+    "intent": "exact",
+    "level": 1,
+    "expected": [
+      "blockchain"
+    ],
+    "unexpected": [],
+    "notes": ""
+  },
+  {
+    "query": "risk management VaR",
+    "intent": "exact",
+    "level": 1,
+    "expected": [
+      "risk-management"
+    ],
+    "unexpected": [],
+    "notes": ""
+  },
+  {
+    "query": "behavioral economics prospect theory",
+    "intent": "exact",
+    "level": 1,
+    "expected": [
+      "behavioral-economics"
+    ],
+    "unexpected": [],
+    "notes": ""
+  },
+  {
+    "query": "Zettelkasten note taking",
+    "intent": "exact",
+    "level": 1,
+    "expected": [
+      "zettelkasten"
+    ],
+    "unexpected": [],
+    "notes": ""
+  },
+  {
+    "query": "Feynman technique learning",
+    "intent": "exact",
+    "level": 1,
+    "expected": [
+      "feynman-technique"
+    ],
+    "unexpected": [],
+    "notes": ""
+  },
+  {
+    "query": "Bloom taxonomy",
+    "intent": "exact",
+    "level": 1,
+    "expected": [
+      "bloom-taxonomy"
+    ],
+    "unexpected": [],
+    "notes": ""
+  },
+  {
+    "query": "reinforcement learning reward",
+    "intent": "exact",
+    "level": 1,
+    "expected": [
+      "reinforcement-learning"
+    ],
+    "unexpected": [],
+    "notes": ""
+  },
+  {
+    "query": "GAN generative adversarial",
+    "intent": "exact",
+    "level": 1,
+    "expected": [
+      "generative-adversarial-network"
+    ],
+    "unexpected": [],
+    "notes": ""
+  },
+  {
+    "query": "transfer learning fine-tuning",
+    "intent": "exact",
+    "level": 1,
+    "expected": [
+      "transfer-learning"
+    ],
+    "unexpected": [],
+    "notes": ""
+  },
+  {
+    "query": "ResNet skip connection",
+    "intent": "exact",
+    "level": 1,
+    "expected": [
+      "resnet-paper"
+    ],
+    "unexpected": [],
+    "notes": ""
+  },
+  {
+    "query": "BERT bidirectional transformer",
+    "intent": "exact",
+    "level": 1,
+    "expected": [
+      "bert-paper"
+    ],
+    "unexpected": [],
+    "notes": ""
+  },
+  {
+    "query": "attention is all you need",
+    "intent": "exact",
+    "level": 1,
+    "expected": [
+      "attention-is-all-you-need"
+    ],
+    "unexpected": [],
+    "notes": ""
+  },
+  {
+    "query": "2008 financial crisis",
+    "intent": "exact",
+    "level": 1,
+    "expected": [
+      "financial-crisis-2008"
+    ],
+    "unexpected": [],
+    "notes": ""
+  },
+  {
+    "query": "deep learning pioneer Turing award",
+    "intent": "conceptual",
+    "level": 2,
+    "expected": [
+      "geoffrey-hinton"
+    ],
+    "unexpected": [],
+    "notes": "description instead of name"
+  },
+  {
+    "query": "convolutional feature extraction image recognition",
+    "intent": "conceptual",
+    "level": 2,
+    "expected": [
+      "convolutional-neural-network",
+      "imagenet-paper"
+    ],
+    "unexpected": [],
+    "notes": "concept description without saying CNN"
+  },
+  {
+    "query": "reward-based learning policy optimization",
+    "intent": "conceptual",
+    "level": 2,
+    "expected": [
+      "reinforcement-learning"
+    ],
+    "unexpected": [],
+    "notes": "synonym: reinforcement learning"
+  },
+  {
+    "query": "sequence modeling vanishing gradient gates",
+    "intent": "conceptual",
+    "level": 2,
+    "expected": [
+      "lstm-network"
+    ],
+    "unexpected": [],
+    "notes": "LSTM description without acronym"
+  },
+  {
+    "query": "pre-training and fine-tuning paradigm",
+    "intent": "conceptual",
+    "level": 2,
+    "expected": [
+      "transfer-learning",
+      "bert-paper"
+    ],
+    "unexpected": [],
+    "notes": "transfer learning described"
+  },
+  {
+    "query": "generator discriminator adversarial training",
+    "intent": "conceptual",
+    "level": 2,
+    "expected": [
+      "generative-adversarial-network"
+    ],
+    "unexpected": [],
+    "notes": "GAN described by components"
+  },
+  {
+    "query": "query key value self-attention",
+    "intent": "conceptual",
+    "level": 2,
+    "expected": [
+      "attention-mechanism",
+      "transformer-architecture"
+    ],
+    "unexpected": [],
+    "notes": "QKV description"
+  },
+  {
+    "query": "stochastic optimization parameter update",
+    "intent": "conceptual",
+    "level": 2,
+    "expected": [
+      "gradient-descent",
+      "adam-optimizer-paper"
+    ],
+    "unexpected": [],
+    "notes": "gradient descent synonym"
+  },
+  {
+    "query": "internal covariate shift normalization",
+    "intent": "conceptual",
+    "level": 2,
+    "expected": [
+      "batch-normalization"
+    ],
+    "unexpected": [],
+    "notes": "BN described by problem it solves"
+  },
+  {
+    "query": "silicon solar energy conversion",
+    "intent": "conceptual",
+    "level": 2,
+    "expected": [
+      "photovoltaic-cell"
+    ],
+    "unexpected": [],
+    "notes": "PV cell described"
+  },
+  {
+    "query": "lithium ion energy density rechargeable",
+    "intent": "conceptual",
+    "level": 2,
+    "expected": [
+      "battery-technology",
+      "catl"
+    ],
+    "unexpected": [],
+    "notes": "battery described"
+  },
+  {
+    "query": "CO2 removal atmosphere sequestration",
+    "intent": "conceptual",
+    "level": 2,
+    "expected": [
+      "carbon-capture"
+    ],
+    "unexpected": [],
+    "notes": "CCS described"
+  },
+  {
+    "query": "electricity grid digital optimization IoT",
+    "intent": "conceptual",
+    "level": 2,
+    "expected": [
+      "smart-grid"
+    ],
+    "unexpected": [],
+    "notes": "smart grid described"
+  },
+  {
+    "query": "水电解绿色氢气",
+    "intent": "conceptual",
+    "level": 2,
+    "expected": [
+      "hydrogen-fuel-cell"
+    ],
+    "unexpected": [],
+    "notes": "hydrogen fuel cell in Chinese description"
+  },
+  {
+    "query": "托卡马克等离子体约束",
+    "intent": "conceptual",
+    "level": 2,
+    "expected": [
+      "nuclear-fusion",
+      "iter"
+    ],
+    "unexpected": [],
+    "notes": "fusion described in Chinese"
+  },
+  {
+    "query": "基因剪刀Cas9靶向编辑",
+    "intent": "conceptual",
+    "level": 2,
+    "expected": [
+      "crispr-gene-editing"
+    ],
+    "unexpected": [],
+    "notes": "CRISPR described in Chinese"
+  },
+  {
+    "query": "脂质纳米颗粒疫苗递送",
+    "intent": "conceptual",
+    "level": 2,
+    "expected": [
+      "mrna-technology"
+    ],
+    "unexpected": [],
+    "notes": "mRNA delivery mechanism"
+  },
+  {
+    "query": "嵌合抗原受体免疫治疗",
+    "intent": "conceptual",
+    "level": 2,
+    "expected": [
+      "car-t-therapy"
+    ],
+    "unexpected": [],
+    "notes": "CAR-T described in Chinese"
+  },
+  {
+    "query": "蛋白质三维结构预测",
+    "intent": "conceptual",
+    "level": 2,
+    "expected": [
+      "protein-folding",
+      "alphafold-nature-paper"
+    ],
+    "unexpected": [],
+    "notes": "protein folding described"
+  },
+  {
+    "query": "药物靶点筛选临床前研究",
+    "intent": "conceptual",
+    "level": 2,
+    "expected": [
+      "drug-discovery-pipeline"
+    ],
+    "unexpected": [],
+    "notes": "drug discovery described"
+  },
+  {
+    "query": "container orchestration pods scaling",
+    "intent": "conceptual",
+    "level": 2,
+    "expected": [
+      "kubernetes"
+    ],
+    "unexpected": [],
+    "notes": "K8s described"
+  },
+  {
+    "query": "continuous integration deployment pipeline",
+    "intent": "conceptual",
+    "level": 2,
+    "expected": [
+      "devops",
+      "accelerate-devops"
+    ],
+    "unexpected": [],
+    "notes": "CI/CD described"
+  },
+  {
+    "query": "service decomposition API gateway mesh",
+    "intent": "conceptual",
+    "level": 2,
+    "expected": [
+      "microservices"
+    ],
+    "unexpected": [],
+    "notes": "microservices described"
+  },
+  {
+    "query": "CAP theorem consensus algorithm",
+    "intent": "conceptual",
+    "level": 2,
+    "expected": [
+      "distributed-systems"
+    ],
+    "unexpected": [],
+    "notes": "distributed systems described"
+  },
+  {
+    "query": "peer review pull request quality",
+    "intent": "conceptual",
+    "level": 2,
+    "expected": [
+      "code-review"
+    ],
+    "unexpected": [],
+    "notes": "code review described"
+  },
+  {
+    "query": "red green refactor unit test first",
+    "intent": "conceptual",
+    "level": 2,
+    "expected": [
+      "test-driven-development"
+    ],
+    "unexpected": [],
+    "notes": "TDD described"
+  },
+  {
+    "query": "iron curtain proxy wars mutual assured destruction",
+    "intent": "conceptual",
+    "level": 2,
+    "expected": [
+      "cold-war"
+    ],
+    "unexpected": [],
+    "notes": "cold war described"
+  },
+  {
+    "query": "gold standard fixed exchange rate postwar",
+    "intent": "conceptual",
+    "level": 2,
+    "expected": [
+      "bretton-woods"
+    ],
+    "unexpected": [],
+    "notes": "Bretton Woods described"
+  },
+  {
+    "query": "trade liberalization cultural exchange supply chain",
+    "intent": "conceptual",
+    "level": 2,
+    "expected": [
+      "globalization"
+    ],
+    "unexpected": [],
+    "notes": "globalization described"
+  },
+  {
+    "query": "confirmation bias anchoring availability heuristic",
+    "intent": "conceptual",
+    "level": 2,
+    "expected": [
+      "cognitive-biases"
+    ],
+    "unexpected": [],
+    "notes": "biases listed"
+  },
+  {
+    "query": "System 1 fast System 2 slow thinking",
+    "intent": "conceptual",
+    "level": 2,
+    "expected": [
+      "dual-process-theory",
+      "thinking-fast-and-slow"
+    ],
+    "unexpected": [],
+    "notes": "dual process described"
+  },
+  {
+    "query": "forgetting curve interval review flashcard",
+    "intent": "conceptual",
+    "level": 2,
+    "expected": [
+      "spaced-repetition",
+      "anki"
+    ],
+    "unexpected": [],
+    "notes": "SRS described"
+  },
+  {
+    "query": "algorithmic backtesting alpha generation",
+    "intent": "conceptual",
+    "level": 2,
+    "expected": [
+      "quantitative-trading"
+    ],
+    "unexpected": [],
+    "notes": "quant trading described"
+  },
+  {
+    "query": "distributed ledger consensus smart contract",
+    "intent": "conceptual",
+    "level": 2,
+    "expected": [
+      "blockchain"
+    ],
+    "unexpected": [],
+    "notes": "blockchain described"
+  },
+  {
+    "query": "value at risk Monte Carlo stress test",
+    "intent": "conceptual",
+    "level": 2,
+    "expected": [
+      "risk-management"
+    ],
+    "unexpected": [],
+    "notes": "risk mgmt described"
+  },
+  {
+    "query": "loss aversion nudge prospect theory",
+    "intent": "conceptual",
+    "level": 2,
+    "expected": [
+      "behavioral-economics",
+      "daniel-kahneman"
+    ],
+    "unexpected": [],
+    "notes": "behavioral econ described"
+  },
+  {
+    "query": "atomic notes linking Luhmann",
+    "intent": "conceptual",
+    "level": 2,
+    "expected": [
+      "zettelkasten",
+      "how-to-take-smart-notes"
+    ],
+    "unexpected": [],
+    "notes": "Zettelkasten described"
+  },
+  {
+    "query": "teach to learn simplification explanation",
+    "intent": "conceptual",
+    "level": 2,
+    "expected": [
+      "feynman-technique"
+    ],
+    "unexpected": [],
+    "notes": "Feynman technique described"
+  },
+  {
+    "query": "remember understand apply analyze evaluate create",
+    "intent": "conceptual",
+    "level": 2,
+    "expected": [
+      "bloom-taxonomy"
+    ],
+    "unexpected": [],
+    "notes": "Bloom levels listed"
+  },
+  {
+    "query": "knowledge representation ontology triple extraction",
+    "intent": "conceptual",
+    "level": 2,
+    "expected": [
+      "knowledge-graph-methodology"
+    ],
+    "unexpected": [],
+    "notes": "KG described"
+  },
+  {
+    "query": "海上风力发电浮式平台",
+    "intent": "conceptual",
+    "level": 2,
+    "expected": [
+      "offshore-wind",
+      "wind-energy"
+    ],
+    "unexpected": [],
+    "notes": "offshore wind in Chinese"
+  },
+  {
+    "query": "可再生能源发电成本平价",
+    "intent": "conceptual",
+    "level": 2,
+    "expected": [
+      "grid-parity"
+    ],
+    "unexpected": [],
+    "notes": "grid parity in Chinese"
+  },
+  {
+    "query": "分布式小型电力系统独立运行",
+    "intent": "conceptual",
+    "level": 2,
+    "expected": [
+      "microgrid"
+    ],
+    "unexpected": [],
+    "notes": "microgrid in Chinese"
+  },
+  {
+    "query": "碳排放交易体系定价",
+    "intent": "conceptual",
+    "level": 2,
+    "expected": [
+      "carbon-pricing"
+    ],
+    "unexpected": [],
+    "notes": "carbon pricing in Chinese"
+  },
+  {
+    "query": "抗体偶联靶向载药",
+    "intent": "conceptual",
+    "level": 2,
+    "expected": [
+      "antibody-drug-conjugate"
+    ],
+    "unexpected": [],
+    "notes": "ADC in Chinese"
+  },
+  {
+    "query": "免疫检查点T细胞激活",
+    "intent": "conceptual",
+    "level": 2,
+    "expected": [
+      "immunotherapy",
+      "car-t-therapy"
+    ],
+    "unexpected": [],
+    "notes": "immunotherapy described"
+  },
+  {
+    "query": "事件驱动消息队列异步处理",
+    "intent": "conceptual",
+    "level": 2,
+    "expected": [
+      "event-driven-architecture"
+    ],
+    "unexpected": [],
+    "notes": "EDA in Chinese"
+  },
+  {
+    "query": "有界上下文聚合根领域模型",
+    "intent": "conceptual",
+    "level": 2,
+    "expected": [
+      "domain-driven-design"
+    ],
+    "unexpected": [],
+    "notes": "DDD in Chinese"
+  },
+  {
+    "query": "扩散去噪图像生成",
+    "intent": "conceptual",
+    "level": 2,
+    "expected": [
+      "diffusion-model",
+      "stable-diffusion"
+    ],
+    "unexpected": [],
+    "notes": "diffusion model in Chinese"
+  },
+  {
+    "query": "tail risk fat tails uncertainty",
+    "intent": "conceptual",
+    "level": 2,
+    "expected": [
+      "black-swan-book",
+      "risk-management"
+    ],
+    "unexpected": [],
+    "notes": "Black Swan concepts"
+  },
+  {
+    "query": "AI applications in drug discovery",
+    "intent": "conceptual",
+    "level": 3,
+    "expected": [
+      "ai-drug-discovery",
+      "protein-folding",
+      "drug-discovery-pipeline"
+    ],
+    "unexpected": [],
+    "notes": "ML + Bio cross-domain"
+  },
+  {
+    "query": "machine learning for energy grid optimization",
+    "intent": "conceptual",
+    "level": 3,
+    "expected": [
+      "smart-grid-ml",
+      "smart-grid",
+      "lstm-network"
+    ],
+    "unexpected": [],
+    "notes": "ML + Energy"
+  },
+  {
+    "query": "deep learning in quantitative finance",
+    "intent": "conceptual",
+    "level": 3,
+    "expected": [
+      "algorithmic-trading-ml",
+      "quantitative-trading",
+      "lstm-network"
+    ],
+    "unexpected": [],
+    "notes": "ML + Finance"
+  },
+  {
+    "query": "neural network inspired by brain",
+    "intent": "conceptual",
+    "level": 3,
+    "expected": [
+      "neuroscience-inspired-ai",
+      "attention-mechanism",
+      "selective-attention"
+    ],
+    "unexpected": [],
+    "notes": "ML + CogSci"
+  },
+  {
+    "query": "AI ethics and cognitive bias",
+    "intent": "conceptual",
+    "level": 3,
+    "expected": [
+      "ai-ethics",
+      "cognitive-biases",
+      "explainable-ai"
+    ],
+    "unexpected": [],
+    "notes": "ML + CogSci + Ethics"
+  },
+  {
+    "query": "climate change economic impact",
+    "intent": "conceptual",
+    "level": 3,
+    "expected": [
+      "climate-economics",
+      "ipcc-ar6-report",
+      "carbon-capture"
+    ],
+    "unexpected": [],
+    "notes": "Energy + Finance"
+  },
+  {
+    "query": "energy crisis historical context",
+    "intent": "conceptual",
+    "level": 3,
+    "expected": [
+      "energy-policy-history",
+      "opec",
+      "industrial-revolution"
+    ],
+    "unexpected": [],
+    "notes": "Energy + History"
+  },
+  {
+    "query": "pandemic response and global health",
+    "intent": "conceptual",
+    "level": 3,
+    "expected": [
+      "pandemic-preparedness",
+      "who",
+      "covid-vaccine-development"
+    ],
+    "unexpected": [],
+    "notes": "Bio + History"
+  },
+  {
+    "query": "open source software business model",
+    "intent": "conceptual",
+    "level": 3,
+    "expected": [
+      "open-source-economics",
+      "linux-foundation",
+      "github"
+    ],
+    "unexpected": [],
+    "notes": "SWE + Finance"
+  },
+  {
+    "query": "online education and AI",
+    "intent": "conceptual",
+    "level": 3,
+    "expected": [
+      "digital-transformation-education",
+      "khan-academy",
+      "bloom-taxonomy"
+    ],
+    "unexpected": [],
+    "notes": "Edu + ML"
+  },
+  {
+    "query": "AlphaFold and protein structure",
+    "intent": "conceptual",
+    "level": 3,
+    "expected": [
+      "alphafold-nature-paper",
+      "protein-folding",
+      "deepmind"
+    ],
+    "unexpected": [],
+    "notes": "ML + Bio specific"
+  },
+  {
+    "query": "LSTM for time series prediction in energy",
+    "intent": "conceptual",
+    "level": 3,
+    "expected": [
+      "lstm-network",
+      "smart-grid-ml",
+      "smart-grid"
+    ],
+    "unexpected": [],
+    "notes": "ML technique + Energy domain"
+  },
+  {
+    "query": "reinforcement learning in trading strategies",
+    "intent": "conceptual",
+    "level": 3,
+    "expected": [
+      "reinforcement-learning",
+      "algorithmic-trading-ml",
+      "quantitative-trading"
+    ],
+    "unexpected": [],
+    "notes": "ML technique + Finance domain"
+  },
+  {
+    "query": "attention mechanism and human cognition",
+    "intent": "conceptual",
+    "level": 3,
+    "expected": [
+      "attention-mechanism",
+      "selective-attention",
+      "neuroscience-inspired-ai"
+    ],
+    "unexpected": [],
+    "notes": "ML concept + CogSci concept"
+  },
+  {
+    "query": "gene editing for disease treatment",
+    "intent": "conceptual",
+    "level": 3,
+    "expected": [
+      "crispr-gene-editing",
+      "gene-therapy",
+      "crispr-therapeutics"
+    ],
+    "unexpected": [],
+    "notes": "Bio technique + Bio application"
+  },
+  {
+    "query": "battery technology for renewable energy",
+    "intent": "conceptual",
+    "level": 3,
+    "expected": [
+      "battery-technology",
+      "energy-storage",
+      "photovoltaic-cell"
+    ],
+    "unexpected": [],
+    "notes": "Energy storage + Energy generation"
+  },
+  {
+    "query": "distributed systems and blockchain",
+    "intent": "conceptual",
+    "level": 3,
+    "expected": [
+      "distributed-systems",
+      "blockchain"
+    ],
+    "unexpected": [],
+    "notes": "SWE + Finance"
+  },
+  {
+    "query": "DevOps and software quality",
+    "intent": "conceptual",
+    "level": 3,
+    "expected": [
+      "devops",
+      "test-driven-development",
+      "code-review"
+    ],
+    "unexpected": [],
+    "notes": "SWE practices"
+  },
+  {
+    "query": "cognitive science and learning technology",
+    "intent": "conceptual",
+    "level": 3,
+    "expected": [
+      "spaced-repetition",
+      "neuroplasticity",
+      "digital-transformation-education"
+    ],
+    "unexpected": [],
+    "notes": "CogSci + Edu"
+  },
+  {
+    "query": "金融危机与货币政策",
+    "intent": "conceptual",
+    "level": 3,
+    "expected": [
+      "financial-crisis-2008",
+      "central-banking",
+      "fed"
+    ],
+    "unexpected": [],
+    "notes": "Finance + History in Chinese"
+  },
+  {
+    "query": "可持续能源投资趋势",
+    "intent": "conceptual",
+    "level": 3,
+    "expected": [
+      "esg-investing",
+      "bnef-energy-transition",
+      "climate-economics"
+    ],
+    "unexpected": [],
+    "notes": "Finance + Energy in Chinese"
+  },
+  {
+    "query": "基因组学与精准医疗",
+    "intent": "conceptual",
+    "level": 3,
+    "expected": [
+      "genomics",
+      "drug-discovery-pipeline",
+      "illumina"
+    ],
+    "unexpected": [],
+    "notes": "Bio precision medicine"
+  },
+  {
+    "query": "MLOps and model deployment",
+    "intent": "conceptual",
+    "level": 3,
+    "expected": [
+      "devops",
+      "pytorch",
+      "tensorflow"
+    ],
+    "unexpected": [],
+    "notes": "SWE + ML"
+  },
+  {
+    "query": "carbon trading and ESG",
+    "intent": "conceptual",
+    "level": 3,
+    "expected": [
+      "carbon-pricing",
+      "esg-investing",
+      "climate-economics"
+    ],
+    "unexpected": [],
+    "notes": "Energy + Finance"
+  },
+  {
+    "query": "Bretton Woods and modern monetary system",
+    "intent": "conceptual",
+    "level": 3,
+    "expected": [
+      "bretton-woods",
+      "imf",
+      "central-banking"
+    ],
+    "unexpected": [],
+    "notes": "History + Finance"
+  },
+  {
+    "query": "RLHF and AI alignment",
+    "intent": "conceptual",
+    "level": 3,
+    "expected": [
+      "reinforcement-learning",
+      "anthropic",
+      "openai",
+      "ai-ethics"
+    ],
+    "unexpected": [],
+    "notes": "ML + Ethics"
+  },
+  {
+    "query": "太阳能电池材料创新",
+    "intent": "conceptual",
+    "level": 3,
+    "expected": [
+      "photovoltaic-cell",
+      "nature-perovskite-review"
+    ],
+    "unexpected": [],
+    "notes": "Energy materials"
+  },
+  {
+    "query": "认知偏差对投资决策的影响",
+    "intent": "conceptual",
+    "level": 3,
+    "expected": [
+      "cognitive-biases",
+      "behavioral-economics",
+      "risk-management"
+    ],
+    "unexpected": [],
+    "notes": "CogSci + Finance in Chinese"
+  },
+  {
+    "query": "mRNA vaccine vs traditional vaccine safety",
+    "intent": "conceptual",
+    "level": 3,
+    "expected": [
+      "mrna-vs-traditional-vaccines",
+      "mrna-technology",
+      "covid-vaccine-development"
+    ],
+    "unexpected": [],
+    "notes": "Bio comparison"
+  },
+  {
+    "query": "neural architecture and brain structure",
+    "intent": "conceptual",
+    "level": 3,
+    "expected": [
+      "neuroscience-inspired-ai",
+      "convolutional-neural-network",
+      "neuroplasticity"
+    ],
+    "unexpected": [],
+    "notes": "ML + CogSci deep"
+  },
+  {
+    "query": "how does containerization help microservices",
+    "intent": "conceptual",
+    "level": 3,
+    "expected": [
+      "docker",
+      "kubernetes",
+      "microservices"
+    ],
+    "unexpected": [],
+    "notes": "SWE infrastructure"
+  },
+  {
+    "query": "wind power forecasting with deep learning",
+    "intent": "conceptual",
+    "level": 3,
+    "expected": [
+      "wind-energy",
+      "lstm-network",
+      "smart-grid-ml"
+    ],
+    "unexpected": [],
+    "notes": "Energy + ML"
+  },
+  {
+    "query": "immunotherapy for cancer treatment",
+    "intent": "conceptual",
+    "level": 3,
+    "expected": [
+      "immunotherapy",
+      "car-t-therapy",
+      "cancer-immunotherapy-review"
+    ],
+    "unexpected": [],
+    "notes": "Bio treatment"
+  },
+  {
+    "query": "knowledge management tools and methods",
+    "intent": "conceptual",
+    "level": 3,
+    "expected": [
+      "obsidian-app",
+      "zettelkasten",
+      "knowledge-graph-methodology"
+    ],
+    "unexpected": [],
+    "notes": "Edu + KM"
+  },
+  {
+    "query": "历史上的能源转型",
+    "intent": "conceptual",
+    "level": 3,
+    "expected": [
+      "energy-policy-history",
+      "industrial-revolution",
+      "opec"
+    ],
+    "unexpected": [],
+    "notes": "History + Energy in Chinese"
+  },
+  {
+    "query": "learning science and memory",
+    "intent": "conceptual",
+    "level": 3,
+    "expected": [
+      "spaced-repetition",
+      "working-memory",
+      "make-it-stick"
+    ],
+    "unexpected": [],
+    "notes": "CogSci + Edu"
+  },
+  {
+    "query": "federated learning for healthcare data",
+    "intent": "conceptual",
+    "level": 3,
+    "expected": [
+      "federated-learning",
+      "genomics"
+    ],
+    "unexpected": [],
+    "notes": "ML + Bio privacy"
+  },
+  {
+    "query": "explainable AI in medical diagnosis",
+    "intent": "conceptual",
+    "level": 3,
+    "expected": [
+      "explainable-ai",
+      "drug-discovery-pipeline",
+      "ai-drug-discovery"
+    ],
+    "unexpected": [],
+    "notes": "ML + Bio regulation"
+  },
+  {
+    "query": "钙钛矿太阳能电池效率突破",
+    "intent": "conceptual",
+    "level": 3,
+    "expected": [
+      "nature-perovskite-review",
+      "photovoltaic-cell"
+    ],
+    "unexpected": [],
+    "notes": "Energy materials in Chinese"
+  },
+  {
+    "query": "国际组织与全球治理",
+    "intent": "conceptual",
+    "level": 3,
+    "expected": [
+      "united-nations",
+      "imf",
+      "world-bank",
+      "wto"
+    ],
+    "unexpected": [],
+    "notes": "History organizations"
+  },
+  {
+    "query": "model compression for edge deployment",
+    "intent": "conceptual",
+    "level": 3,
+    "expected": [
+      "model-compression",
+      "knowledge-distillation"
+    ],
+    "unexpected": [],
+    "notes": "ML deployment"
+  },
+  {
+    "query": "active learning strategies in education",
+    "intent": "conceptual",
+    "level": 3,
+    "expected": [
+      "active-recall",
+      "feynman-technique",
+      "bloom-taxonomy"
+    ],
+    "unexpected": [],
+    "notes": "Edu strategies"
+  },
+  {
+    "query": "电动汽车电池供应链",
+    "intent": "conceptual",
+    "level": 3,
+    "expected": [
+      "catl",
+      "battery-technology",
+      "tesla-energy"
+    ],
+    "unexpected": [],
+    "notes": "Energy + Industry in Chinese"
+  },
+  {
+    "query": "代码质量与技术债务",
+    "intent": "conceptual",
+    "level": 3,
+    "expected": [
+      "technical-debt",
+      "code-review",
+      "clean-architecture"
+    ],
+    "unexpected": [],
+    "notes": "SWE quality in Chinese"
+  },
+  {
+    "query": "Obsidian PKM workflow",
+    "intent": "conceptual",
+    "level": 3,
+    "expected": [
+      "obsidian-app",
+      "zettelkasten",
+      "knowledge-graph-methodology"
+    ],
+    "unexpected": [],
+    "notes": "Edu tools"
+  },
+  {
+    "query": "固态电池商业化前景",
+    "intent": "conceptual",
+    "level": 3,
+    "expected": [
+      "lithium-vs-solid-state",
+      "battery-technology",
+      "catl"
+    ],
+    "unexpected": [],
+    "notes": "Energy battery in Chinese"
+  },
+  {
+    "query": "COVID-19 vaccine timeline",
+    "intent": "conceptual",
+    "level": 3,
+    "expected": [
+      "covid-vaccine-development",
+      "pfizer",
+      "moderna",
+      "mrna-technology"
+    ],
+    "unexpected": [],
+    "notes": "Bio pandemic"
+  },
+  {
+    "query": "graph neural network applications",
+    "intent": "conceptual",
+    "level": 3,
+    "expected": [
+      "convolutional-neural-network",
+      "transformer-architecture"
+    ],
+    "unexpected": [],
+    "notes": "ML GNN"
+  },
+  {
+    "query": "API design best practices REST GraphQL",
+    "intent": "conceptual",
+    "level": 3,
+    "expected": [
+      "api-design",
+      "rest-vs-graphql",
+      "microservices"
+    ],
+    "unexpected": [],
+    "notes": "SWE API"
+  },
+  {
+    "query": "大模型对齐安全性",
+    "intent": "conceptual",
+    "level": 3,
+    "expected": [
+      "ai-ethics",
+      "reinforcement-learning",
+      "anthropic"
+    ],
+    "unexpected": [],
+    "notes": "ML safety in Chinese"
+  },
+  {
+    "query": "transformer model architecture",
+    "intent": "exact",
+    "level": 4,
+    "expected": [
+      "transformer-architecture",
+      "attention-is-all-you-need"
+    ],
+    "unexpected": [
+      "tesla-energy"
+    ],
+    "notes": "transformer = ML, not electrical"
+  },
+  {
+    "query": "Python deep learning",
+    "intent": "conceptual",
+    "level": 4,
+    "expected": [
+      "pytorch",
+      "tensorflow"
+    ],
+    "unexpected": [],
+    "notes": "Python = programming, not snake"
+  },
+  {
+    "query": "attention in neural networks",
+    "intent": "conceptual",
+    "level": 4,
+    "expected": [
+      "attention-mechanism",
+      "transformer-architecture"
+    ],
+    "unexpected": [
+      "selective-attention"
+    ],
+    "notes": "ML attention, not cognitive attention"
+  },
+  {
+    "query": "attention in cognitive science",
+    "intent": "conceptual",
+    "level": 4,
+    "expected": [
+      "selective-attention",
+      "neuroscience-inspired-ai"
+    ],
+    "unexpected": [
+      "attention-mechanism"
+    ],
+    "notes": "cognitive attention, not ML attention"
+  },
+  {
+    "query": "gates in neural networks",
+    "intent": "conceptual",
+    "level": 4,
+    "expected": [
+      "lstm-network"
+    ],
+    "unexpected": [],
+    "notes": "LSTM gates, not logic gates"
+  },
+  {
+    "query": "cell in biology vs neural network",
+    "intent": "conceptual",
+    "level": 4,
+    "expected": [
+      "car-t-therapy",
+      "lstm-network"
+    ],
+    "unexpected": [],
+    "notes": "biological cell vs LSTM cell"
+  },
+  {
+    "query": "graph in knowledge management",
+    "intent": "conceptual",
+    "level": 4,
+    "expected": [
+      "knowledge-graph-methodology",
+      "obsidian-app"
+    ],
+    "unexpected": [],
+    "notes": "knowledge graph, not math graph"
+  },
+  {
+    "query": "model in machine learning",
+    "intent": "conceptual",
+    "level": 4,
+    "expected": [
+      "transformer-architecture",
+      "convolutional-neural-network"
+    ],
+    "unexpected": [],
+    "notes": "ML model, not fashion model"
+  },
+  {
+    "query": "target in drug discovery",
+    "intent": "conceptual",
+    "level": 4,
+    "expected": [
+      "drug-discovery-pipeline",
+      "antibody-drug-conjugate"
+    ],
+    "unexpected": [],
+    "notes": "drug target, not business target"
+  },
+  {
+    "query": "agent in reinforcement learning",
+    "intent": "conceptual",
+    "level": 4,
+    "expected": [
+      "reinforcement-learning"
+    ],
+    "unexpected": [],
+    "notes": "RL agent, not real estate agent"
+  },
+  {
+    "query": "policy in RL vs geopolitics",
+    "intent": "conceptual",
+    "level": 4,
+    "expected": [
+      "reinforcement-learning"
+    ],
+    "unexpected": [
+      "energy-policy-history"
+    ],
+    "notes": "RL policy, not government policy"
+  },
+  {
+    "query": "fusion in nuclear vs data",
+    "intent": "conceptual",
+    "level": 4,
+    "expected": [
+      "nuclear-fusion",
+      "iter"
+    ],
+    "unexpected": [],
+    "notes": "nuclear fusion, not data fusion"
+  },
+  {
+    "query": "embedding in ML",
+    "intent": "conceptual",
+    "level": 4,
+    "expected": [
+      "transformer-architecture",
+      "bert-paper"
+    ],
+    "unexpected": [],
+    "notes": "vector embedding, not physical embedding"
+  },
+  {
+    "query": "network in neural vs computer",
+    "intent": "conceptual",
+    "level": 4,
+    "expected": [
+      "convolutional-neural-network",
+      "lstm-network"
+    ],
+    "unexpected": [
+      "distributed-systems"
+    ],
+    "notes": "neural network, not computer network"
+  },
+  {
+    "query": "architecture in software vs neural",
+    "intent": "conceptual",
+    "level": 4,
+    "expected": [
+      "microservices",
+      "clean-architecture"
+    ],
+    "unexpected": [],
+    "notes": "software architecture, not neural arch"
+  },
+  {
+    "query": "kernel in CNN vs operating system",
+    "intent": "conceptual",
+    "level": 4,
+    "expected": [
+      "convolutional-neural-network"
+    ],
+    "unexpected": [
+      "linux-foundation"
+    ],
+    "notes": "convolution kernel, not OS kernel"
+  },
+  {
+    "query": "token in NLP",
+    "intent": "conceptual",
+    "level": 4,
+    "expected": [
+      "transformer-architecture",
+      "attention-mechanism"
+    ],
+    "unexpected": [
+      "blockchain"
+    ],
+    "notes": "NLP token, not crypto token"
+  },
+  {
+    "query": "mining in crypto vs data",
+    "intent": "conceptual",
+    "level": 4,
+    "expected": [
+      "blockchain",
+      "cryptocurrency"
+    ],
+    "unexpected": [],
+    "notes": "crypto mining"
+  },
+  {
+    "query": "chain in blockchain vs supply chain",
+    "intent": "conceptual",
+    "level": 4,
+    "expected": [
+      "blockchain"
+    ],
+    "unexpected": [
+      "globalization"
+    ],
+    "notes": "blockchain chain, not supply chain"
+  },
+  {
+    "query": "learning rate in gradient descent",
+    "intent": "conceptual",
+    "level": 4,
+    "expected": [
+      "gradient-descent",
+      "adam-optimizer-paper"
+    ],
+    "unexpected": [],
+    "notes": "ML parameter, not education rate"
+  },
+  {
+    "query": "loss in neural network training",
+    "intent": "conceptual",
+    "level": 4,
+    "expected": [
+      "backpropagation",
+      "gradient-descent"
+    ],
+    "unexpected": [
+      "behavioral-economics"
+    ],
+    "notes": "loss function, not financial loss"
+  },
+  {
+    "query": "bias in machine learning",
+    "intent": "conceptual",
+    "level": 4,
+    "expected": [
+      "convolutional-neural-network",
+      "backpropagation"
+    ],
+    "unexpected": [
+      "cognitive-biases"
+    ],
+    "notes": "ML bias term, not cognitive bias"
+  },
+  {
+    "query": "bias in cognitive psychology",
+    "intent": "conceptual",
+    "level": 4,
+    "expected": [
+      "cognitive-biases",
+      "dual-process-theory"
+    ],
+    "unexpected": [
+      "backpropagation"
+    ],
+    "notes": "cognitive bias, not ML bias"
+  },
+  {
+    "query": "container in software",
+    "intent": "conceptual",
+    "level": 4,
+    "expected": [
+      "docker",
+      "kubernetes"
+    ],
+    "unexpected": [],
+    "notes": "software container, not shipping"
+  },
+  {
+    "query": "pipeline in DevOps vs drug discovery",
+    "intent": "conceptual",
+    "level": 4,
+    "expected": [
+      "devops"
+    ],
+    "unexpected": [
+      "drug-discovery-pipeline"
+    ],
+    "notes": "CI/CD pipeline, not drug pipeline"
+  },
+  {
+    "query": "pipeline in drug development",
+    "intent": "conceptual",
+    "level": 4,
+    "expected": [
+      "drug-discovery-pipeline",
+      "clinical-trial-phases"
+    ],
+    "unexpected": [
+      "devops"
+    ],
+    "notes": "drug pipeline, not CI/CD"
+  },
+  {
+    "query": "layer in neural network",
+    "intent": "conceptual",
+    "level": 4,
+    "expected": [
+      "convolutional-neural-network",
+      "transformer-architecture"
+    ],
+    "unexpected": [],
+    "notes": "NN layer, not geological layer"
+  },
+  {
+    "query": "weight in neural network",
+    "intent": "conceptual",
+    "level": 4,
+    "expected": [
+      "backpropagation",
+      "gradient-descent"
+    ],
+    "unexpected": [],
+    "notes": "NN weight parameter"
+  },
+  {
+    "query": "epoch in training",
+    "intent": "conceptual",
+    "level": 4,
+    "expected": [
+      "gradient-descent",
+      "backpropagation"
+    ],
+    "unexpected": [],
+    "notes": "training epoch, not historical epoch"
+  },
+  {
+    "query": "node in distributed system",
+    "intent": "conceptual",
+    "level": 4,
+    "expected": [
+      "distributed-systems",
+      "kubernetes"
+    ],
+    "unexpected": [],
+    "notes": "compute node, not graph node"
+  },
+  {
+    "query": "pool in CNN",
+    "intent": "conceptual",
+    "level": 4,
+    "expected": [
+      "convolutional-neural-network"
+    ],
+    "unexpected": [],
+    "notes": "pooling layer, not swimming pool"
+  },
+  {
+    "query": "branch in git",
+    "intent": "conceptual",
+    "level": 4,
+    "expected": [
+      "github",
+      "code-review"
+    ],
+    "unexpected": [],
+    "notes": "git branch, not tree branch"
+  },
+  {
+    "query": "sprint in agile",
+    "intent": "conceptual",
+    "level": 4,
+    "expected": [
+      "agile-vs-waterfall",
+      "devops"
+    ],
+    "unexpected": [],
+    "notes": "agile sprint, not running"
+  },
+  {
+    "query": "debt in software engineering",
+    "intent": "conceptual",
+    "level": 4,
+    "expected": [
+      "technical-debt",
+      "clean-architecture"
+    ],
+    "unexpected": [
+      "financial-crisis-2008"
+    ],
+    "notes": "tech debt, not financial debt"
+  },
+  {
+    "query": "bridge in knowledge graph",
+    "intent": "conceptual",
+    "level": 4,
+    "expected": [
+      "knowledge-graph-methodology"
+    ],
+    "unexpected": [],
+    "notes": "graph bridge node, not physical bridge"
+  },
+  {
+    "query": "head in attention mechanism",
+    "intent": "conceptual",
+    "level": 4,
+    "expected": [
+      "attention-mechanism",
+      "transformer-architecture"
+    ],
+    "unexpected": [],
+    "notes": "attention head, not human head"
+  },
+  {
+    "query": "memory in working memory vs computer",
+    "intent": "conceptual",
+    "level": 4,
+    "expected": [
+      "working-memory",
+      "metacognition"
+    ],
+    "unexpected": [],
+    "notes": "cognitive memory, not RAM"
+  },
+  {
+    "query": "dropout in neural network",
+    "intent": "conceptual",
+    "level": 4,
+    "expected": [
+      "dropout-paper",
+      "backpropagation"
+    ],
+    "unexpected": [],
+    "notes": "NN dropout, not school dropout"
+  },
+  {
+    "query": "pruning in model compression",
+    "intent": "conceptual",
+    "level": 4,
+    "expected": [
+      "model-compression"
+    ],
+    "unexpected": [],
+    "notes": "model pruning, not tree pruning"
+  },
+  {
+    "query": "distillation in knowledge transfer",
+    "intent": "conceptual",
+    "level": 4,
+    "expected": [
+      "knowledge-distillation",
+      "model-compression"
+    ],
+    "unexpected": [],
+    "notes": "knowledge distillation, not chemical"
+  },
+  {
+    "query": "how does the brain inspire computer algorithms",
+    "intent": "exploratory",
+    "level": 5,
+    "expected": [
+      "neuroscience-inspired-ai",
+      "attention-mechanism",
+      "selective-attention",
+      "convolutional-neural-network"
+    ],
+    "unexpected": [],
+    "notes": "brain→AI, no shared keywords"
+  },
+  {
+    "query": "what connects ancient trade routes to modern economics",
+    "intent": "exploratory",
+    "level": 5,
+    "expected": [
+      "silk-road",
+      "globalization",
+      "industrial-revolution"
+    ],
+    "unexpected": [],
+    "notes": "historical→modern connection"
+  },
+  {
+    "query": "relationship between memory and learning efficiency",
+    "intent": "exploratory",
+    "level": 5,
+    "expected": [
+      "working-memory",
+      "spaced-repetition",
+      "neuroplasticity",
+      "make-it-stick"
+    ],
+    "unexpected": [],
+    "notes": "cognitive→education"
+  },
+  {
+    "query": "how do financial markets reflect human psychology",
+    "intent": "exploratory",
+    "level": 5,
+    "expected": [
+      "behavioral-economics",
+      "cognitive-biases",
+      "risk-management"
+    ],
+    "unexpected": [],
+    "notes": "finance→psychology"
+  },
+  {
+    "query": "what role does computing power play in AI progress",
+    "intent": "exploratory",
+    "level": 5,
+    "expected": [
+      "nvidia",
+      "transformer-architecture",
+      "pytorch"
+    ],
+    "unexpected": [],
+    "notes": "hardware→AI capability"
+  },
+  {
+    "query": "connection between climate science and investment",
+    "intent": "exploratory",
+    "level": 5,
+    "expected": [
+      "climate-economics",
+      "esg-investing",
+      "ipcc-ar6-report"
+    ],
+    "unexpected": [],
+    "notes": "science→finance"
+  },
+  {
+    "query": "how does open source affect software innovation",
+    "intent": "exploratory",
+    "level": 5,
+    "expected": [
+      "open-source-economics",
+      "linux-foundation",
+      "github",
+      "kubernetes"
+    ],
+    "unexpected": [],
+    "notes": "oss→innovation"
+  },
+  {
+    "query": "parallels between biological evolution and machine learning",
+    "intent": "exploratory",
+    "level": 5,
+    "expected": [
+      "neural-architecture-search",
+      "reinforcement-learning",
+      "neuroscience-inspired-ai"
+    ],
+    "unexpected": [],
+    "notes": "biology→ML metaphor"
+  },
+  {
+    "query": "how do economic crises reshape international institutions",
+    "intent": "exploratory",
+    "level": 5,
+    "expected": [
+      "financial-crisis-2008",
+      "bretton-woods",
+      "imf"
+    ],
+    "unexpected": [],
+    "notes": "crisis→institution"
+  },
+  {
+    "query": "what makes effective knowledge organization",
+    "intent": "exploratory",
+    "level": 5,
+    "expected": [
+      "zettelkasten",
+      "knowledge-graph-methodology",
+      "obsidian-app",
+      "metacognition"
+    ],
+    "unexpected": [],
+    "notes": "KM methods"
+  },
+  {
+    "query": "energy storage and grid stability",
+    "intent": "conceptual",
+    "level": 5,
+    "expected": [
+      "energy-storage",
+      "battery-technology",
+      "smart-grid"
+    ],
+    "unexpected": [],
+    "notes": "energy infrastructure"
+  },
+  {
+    "query": "how vaccines changed pandemic response",
+    "intent": "conceptual",
+    "level": 5,
+    "expected": [
+      "mrna-technology",
+      "covid-vaccine-development",
+      "pandemic-preparedness"
+    ],
+    "unexpected": [],
+    "notes": "vaccine→policy"
+  },
+  {
+    "query": "学习方法与大脑可塑性的关系",
+    "intent": "exploratory",
+    "level": 5,
+    "expected": [
+      "neuroplasticity",
+      "spaced-repetition",
+      "metacognition"
+    ],
+    "unexpected": [],
+    "notes": "Chinese: learning→brain"
+  },
+  {
+    "query": "人工智能如何改变医疗行业",
+    "intent": "exploratory",
+    "level": 5,
+    "expected": [
+      "ai-drug-discovery",
+      "protein-folding",
+      "genomics"
+    ],
+    "unexpected": [],
+    "notes": "Chinese: AI→healthcare"
+  },
+  {
+    "query": "开源社区如何推动技术创新",
+    "intent": "exploratory",
+    "level": 5,
+    "expected": [
+      "open-source-economics",
+      "linux-foundation",
+      "github"
+    ],
+    "unexpected": [],
+    "notes": "Chinese: OSS→innovation"
+  },
+  {
+    "query": "全球化与国际组织的演变",
+    "intent": "exploratory",
+    "level": 5,
+    "expected": [
+      "globalization",
+      "united-nations",
+      "wto",
+      "european-union"
+    ],
+    "unexpected": [],
+    "notes": "Chinese: globalization→orgs"
+  },
+  {
+    "query": "how does testing improve software quality",
+    "intent": "conceptual",
+    "level": 5,
+    "expected": [
+      "test-driven-development",
+      "code-review",
+      "accelerate-devops"
+    ],
+    "unexpected": [],
+    "notes": "testing→quality"
+  },
+  {
+    "query": "relationship between monetary policy and market stability",
+    "intent": "conceptual",
+    "level": 5,
+    "expected": [
+      "central-banking",
+      "fed",
+      "financial-crisis-2008"
+    ],
+    "unexpected": [],
+    "notes": "policy→market"
+  },
+  {
+    "query": "what makes a good research paper",
+    "intent": "exploratory",
+    "level": 5,
+    "expected": [
+      "attention-is-all-you-need",
+      "resnet-paper",
+      "bert-paper"
+    ],
+    "unexpected": [],
+    "notes": "meta: paper quality"
+  },
+  {
+    "query": "how do international agreements affect energy policy",
+    "intent": "exploratory",
+    "level": 5,
+    "expected": [
+      "ipcc-ar6-report",
+      "energy-policy-history",
+      "climate-economics"
+    ],
+    "unexpected": [],
+    "notes": "diplomacy→energy"
+  },
+  {
+    "query": "teacher-student relationship in knowledge transfer",
+    "intent": "conceptual",
+    "level": 5,
+    "expected": [
+      "knowledge-distillation",
+      "feynman-technique",
+      "transfer-learning"
+    ],
+    "unexpected": [],
+    "notes": "metaphor bridges ML and education"
+  },
+  {
+    "query": "how does note-taking method affect understanding",
+    "intent": "conceptual",
+    "level": 5,
+    "expected": [
+      "zettelkasten",
+      "active-recall",
+      "metacognition",
+      "bloom-taxonomy"
+    ],
+    "unexpected": [],
+    "notes": "PKM→cognition"
+  },
+  {
+    "query": "information overload and decision making",
+    "intent": "exploratory",
+    "level": 5,
+    "expected": [
+      "cognitive-biases",
+      "decision-fatigue",
+      "dual-process-theory"
+    ],
+    "unexpected": [],
+    "notes": "modern problem→psychology"
+  },
+  {
+    "query": "why do some technologies displace others",
+    "intent": "exploratory",
+    "level": 5,
+    "expected": [
+      "cnn-vs-transformer",
+      "pytorch-vs-tensorflow",
+      "lstm-vs-gru"
+    ],
+    "unexpected": [],
+    "notes": "tech evolution"
+  },
+  {
+    "query": "how renewable energy reshapes geopolitics",
+    "intent": "exploratory",
+    "level": 5,
+    "expected": [
+      "energy-policy-history",
+      "opec",
+      "climate-economics",
+      "photovoltaic-cell"
+    ],
+    "unexpected": [],
+    "notes": "energy→geopolitics"
+  },
+  {
+    "query": "ethical implications of gene editing",
+    "intent": "exploratory",
+    "level": 5,
+    "expected": [
+      "crispr-gene-editing",
+      "ai-ethics",
+      "genomics"
+    ],
+    "unexpected": [],
+    "notes": "bio→ethics"
+  },
+  {
+    "query": "数据隐私与机器学习的矛盾",
+    "intent": "exploratory",
+    "level": 5,
+    "expected": [
+      "federated-learning",
+      "ai-ethics",
+      "genomics"
+    ],
+    "unexpected": [],
+    "notes": "Chinese: privacy vs ML"
+  },
+  {
+    "query": "从工业革命到数字革命",
+    "intent": "exploratory",
+    "level": 5,
+    "expected": [
+      "industrial-revolution",
+      "globalization",
+      "digital-transformation-education"
+    ],
+    "unexpected": [],
+    "notes": "Chinese: historical parallel"
+  },
+  {
+    "query": "为什么深度学习需要大量计算",
+    "intent": "exploratory",
+    "level": 5,
+    "expected": [
+      "nvidia",
+      "transformer-architecture",
+      "gradient-descent",
+      "backpropagation"
+    ],
+    "unexpected": [],
+    "notes": "Chinese: compute→DL"
+  },
+  {
+    "query": "气候变化与公共健康",
+    "intent": "exploratory",
+    "level": 5,
+    "expected": [
+      "ipcc-ar6-report",
+      "pandemic-preparedness",
+      "who"
+    ],
+    "unexpected": [],
+    "notes": "Chinese: climate→health"
+  },
+  {
+    "query": "知识图谱与人工智能的结合",
+    "intent": "exploratory",
+    "level": 5,
+    "expected": [
+      "knowledge-graph-methodology",
+      "transformer-architecture",
+      "ai-drug-discovery"
+    ],
+    "unexpected": [],
+    "notes": "Chinese: KG→AI"
+  },
+  {
+    "query": "how does architecture design affect system reliability",
+    "intent": "conceptual",
+    "level": 5,
+    "expected": [
+      "microservices",
+      "distributed-systems",
+      "google-sre-book"
+    ],
+    "unexpected": [],
+    "notes": "SWE arch→reliability"
+  },
+  {
+    "query": "biological inspiration for optimization algorithms",
+    "intent": "conceptual",
+    "level": 5,
+    "expected": [
+      "neural-architecture-search",
+      "reinforcement-learning",
+      "gradient-descent"
+    ],
+    "unexpected": [],
+    "notes": "bio→optimization"
+  },
+  {
+    "query": "media and public perception of AI",
+    "intent": "exploratory",
+    "level": 5,
+    "expected": [
+      "ai-ethics",
+      "openai",
+      "anthropic"
+    ],
+    "unexpected": [],
+    "notes": "society→AI"
+  },
+  {
+    "query": "how sleep affects learning and memory",
+    "intent": "exploratory",
+    "level": 5,
+    "expected": [
+      "neuroplasticity",
+      "working-memory",
+      "spaced-repetition"
+    ],
+    "unexpected": [],
+    "notes": "sleep→learning, implicit"
+  },
+  {
+    "query": "economic inequality and globalization",
+    "intent": "exploratory",
+    "level": 5,
+    "expected": [
+      "globalization",
+      "industrial-revolution",
+      "capitalism-vs-socialism"
+    ],
+    "unexpected": [],
+    "notes": "inequality→globalization"
+  },
+  {
+    "query": "数字货币对传统金融的冲击",
+    "intent": "exploratory",
+    "level": 5,
+    "expected": [
+      "cryptocurrency",
+      "blockchain",
+      "central-banking"
+    ],
+    "unexpected": [],
+    "notes": "Chinese: crypto→finance"
+  },
+  {
+    "query": "科研论文的可重复性危机",
+    "intent": "exploratory",
+    "level": 5,
+    "expected": [
+      "clinical-trial-phases",
+      "test-driven-development"
+    ],
+    "unexpected": [],
+    "notes": "Chinese: reproducibility"
+  },
+  {
+    "query": "自动化对就业市场的影响",
+    "intent": "exploratory",
+    "level": 5,
+    "expected": [
+      "ai-ethics",
+      "industrial-revolution",
+      "devops"
+    ],
+    "unexpected": [],
+    "notes": "Chinese: automation→jobs"
+  },
+  {
+    "query": "心理学如何帮助产品设计",
+    "intent": "exploratory",
+    "level": 5,
+    "expected": [
+      "cognitive-biases",
+      "dual-process-theory",
+      "design-patterns"
+    ],
+    "unexpected": [],
+    "notes": "Chinese: psychology→design"
+  },
+  {
+    "query": "the relationship between model size and capability",
+    "intent": "conceptual",
+    "level": 5,
+    "expected": [
+      "transformer-architecture",
+      "model-compression",
+      "gpt4-technical-report"
+    ],
+    "unexpected": [],
+    "notes": "scaling laws implicit"
+  },
+  {
+    "query": "how does peer pressure affect scientific research",
+    "intent": "exploratory",
+    "level": 5,
+    "expected": [
+      "code-review",
+      "clinical-trial-phases"
+    ],
+    "unexpected": [],
+    "notes": "social→science"
+  },
+  {
+    "query": "energy independence and national security",
+    "intent": "exploratory",
+    "level": 5,
+    "expected": [
+      "energy-policy-history",
+      "opec",
+      "nuclear-fusion"
+    ],
+    "unexpected": [],
+    "notes": "energy→security"
+  },
+  {
+    "query": "创新生态系统的要素",
+    "intent": "exploratory",
+    "level": 5,
+    "expected": [
+      "open-source-economics",
+      "silicon-road",
+      "globalization"
+    ],
+    "unexpected": [],
+    "notes": "Chinese: innovation ecosystem"
+  },
+  {
+    "query": "什么因素决定技术采用速度",
+    "intent": "exploratory",
+    "level": 5,
+    "expected": [
+      "grid-parity",
+      "mrna-technology",
+      "kubernetes"
+    ],
+    "unexpected": [],
+    "notes": "Chinese: adoption factors across domains"
+  },
+  {
+    "query": "how cultural context shapes technology adoption",
+    "intent": "exploratory",
+    "level": 5,
+    "expected": [
+      "globalization",
+      "digital-transformation-education",
+      "obsidian-app"
+    ],
+    "unexpected": [],
+    "notes": "culture→tech adoption"
+  },
+  {
+    "query": "risk perception and decision-making under uncertainty",
+    "intent": "exploratory",
+    "level": 5,
+    "expected": [
+      "cognitive-biases",
+      "risk-management",
+      "black-swan-book"
+    ],
+    "unexpected": [],
+    "notes": "psychology→risk"
+  },
+  {
+    "query": "collaboration tools and team productivity",
+    "intent": "exploratory",
+    "level": 5,
+    "expected": [
+      "github",
+      "devops",
+      "code-review"
+    ],
+    "unexpected": [],
+    "notes": "tools→productivity"
+  },
+  {
+    "query": "长期主义与短期利益的平衡",
+    "intent": "exploratory",
+    "level": 5,
+    "expected": [
+      "esg-investing",
+      "climate-economics",
+      "technical-debt"
+    ],
+    "unexpected": [],
+    "notes": "Chinese: long-term vs short-term across domains"
+  },
+  {
+    "query": "how early career choices compound over time",
+    "intent": "exploratory",
+    "level": 5,
+    "expected": [
+      "growth-mindset",
+      "deliberate-practice",
+      "spaced-repetition"
+    ],
+    "unexpected": [],
+    "notes": "career→learning, very implicit"
+  },
+  {
+    "query": "How did Hinton's research lead to drug discovery breakthroughs",
+    "intent": "relationship",
+    "level": 6,
+    "expected": [
+      "geoffrey-hinton",
+      "backpropagation",
+      "convolutional-neural-network",
+      "deepmind",
+      "protein-folding",
+      "ai-drug-discovery"
+    ],
+    "unexpected": [],
+    "notes": "hinton→backprop→deep learning→DeepMind→AlphaFold→drug discovery (4 hops)"
+  },
+  {
+    "query": "How did cold war technology become the internet",
+    "intent": "relationship",
+    "level": 6,
+    "expected": [
+      "cold-war",
+      "nato"
+    ],
+    "unexpected": [],
+    "notes": "cold war→ARPANET→internet (implicit, not fully in wiki)"
+  },
+  {
+    "query": "How does the forgetting curve relate to AI training",
+    "intent": "relationship",
+    "level": 6,
+    "expected": [
+      "spaced-repetition",
+      "neuroplasticity",
+      "neuroscience-inspired-ai",
+      "attention-mechanism"
+    ],
+    "unexpected": [],
+    "notes": "forgetting→memory→brain→neural network (3 hops)"
+  },
+  {
+    "query": "连接石油危机到今天的电动汽车",
+    "intent": "relationship",
+    "level": 6,
+    "expected": [
+      "opec",
+      "energy-policy-history",
+      "photovoltaic-cell",
+      "battery-technology",
+      "tesla-energy"
+    ],
+    "unexpected": [],
+    "notes": "Chinese: oil crisis→energy policy→renewables→batteries→EVs (4 hops)"
+  },
+  {
+    "query": "From ImageNet to medical diagnosis",
+    "intent": "relationship",
+    "level": 6,
+    "expected": [
+      "imagenet-paper",
+      "convolutional-neural-network",
+      "transfer-learning",
+      "ai-drug-discovery"
+    ],
+    "unexpected": [],
+    "notes": "ImageNet→CNN→transfer learning→medical AI (3 hops)"
+  },
+  {
+    "query": "How Kahneman's research influenced AI alignment",
+    "intent": "relationship",
+    "level": 6,
+    "expected": [
+      "daniel-kahneman",
+      "cognitive-biases",
+      "behavioral-economics",
+      "ai-ethics",
+      "reinforcement-learning"
+    ],
+    "unexpected": [],
+    "notes": "Kahneman→biases→behavioral econ→AI ethics→RLHF (4 hops)"
+  },
+  {
+    "query": "Connection between gold standard and cryptocurrency",
+    "intent": "relationship",
+    "level": 6,
+    "expected": [
+      "bretton-woods",
+      "central-banking",
+      "financial-crisis-2008",
+      "blockchain",
+      "cryptocurrency"
+    ],
+    "unexpected": [],
+    "notes": "gold standard→central banking→crisis→blockchain→crypto (4 hops)"
+  },
+  {
+    "query": "How brain science improved computer vision",
+    "intent": "relationship",
+    "level": 6,
+    "expected": [
+      "selective-attention",
+      "neuroscience-inspired-ai",
+      "convolutional-neural-network",
+      "attention-mechanism"
+    ],
+    "unexpected": [],
+    "notes": "brain→neuro-AI→CNN→attention (3 hops)"
+  },
+  {
+    "query": "从Luhmann笔记法到现代AI知识管理",
+    "intent": "relationship",
+    "level": 6,
+    "expected": [
+      "zettelkasten",
+      "knowledge-graph-methodology",
+      "obsidian-app",
+      "transformer-architecture"
+    ],
+    "unexpected": [],
+    "notes": "Chinese: Zettelkasten→KG→Obsidian→AI (3 hops)"
+  },
+  {
+    "query": "How battery technology connects renewable energy to electric vehicles",
+    "intent": "relationship",
+    "level": 6,
+    "expected": [
+      "photovoltaic-cell",
+      "energy-storage",
+      "battery-technology",
+      "catl",
+      "tesla-energy"
+    ],
+    "unexpected": [],
+    "notes": "solar→storage→batteries→CATL→Tesla (4 hops)"
+  },
+  {
+    "query": "From human genome to personalized cancer treatment",
+    "intent": "relationship",
+    "level": 6,
+    "expected": [
+      "human-genome-project",
+      "genomics",
+      "crispr-gene-editing",
+      "car-t-therapy"
+    ],
+    "unexpected": [],
+    "notes": "HGP→genomics→CRISPR→CAR-T (3 hops)"
+  },
+  {
+    "query": "How open source shaped cloud computing",
+    "intent": "relationship",
+    "level": 6,
+    "expected": [
+      "linux-foundation",
+      "docker",
+      "kubernetes",
+      "microservices"
+    ],
+    "unexpected": [],
+    "notes": "Linux→Docker→K8s→microservices (3 hops)"
+  },
+  {
+    "query": "Link between behavioral economics and market crashes",
+    "intent": "relationship",
+    "level": 6,
+    "expected": [
+      "daniel-kahneman",
+      "behavioral-economics",
+      "cognitive-biases",
+      "risk-management",
+      "financial-crisis-2008"
+    ],
+    "unexpected": [],
+    "notes": "Kahneman→behav econ→biases→risk→crash (4 hops)"
+  },
+  {
+    "query": "How transformer replaced LSTM",
+    "intent": "relationship",
+    "level": 6,
+    "expected": [
+      "lstm-network",
+      "attention-mechanism",
+      "attention-is-all-you-need",
+      "transformer-architecture",
+      "bert-paper"
+    ],
+    "unexpected": [],
+    "notes": "LSTM→attention→paper→transformer→BERT (4 hops)"
+  },
+  {
+    "query": "Evolution from mainframe to serverless",
+    "intent": "relationship",
+    "level": 6,
+    "expected": [
+      "distributed-systems",
+      "docker",
+      "kubernetes",
+      "microservices"
+    ],
+    "unexpected": [],
+    "notes": "distributed→container→K8s→serverless (3 hops)"
+  },
+  {
+    "query": "How does education theory connect to AI",
+    "intent": "relationship",
+    "level": 6,
+    "expected": [
+      "bloom-taxonomy",
+      "metacognition",
+      "feynman-technique",
+      "transfer-learning",
+      "transformer-architecture"
+    ],
+    "unexpected": [],
+    "notes": "Bloom→metacognition→learning→transfer learning→transformers"
+  },
+  {
+    "query": "气候政策如何影响能源投资",
+    "intent": "relationship",
+    "level": 6,
+    "expected": [
+      "ipcc-ar6-report",
+      "carbon-pricing",
+      "climate-economics",
+      "esg-investing"
+    ],
+    "unexpected": [],
+    "notes": "Chinese: IPCC→carbon pricing→economics→ESG (3 hops)"
+  },
+  {
+    "query": "从图灵奖到商业AI产品",
+    "intent": "relationship",
+    "level": 6,
+    "expected": [
+      "geoffrey-hinton",
+      "backpropagation",
+      "transformer-architecture",
+      "openai",
+      "gpt4-technical-report"
+    ],
+    "unexpected": [],
+    "notes": "Chinese: Hinton→backprop→transformer→OpenAI→GPT-4 (4 hops)"
+  },
+  {
+    "query": "How CRISPR Nobel Prize connects to pharma industry",
+    "intent": "relationship",
+    "level": 6,
+    "expected": [
+      "crispr-nobel-lecture",
+      "crispr-gene-editing",
+      "crispr-therapeutics",
+      "fda",
+      "drug-discovery-pipeline"
+    ],
+    "unexpected": [],
+    "notes": "Nobel→CRISPR→therapeutics→FDA→drug pipeline (4 hops)"
+  },
+  {
+    "query": "From ResNet to modern LLMs",
+    "intent": "relationship",
+    "level": 6,
+    "expected": [
+      "resnet-paper",
+      "batch-normalization",
+      "transformer-architecture",
+      "bert-paper",
+      "gpt4-technical-report"
+    ],
+    "unexpected": [],
+    "notes": "ResNet→BN→transformer→BERT→GPT-4 (4 hops)"
+  },
+  {
+    "query": "How industrial revolution led to climate change discussion",
+    "intent": "relationship",
+    "level": 6,
+    "expected": [
+      "industrial-revolution",
+      "globalization",
+      "ipcc-ar6-report",
+      "carbon-capture",
+      "climate-economics"
+    ],
+    "unexpected": [],
+    "notes": "industry→global→IPCC→CCS→economics (4 hops)"
+  },
+  {
+    "query": "Path from ancient trade to digital globalization",
+    "intent": "relationship",
+    "level": 6,
+    "expected": [
+      "silk-road",
+      "industrial-revolution",
+      "globalization",
+      "blockchain"
+    ],
+    "unexpected": [],
+    "notes": "silk road→industry→globalization→digital (3 hops)"
+  },
+  {
+    "query": "Connection between mRNA research and pandemic response",
+    "intent": "relationship",
+    "level": 6,
+    "expected": [
+      "mrna-technology",
+      "pfizer",
+      "moderna",
+      "covid-vaccine-development",
+      "pandemic-preparedness",
+      "who"
+    ],
+    "unexpected": [],
+    "notes": "mRNA→pharma→vaccines→pandemic→WHO (4 hops)"
+  },
+  {
+    "query": "从注意力机制到多模态AI",
+    "intent": "relationship",
+    "level": 6,
+    "expected": [
+      "attention-mechanism",
+      "transformer-architecture",
+      "gpt4-technical-report",
+      "multi-modal-learning"
+    ],
+    "unexpected": [],
+    "notes": "Chinese: attention→transformer→GPT-4→multimodal (3 hops)"
+  },
+  {
+    "query": "How software testing philosophy relates to scientific method",
+    "intent": "relationship",
+    "level": 6,
+    "expected": [
+      "test-driven-development",
+      "code-review",
+      "clinical-trial-phases"
+    ],
+    "unexpected": [],
+    "notes": "TDD→validation→scientific method (implicit)"
+  },
+  {
+    "query": "军事技术转化为民用创新",
+    "intent": "relationship",
+    "level": 6,
+    "expected": [
+      "cold-war",
+      "nato",
+      "distributed-systems",
+      "kubernetes"
+    ],
+    "unexpected": [],
+    "notes": "Chinese: military→civilian tech (3 hops)"
+  },
+  {
+    "query": "From Turing Award to AI safety concerns",
+    "intent": "relationship",
+    "level": 6,
+    "expected": [
+      "geoffrey-hinton",
+      "deepmind",
+      "openai",
+      "anthropic",
+      "ai-ethics"
+    ],
+    "unexpected": [],
+    "notes": "Hinton→DeepMind→OpenAI→Anthropic→ethics (4 hops)"
+  },
+  {
+    "query": "How learning science informs AI training",
+    "intent": "relationship",
+    "level": 6,
+    "expected": [
+      "spaced-repetition",
+      "neuroplasticity",
+      "neuroscience-inspired-ai",
+      "reinforcement-learning"
+    ],
+    "unexpected": [],
+    "notes": "SRS→brain→neuro-AI→RL (3 hops)"
+  },
+  {
+    "query": "储能技术如何推动能源转型",
+    "intent": "relationship",
+    "level": 6,
+    "expected": [
+      "energy-storage",
+      "battery-technology",
+      "smart-grid",
+      "photovoltaic-cell",
+      "grid-parity"
+    ],
+    "unexpected": [],
+    "notes": "Chinese: storage→battery→grid→solar→parity (4 hops)"
+  },
+  {
+    "query": "从Adam优化器到GPT-4",
+    "intent": "relationship",
+    "level": 6,
+    "expected": [
+      "adam-optimizer-paper",
+      "gradient-descent",
+      "transformer-architecture",
+      "openai",
+      "gpt4-technical-report"
+    ],
+    "unexpected": [],
+    "notes": "Chinese: Adam→GD→transformer→OpenAI→GPT-4 (4 hops)"
+  },
+  {
+    "query": "How decolonization shaped modern global institutions",
+    "intent": "relationship",
+    "level": 6,
+    "expected": [
+      "decolonization",
+      "cold-war",
+      "united-nations",
+      "globalization"
+    ],
+    "unexpected": [],
+    "notes": "decolonization→cold war→UN→globalization (3 hops)"
+  },
+  {
+    "query": "基因测序技术推动精准医疗",
+    "intent": "relationship",
+    "level": 6,
+    "expected": [
+      "illumina",
+      "genomics",
+      "drug-discovery-pipeline",
+      "clinical-trial-phases"
+    ],
+    "unexpected": [],
+    "notes": "Chinese: sequencing→genomics→drug discovery→trials (3 hops)"
+  },
+  {
+    "query": "From dropout to modern regularization",
+    "intent": "relationship",
+    "level": 6,
+    "expected": [
+      "dropout-paper",
+      "batch-normalization",
+      "transformer-architecture"
+    ],
+    "unexpected": [],
+    "notes": "dropout→BN→transformer (2 hops)"
+  },
+  {
+    "query": "Link between Marshall Plan and EU formation",
+    "intent": "relationship",
+    "level": 6,
+    "expected": [
+      "marshall-plan",
+      "cold-war",
+      "european-union"
+    ],
+    "unexpected": [],
+    "notes": "Marshall→cold war→EU (2 hops)"
+  },
+  {
+    "query": "How contrastive learning relates to human perception",
+    "intent": "relationship",
+    "level": 6,
+    "expected": [
+      "contrastive-learning",
+      "self-supervised-learning",
+      "selective-attention",
+      "neuroscience-inspired-ai"
+    ],
+    "unexpected": [],
+    "notes": "CL→SSL→attention→neuro-AI (3 hops)"
+  },
+  {
+    "query": "核聚变到无限能源的路径",
+    "intent": "relationship",
+    "level": 6,
+    "expected": [
+      "nuclear-fusion",
+      "iter",
+      "energy-storage",
+      "smart-grid"
+    ],
+    "unexpected": [],
+    "notes": "Chinese: fusion→ITER→storage→grid (3 hops)"
+  },
+  {
+    "query": "How few-shot learning connects to Feynman technique",
+    "intent": "relationship",
+    "level": 6,
+    "expected": [
+      "few-shot-learning",
+      "transfer-learning",
+      "feynman-technique"
+    ],
+    "unexpected": [],
+    "notes": "few-shot→transfer→Feynman (learning from few examples, 2 hops)"
+  },
+  {
+    "query": "从布雷顿森林到加密货币",
+    "intent": "relationship",
+    "level": 6,
+    "expected": [
+      "bretton-woods",
+      "central-banking",
+      "financial-crisis-2008",
+      "blockchain",
+      "cryptocurrency"
+    ],
+    "unexpected": [],
+    "notes": "Chinese: BW→central bank→crisis→blockchain→crypto (4 hops)"
+  },
+  {
+    "query": "How wind turbine design evolved with materials science",
+    "intent": "relationship",
+    "level": 6,
+    "expected": [
+      "wind-energy",
+      "vestas",
+      "siemens-gamesa",
+      "offshore-wind"
+    ],
+    "unexpected": [],
+    "notes": "wind→manufacturers→offshore (2 hops)"
+  },
+  {
+    "query": "Connection between working memory research and UX design",
+    "intent": "relationship",
+    "level": 6,
+    "expected": [
+      "working-memory",
+      "cognitive-biases",
+      "design-patterns"
+    ],
+    "unexpected": [],
+    "notes": "memory→biases→design (2 hops, cross CogSci+SWE)"
+  },
+  {
+    "query": "什么是 transformer 的 self-attention",
+    "intent": "conceptual",
+    "level": 7,
+    "expected": [
+      "transformer-architecture",
+      "attention-mechanism",
+      "attention-is-all-you-need"
+    ],
+    "unexpected": [],
+    "notes": "Chinese + English technical terms"
+  },
+  {
+    "query": "比较 LSTM 和 GRU 的参数效率",
+    "intent": "conceptual",
+    "level": 7,
+    "expected": [
+      "lstm-vs-gru",
+      "lstm-network"
+    ],
+    "unexpected": [],
+    "notes": "Chinese + English acronyms"
+  },
+  {
+    "query": "ResNet-50 vs VGG-16 哪个更好",
+    "intent": "conceptual",
+    "level": 7,
+    "expected": [
+      "resnet-paper",
+      "imagenet-paper"
+    ],
+    "unexpected": [],
+    "notes": "model names with numbers"
+  },
+  {
+    "query": "GPT-4和Claude的区别",
+    "intent": "conceptual",
+    "level": 7,
+    "expected": [
+      "openai",
+      "anthropic",
+      "gpt4-technical-report"
+    ],
+    "unexpected": [],
+    "notes": "Chinese + product names"
+  },
+  {
+    "query": "Adam optimizer的学习率怎么调",
+    "intent": "conceptual",
+    "level": 7,
+    "expected": [
+      "adam-optimizer-paper",
+      "gradient-descent"
+    ],
+    "unexpected": [],
+    "notes": "Chinese + English optimizer name"
+  },
+  {
+    "query": "CAR-T疗法的FDA审批流程",
+    "intent": "conceptual",
+    "level": 7,
+    "expected": [
+      "car-t-therapy",
+      "fda",
+      "clinical-trial-phases"
+    ],
+    "unexpected": [],
+    "notes": "Chinese + English acronyms"
+  },
+  {
+    "query": "Kubernetes的pod和service区别",
+    "intent": "conceptual",
+    "level": 7,
+    "expected": [
+      "kubernetes",
+      "microservices"
+    ],
+    "unexpected": [],
+    "notes": "Chinese + K8s terms"
+  },
+  {
+    "query": "Docker和Kubernetes怎么配合",
+    "intent": "conceptual",
+    "level": 7,
+    "expected": [
+      "docker",
+      "kubernetes",
+      "devops"
+    ],
+    "unexpected": [],
+    "notes": "Chinese + product names"
+  },
+  {
+    "query": "REST和GraphQL选哪个",
+    "intent": "conceptual",
+    "level": 7,
+    "expected": [
+      "rest-vs-graphql",
+      "api-design"
+    ],
+    "unexpected": [],
+    "notes": "Chinese + API terms"
+  },
+  {
+    "query": "SQL和NoSQL的使用场景",
+    "intent": "conceptual",
+    "level": 7,
+    "expected": [
+      "sql-vs-nosql",
+      "postgresql",
+      "distributed-systems"
+    ],
+    "unexpected": [],
+    "notes": "Chinese + DB terms"
+  },
+  {
+    "query": "BERT vs GPT architecture differences",
+    "intent": "conceptual",
+    "level": 7,
+    "expected": [
+      "bert-paper",
+      "gpt4-technical-report",
+      "transformer-architecture"
+    ],
+    "unexpected": [],
+    "notes": "English with model names"
+  },
+  {
+    "query": "mRNA vaccine mechanism of action",
+    "intent": "conceptual",
+    "level": 7,
+    "expected": [
+      "mrna-technology",
+      "covid-vaccine-development"
+    ],
+    "unexpected": [],
+    "notes": "English medical terminology"
+  },
+  {
+    "query": "CRISPR-Cas9 off-target effects",
+    "intent": "conceptual",
+    "level": 7,
+    "expected": [
+      "crispr-gene-editing"
+    ],
+    "unexpected": [],
+    "notes": "hyphenated technical term"
+  },
+  {
+    "query": "PyTorch 2.0 vs TensorFlow 2.x",
+    "intent": "conceptual",
+    "level": 7,
+    "expected": [
+      "pytorch-vs-tensorflow",
+      "pytorch",
+      "tensorflow"
+    ],
+    "unexpected": [],
+    "notes": "version numbers"
+  },
+  {
+    "query": "H100 GPU training performance",
+    "intent": "conceptual",
+    "level": 7,
+    "expected": [
+      "nvidia",
+      "transformer-architecture"
+    ],
+    "unexpected": [],
+    "notes": "product code + technical term"
+  },
+  {
+    "query": "PEM电解水制氢效率",
+    "intent": "conceptual",
+    "level": 7,
+    "expected": [
+      "hydrogen-fuel-cell"
+    ],
+    "unexpected": [],
+    "notes": "Chinese + English acronym PEM"
+  },
+  {
+    "query": "ESG评级对投资回报的影响",
+    "intent": "conceptual",
+    "level": 7,
+    "expected": [
+      "esg-investing",
+      "climate-economics"
+    ],
+    "unexpected": [],
+    "notes": "Chinese + ESG acronym"
+  },
+  {
+    "query": "CDO和次贷危机的关系",
+    "intent": "conceptual",
+    "level": 7,
+    "expected": [
+      "financial-crisis-2008"
+    ],
+    "unexpected": [],
+    "notes": "Chinese + financial acronym"
+  },
+  {
+    "query": "BM25 vs vector similarity search",
+    "intent": "conceptual",
+    "level": 7,
+    "expected": [
+      "knowledge-graph-methodology"
+    ],
+    "unexpected": [],
+    "notes": "search algorithm names"
+  },
+  {
+    "query": "IoT在smart grid中的应用",
+    "intent": "conceptual",
+    "level": 7,
+    "expected": [
+      "smart-grid",
+      "smart-grid-ml"
+    ],
+    "unexpected": [],
+    "notes": "English IoT + mixed"
+  },
+  {
+    "query": "RLHF vs constitutional AI",
+    "intent": "conceptual",
+    "level": 7,
+    "expected": [
+      "reinforcement-learning",
+      "anthropic",
+      "ai-ethics"
+    ],
+    "unexpected": [],
+    "notes": "ML alignment terms"
+  },
+  {
+    "query": "A100/H100 GPU对比",
+    "intent": "conceptual",
+    "level": 7,
+    "expected": [
+      "nvidia"
+    ],
+    "unexpected": [],
+    "notes": "Chinese + GPU model numbers"
+  },
+  {
+    "query": "GAN和Diffusion Model的对比",
+    "intent": "conceptual",
+    "level": 7,
+    "expected": [
+      "generative-adversarial-network",
+      "diffusion-model"
+    ],
+    "unexpected": [],
+    "notes": "Chinese + English model names"
+  },
+  {
+    "query": "Obsidian中如何实现Zettelkasten",
+    "intent": "conceptual",
+    "level": 7,
+    "expected": [
+      "obsidian-app",
+      "zettelkasten",
+      "how-to-take-smart-notes"
+    ],
+    "unexpected": [],
+    "notes": "Chinese + product + method name"
+  },
+  {
+    "query": "SRS算法和Anki的关系",
+    "intent": "conceptual",
+    "level": 7,
+    "expected": [
+      "spaced-repetition",
+      "anki"
+    ],
+    "unexpected": [],
+    "notes": "Chinese + English acronym + product"
+  },
+  {
+    "query": "CI/CD pipeline怎么搭建",
+    "intent": "conceptual",
+    "level": 7,
+    "expected": [
+      "devops",
+      "github",
+      "accelerate-devops"
+    ],
+    "unexpected": [],
+    "notes": "Chinese + DevOps terms"
+  },
+  {
+    "query": "API rate limiting最佳实践",
+    "intent": "conceptual",
+    "level": 7,
+    "expected": [
+      "api-design"
+    ],
+    "unexpected": [],
+    "notes": "Chinese + English mixed"
+  },
+  {
+    "query": "VaR模型的Monte Carlo方法",
+    "intent": "conceptual",
+    "level": 7,
+    "expected": [
+      "risk-management"
+    ],
+    "unexpected": [],
+    "notes": "Chinese + finance/math terms"
+  },
+  {
+    "query": "Phase III clinical trial design",
+    "intent": "conceptual",
+    "level": 7,
+    "expected": [
+      "clinical-trial-phases"
+    ],
+    "unexpected": [],
+    "notes": "English with Roman numeral"
+  },
+  {
+    "query": "LFP vs NMC电池技术路线",
+    "intent": "conceptual",
+    "level": 7,
+    "expected": [
+      "battery-technology",
+      "catl",
+      "lithium-vs-solid-state"
+    ],
+    "unexpected": [],
+    "notes": "Chinese + battery chemistry acronyms"
+  },
+  {
+    "query": "PPO算法在RLHF中的应用",
+    "intent": "conceptual",
+    "level": 7,
+    "expected": [
+      "reinforcement-learning",
+      "openai",
+      "anthropic"
+    ],
+    "unexpected": [],
+    "notes": "Chinese + RL algorithm names"
+  },
+  {
+    "query": "Istio service mesh架构",
+    "intent": "conceptual",
+    "level": 7,
+    "expected": [
+      "service-mesh",
+      "microservices",
+      "kubernetes"
+    ],
+    "unexpected": [],
+    "notes": "Chinese + product name"
+  },
+  {
+    "query": "DAC直接空气捕获技术成本",
+    "intent": "conceptual",
+    "level": 7,
+    "expected": [
+      "carbon-capture"
+    ],
+    "unexpected": [],
+    "notes": "Chinese + English acronym DAC"
+  },
+  {
+    "query": "FTS5 full-text search algorithm",
+    "intent": "conceptual",
+    "level": 7,
+    "expected": [
+      "knowledge-graph-methodology"
+    ],
+    "unexpected": [],
+    "notes": "SQLite search term"
+  },
+  {
+    "query": "Q-learning vs PPO vs A3C",
+    "intent": "conceptual",
+    "level": 7,
+    "expected": [
+      "reinforcement-learning"
+    ],
+    "unexpected": [],
+    "notes": "multiple RL algorithm names"
+  },
+  {
+    "query": "SimCLR对比学习框架",
+    "intent": "conceptual",
+    "level": 7,
+    "expected": [
+      "contrastive-learning",
+      "self-supervised-learning"
+    ],
+    "unexpected": [],
+    "notes": "Chinese + framework name"
+  },
+  {
+    "query": "EfficientNet和NAS的关系",
+    "intent": "conceptual",
+    "level": 7,
+    "expected": [
+      "neural-architecture-search",
+      "convolutional-neural-network"
+    ],
+    "unexpected": [],
+    "notes": "Chinese + model names"
+  },
+  {
+    "query": "GWAS全基因组关联分析",
+    "intent": "conceptual",
+    "level": 7,
+    "expected": [
+      "genomics",
+      "human-genome-project"
+    ],
+    "unexpected": [],
+    "notes": "Chinese + English acronym GWAS"
+  },
+  {
+    "query": "Markowitz投资组合优化",
+    "intent": "conceptual",
+    "level": 7,
+    "expected": [
+      "modern-portfolio-theory",
+      "risk-management"
+    ],
+    "unexpected": [],
+    "notes": "Chinese + person name + theory"
+  },
+  {
+    "query": "WTO与全球化的争议",
+    "intent": "conceptual",
+    "level": 7,
+    "expected": [
+      "wto",
+      "globalization",
+      "capitalism-vs-socialism"
+    ],
+    "unexpected": [],
+    "notes": "Chinese + English org name"
+  },
+  {
+    "query": "Stable Diffusion image generation",
+    "intent": "exact",
+    "level": 1,
+    "expected": [
+      "stable-diffusion"
+    ],
+    "unexpected": [],
+    "notes": ""
+  },
+  {
+    "query": "Midjourney AI art",
+    "intent": "exact",
+    "level": 1,
+    "expected": [
+      "midjourney"
+    ],
+    "unexpected": [],
+    "notes": ""
+  },
+  {
+    "query": "self-supervised learning",
+    "intent": "exact",
+    "level": 1,
+    "expected": [
+      "self-supervised-learning"
+    ],
+    "unexpected": [],
+    "notes": ""
+  },
+  {
+    "query": "model compression techniques",
+    "intent": "exact",
+    "level": 1,
+    "expected": [
+      "model-compression"
+    ],
+    "unexpected": [],
+    "notes": ""
+  },
+  {
+    "query": "federated learning privacy",
+    "intent": "exact",
+    "level": 1,
+    "expected": [
+      "federated-learning"
+    ],
+    "unexpected": [],
+    "notes": ""
+  },
+  {
+    "query": "neural architecture search NAS",
+    "intent": "exact",
+    "level": 1,
+    "expected": [
+      "neural-architecture-search"
+    ],
+    "unexpected": [],
+    "notes": ""
+  },
+  {
+    "query": "explainable AI XAI",
+    "intent": "exact",
+    "level": 1,
+    "expected": [
+      "explainable-ai"
+    ],
+    "unexpected": [],
+    "notes": ""
+  },
+  {
+    "query": "few-shot learning meta-learning",
+    "intent": "exact",
+    "level": 1,
+    "expected": [
+      "few-shot-learning"
+    ],
+    "unexpected": [],
+    "notes": ""
+  },
+  {
+    "query": "diffusion model denoising",
+    "intent": "exact",
+    "level": 1,
+    "expected": [
+      "diffusion-model"
+    ],
+    "unexpected": [],
+    "notes": ""
+  },
+  {
+    "query": "knowledge distillation teacher student",
+    "intent": "exact",
+    "level": 1,
+    "expected": [
+      "knowledge-distillation"
+    ],
+    "unexpected": [],
+    "notes": ""
+  },
+  {
+    "query": "contrastive learning SimCLR",
+    "intent": "exact",
+    "level": 1,
+    "expected": [
+      "contrastive-learning"
+    ],
+    "unexpected": [],
+    "notes": ""
+  },
+  {
+    "query": "multi-modal learning CLIP",
+    "intent": "exact",
+    "level": 1,
+    "expected": [
+      "multi-modal-learning"
+    ],
+    "unexpected": [],
+    "notes": ""
+  },
+  {
+    "query": "Roche diagnostics pharma",
+    "intent": "exact",
+    "level": 1,
+    "expected": [
+      "roche"
+    ],
+    "unexpected": [],
+    "notes": ""
+  },
+  {
+    "query": "AstraZeneca oncology",
+    "intent": "exact",
+    "level": 1,
+    "expected": [
+      "astrazeneca"
+    ],
+    "unexpected": [],
+    "notes": ""
+  },
+  {
+    "query": "immunotherapy checkpoint",
+    "intent": "exact",
+    "level": 1,
+    "expected": [
+      "immunotherapy"
+    ],
+    "unexpected": [],
+    "notes": ""
+  },
+  {
+    "query": "gene therapy delivery",
+    "intent": "exact",
+    "level": 1,
+    "expected": [
+      "gene-therapy"
+    ],
+    "unexpected": [],
+    "notes": ""
+  },
+  {
+    "query": "biomarker diagnosis",
+    "intent": "exact",
+    "level": 1,
+    "expected": [
+      "biomarker"
+    ],
+    "unexpected": [],
+    "notes": ""
+  },
+  {
+    "query": "PostgreSQL database",
+    "intent": "exact",
+    "level": 1,
+    "expected": [
+      "postgresql"
+    ],
+    "unexpected": [],
+    "notes": ""
+  },
+  {
+    "query": "Redis cache in-memory",
+    "intent": "exact",
+    "level": 1,
+    "expected": [
+      "redis"
+    ],
+    "unexpected": [],
+    "notes": ""
+  },
+  {
+    "query": "event-driven architecture messaging",
+    "intent": "exact",
+    "level": 1,
+    "expected": [
+      "event-driven-architecture"
+    ],
+    "unexpected": [],
+    "notes": ""
+  },
+  {
+    "query": "domain driven design DDD",
+    "intent": "exact",
+    "level": 1,
+    "expected": [
+      "domain-driven-design"
+    ],
+    "unexpected": [],
+    "notes": ""
+  },
+  {
+    "query": "GitOps declarative",
+    "intent": "exact",
+    "level": 1,
+    "expected": [
+      "gitops"
+    ],
+    "unexpected": [],
+    "notes": ""
+  },
+  {
+    "query": "WTO trade organization",
+    "intent": "exact",
+    "level": 1,
+    "expected": [
+      "wto"
+    ],
+    "unexpected": [],
+    "notes": ""
+  },
+  {
+    "query": "OPEC oil cartel",
+    "intent": "exact",
+    "level": 1,
+    "expected": [
+      "opec"
+    ],
+    "unexpected": [],
+    "notes": ""
+  },
+  {
+    "query": "Marshall Plan reconstruction",
+    "intent": "exact",
+    "level": 1,
+    "expected": [
+      "marshall-plan"
+    ],
+    "unexpected": [],
+    "notes": ""
+  },
+  {
+    "query": "embodied cognition perception",
+    "intent": "exact",
+    "level": 1,
+    "expected": [
+      "embodied-cognition"
+    ],
+    "unexpected": [],
+    "notes": ""
+  },
+  {
+    "query": "flow state optimal experience",
+    "intent": "exact",
+    "level": 1,
+    "expected": [
+      "flow-state"
+    ],
+    "unexpected": [],
+    "notes": ""
+  },
+  {
+    "query": "growth mindset Dweck",
+    "intent": "exact",
+    "level": 1,
+    "expected": [
+      "growth-mindset"
+    ],
+    "unexpected": [],
+    "notes": ""
+  },
+  {
+    "query": "cryptocurrency Bitcoin DeFi",
+    "intent": "exact",
+    "level": 1,
+    "expected": [
+      "cryptocurrency"
+    ],
+    "unexpected": [],
+    "notes": ""
+  },
+  {
+    "query": "high frequency trading HFT",
+    "intent": "exact",
+    "level": 1,
+    "expected": [
+      "high-frequency-trading"
+    ],
+    "unexpected": [],
+    "notes": ""
+  },
+  {
+    "query": "image generation from text description",
+    "intent": "conceptual",
+    "level": 2,
+    "expected": [
+      "stable-diffusion",
+      "diffusion-model"
+    ],
+    "unexpected": [],
+    "notes": "text-to-image described"
+  },
+  {
+    "query": "training with fewer labeled examples",
+    "intent": "conceptual",
+    "level": 2,
+    "expected": [
+      "few-shot-learning",
+      "self-supervised-learning"
+    ],
+    "unexpected": [],
+    "notes": "few-shot described"
+  },
+  {
+    "query": "making neural networks smaller and faster",
+    "intent": "conceptual",
+    "level": 2,
+    "expected": [
+      "model-compression",
+      "knowledge-distillation"
+    ],
+    "unexpected": [],
+    "notes": "compression described"
+  },
+  {
+    "query": "collaborative training without sharing data",
+    "intent": "conceptual",
+    "level": 2,
+    "expected": [
+      "federated-learning"
+    ],
+    "unexpected": [],
+    "notes": "FL described"
+  },
+  {
+    "query": "automated neural network design",
+    "intent": "conceptual",
+    "level": 2,
+    "expected": [
+      "neural-architecture-search"
+    ],
+    "unexpected": [],
+    "notes": "NAS described"
+  },
+  {
+    "query": "understanding why AI makes decisions",
+    "intent": "conceptual",
+    "level": 2,
+    "expected": [
+      "explainable-ai"
+    ],
+    "unexpected": [],
+    "notes": "XAI described"
+  },
+  {
+    "query": "learning representations without labels",
+    "intent": "conceptual",
+    "level": 2,
+    "expected": [
+      "contrastive-learning",
+      "self-supervised-learning"
+    ],
+    "unexpected": [],
+    "notes": "SSL/CL described"
+  },
+  {
+    "query": "processing text images and audio together",
+    "intent": "conceptual",
+    "level": 2,
+    "expected": [
+      "multi-modal-learning",
+      "gpt4-technical-report"
+    ],
+    "unexpected": [],
+    "notes": "multimodal described"
+  },
+  {
+    "query": "小模型从大模型学习知识",
+    "intent": "conceptual",
+    "level": 2,
+    "expected": [
+      "knowledge-distillation",
+      "model-compression"
+    ],
+    "unexpected": [],
+    "notes": "KD in Chinese"
+  },
+  {
+    "query": "不需要标注数据的预训练方法",
+    "intent": "conceptual",
+    "level": 2,
+    "expected": [
+      "self-supervised-learning",
+      "contrastive-learning"
+    ],
+    "unexpected": [],
+    "notes": "SSL in Chinese"
+  },
+  {
+    "query": "让AI解释自己的推理过程",
+    "intent": "conceptual",
+    "level": 2,
+    "expected": [
+      "explainable-ai"
+    ],
+    "unexpected": [],
+    "notes": "XAI in Chinese"
+  },
+  {
+    "query": "多种感官信息的联合处理",
+    "intent": "conceptual",
+    "level": 2,
+    "expected": [
+      "multi-modal-learning"
+    ],
+    "unexpected": [],
+    "notes": "multimodal in Chinese"
+  },
+  {
+    "query": "去中心化数字账本技术",
+    "intent": "conceptual",
+    "level": 2,
+    "expected": [
+      "blockchain",
+      "cryptocurrency"
+    ],
+    "unexpected": [],
+    "notes": "blockchain in Chinese"
+  },
+  {
+    "query": "高速自动化证券交易",
+    "intent": "conceptual",
+    "level": 2,
+    "expected": [
+      "high-frequency-trading",
+      "flash-boys"
+    ],
+    "unexpected": [],
+    "notes": "HFT in Chinese"
+  },
+  {
+    "query": "环境社会治理投资评估",
+    "intent": "conceptual",
+    "level": 2,
+    "expected": [
+      "esg-investing"
+    ],
+    "unexpected": [],
+    "notes": "ESG in Chinese"
+  },
+  {
+    "query": "关键枢纽节点的免疫疗法",
+    "intent": "conceptual",
+    "level": 2,
+    "expected": [
+      "immunotherapy",
+      "car-t-therapy"
+    ],
+    "unexpected": [],
+    "notes": "immunotherapy in Chinese alt"
+  },
+  {
+    "query": "最佳体验与沉浸感",
+    "intent": "conceptual",
+    "level": 2,
+    "expected": [
+      "flow-state"
+    ],
+    "unexpected": [],
+    "notes": "flow state in Chinese"
+  },
+  {
+    "query": "固定思维与成长思维",
+    "intent": "conceptual",
+    "level": 2,
+    "expected": [
+      "growth-mindset"
+    ],
+    "unexpected": [],
+    "notes": "mindset in Chinese"
+  },
+  {
+    "query": "刻意重复与专家技能",
+    "intent": "conceptual",
+    "level": 2,
+    "expected": [
+      "deliberate-practice",
+      "peak-ericsson"
+    ],
+    "unexpected": [],
+    "notes": "deliberate practice in Chinese"
+  },
+  {
+    "query": "micro power systems for remote areas",
+    "intent": "conceptual",
+    "level": 2,
+    "expected": [
+      "microgrid"
+    ],
+    "unexpected": [],
+    "notes": "microgrid described"
+  },
+  {
+    "query": "clean energy cost reduction trajectory",
+    "intent": "conceptual",
+    "level": 2,
+    "expected": [
+      "grid-parity",
+      "bnef-energy-transition"
+    ],
+    "unexpected": [],
+    "notes": "grid parity described"
+  },
+  {
+    "query": "declarative infrastructure management via git",
+    "intent": "conceptual",
+    "level": 2,
+    "expected": [
+      "gitops",
+      "devops"
+    ],
+    "unexpected": [],
+    "notes": "GitOps described"
+  },
+  {
+    "query": "logging tracing metrics for services",
+    "intent": "conceptual",
+    "level": 2,
+    "expected": [
+      "observability",
+      "devops"
+    ],
+    "unexpected": [],
+    "notes": "observability described"
+  },
+  {
+    "query": "sidecar proxy for service communication",
+    "intent": "conceptual",
+    "level": 2,
+    "expected": [
+      "service-mesh",
+      "microservices"
+    ],
+    "unexpected": [],
+    "notes": "service mesh described"
+  },
+  {
+    "query": "measuring drug effectiveness in patients",
+    "intent": "conceptual",
+    "level": 2,
+    "expected": [
+      "biomarker",
+      "clinical-trial-phases"
+    ],
+    "unexpected": [],
+    "notes": "biomarker described"
+  },
+  {
+    "query": "correcting genetic mutations in living cells",
+    "intent": "conceptual",
+    "level": 2,
+    "expected": [
+      "gene-therapy",
+      "crispr-gene-editing"
+    ],
+    "unexpected": [],
+    "notes": "gene therapy described"
+  },
+  {
+    "query": "个体化基因药物反应",
+    "intent": "conceptual",
+    "level": 2,
+    "expected": [
+      "pharmacogenomics"
+    ],
+    "unexpected": [],
+    "notes": "pharmacogenomics in Chinese"
+  },
+  {
+    "query": "构建主义教学方法",
+    "intent": "conceptual",
+    "level": 2,
+    "expected": [
+      "constructivism"
+    ],
+    "unexpected": [],
+    "notes": "constructivism in Chinese"
+  },
+  {
+    "query": "主动检索记忆强化",
+    "intent": "conceptual",
+    "level": 2,
+    "expected": [
+      "active-recall",
+      "make-it-stick"
+    ],
+    "unexpected": [],
+    "notes": "active recall in Chinese"
+  },
+  {
+    "query": "strategic military alliance collective defense",
+    "intent": "conceptual",
+    "level": 2,
+    "expected": [
+      "nato",
+      "cold-war"
+    ],
+    "unexpected": [],
+    "notes": "NATO described"
+  },
+  {
+    "query": "diffusion models for molecular design",
+    "intent": "conceptual",
+    "level": 3,
+    "expected": [
+      "diffusion-model",
+      "ai-drug-discovery",
+      "drug-discovery-pipeline"
+    ],
+    "unexpected": [],
+    "notes": "ML generative + Bio"
+  },
+  {
+    "query": "contrastive learning for medical imaging",
+    "intent": "conceptual",
+    "level": 3,
+    "expected": [
+      "contrastive-learning",
+      "ai-drug-discovery"
+    ],
+    "unexpected": [],
+    "notes": "ML technique + Bio"
+  },
+  {
+    "query": "knowledge distillation for edge deployment in IoT",
+    "intent": "conceptual",
+    "level": 3,
+    "expected": [
+      "knowledge-distillation",
+      "model-compression",
+      "smart-grid"
+    ],
+    "unexpected": [],
+    "notes": "ML + Energy IoT"
+  },
+  {
+    "query": "federated learning for financial data privacy",
+    "intent": "conceptual",
+    "level": 3,
+    "expected": [
+      "federated-learning",
+      "risk-management",
+      "quantitative-trading"
+    ],
+    "unexpected": [],
+    "notes": "ML + Finance privacy"
+  },
+  {
+    "query": "NAS for efficient energy forecasting models",
+    "intent": "conceptual",
+    "level": 3,
+    "expected": [
+      "neural-architecture-search",
+      "smart-grid-ml",
+      "lstm-network"
+    ],
+    "unexpected": [],
+    "notes": "ML AutoML + Energy"
+  },
+  {
+    "query": "decision fatigue in trading",
+    "intent": "conceptual",
+    "level": 3,
+    "expected": [
+      "decision-fatigue",
+      "quantitative-trading",
+      "behavioral-economics"
+    ],
+    "unexpected": [],
+    "notes": "CogSci + Finance"
+  },
+  {
+    "query": "growth mindset in software engineering",
+    "intent": "conceptual",
+    "level": 3,
+    "expected": [
+      "growth-mindset",
+      "technical-debt",
+      "code-review"
+    ],
+    "unexpected": [],
+    "notes": "CogSci + SWE"
+  },
+  {
+    "query": "deliberate practice for programming skills",
+    "intent": "conceptual",
+    "level": 3,
+    "expected": [
+      "deliberate-practice",
+      "test-driven-development"
+    ],
+    "unexpected": [],
+    "notes": "Edu + SWE"
+  },
+  {
+    "query": "flow state and deep work in coding",
+    "intent": "conceptual",
+    "level": 3,
+    "expected": [
+      "flow-state",
+      "code-review",
+      "devops"
+    ],
+    "unexpected": [],
+    "notes": "CogSci + SWE"
+  },
+  {
+    "query": "blockchain for clinical trial data integrity",
+    "intent": "conceptual",
+    "level": 3,
+    "expected": [
+      "blockchain",
+      "clinical-trial-phases",
+      "drug-discovery-pipeline"
+    ],
+    "unexpected": [],
+    "notes": "Finance tech + Bio"
+  },
+  {
+    "query": "ESG and renewable energy investment",
+    "intent": "conceptual",
+    "level": 3,
+    "expected": [
+      "esg-investing",
+      "photovoltaic-cell",
+      "wind-energy",
+      "bnef-energy-transition"
+    ],
+    "unexpected": [],
+    "notes": "Finance + Energy"
+  },
+  {
+    "query": "cryptocurrency regulation and central banking",
+    "intent": "conceptual",
+    "level": 3,
+    "expected": [
+      "cryptocurrency",
+      "central-banking",
+      "fed"
+    ],
+    "unexpected": [],
+    "notes": "Finance digital + traditional"
+  },
+  {
+    "query": "HFT algorithms using deep learning",
+    "intent": "conceptual",
+    "level": 3,
+    "expected": [
+      "high-frequency-trading",
+      "lstm-network",
+      "algorithmic-trading-ml"
+    ],
+    "unexpected": [],
+    "notes": "Finance + ML"
+  },
+  {
+    "query": "observability in distributed ML training",
+    "intent": "conceptual",
+    "level": 3,
+    "expected": [
+      "observability",
+      "distributed-systems",
+      "pytorch"
+    ],
+    "unexpected": [],
+    "notes": "SWE + ML"
+  },
+  {
+    "query": "GitOps for ML model deployment",
+    "intent": "conceptual",
+    "level": 3,
+    "expected": [
+      "gitops",
+      "devops",
+      "pytorch"
+    ],
+    "unexpected": [],
+    "notes": "SWE DevOps + ML"
+  },
+  {
+    "query": "event-driven architecture for real-time analytics",
+    "intent": "conceptual",
+    "level": 3,
+    "expected": [
+      "event-driven-architecture",
+      "distributed-systems",
+      "quantitative-trading"
+    ],
+    "unexpected": [],
+    "notes": "SWE + Finance"
+  },
+  {
+    "query": "DDD for healthcare software",
+    "intent": "conceptual",
+    "level": 3,
+    "expected": [
+      "domain-driven-design",
+      "drug-discovery-pipeline"
+    ],
+    "unexpected": [],
+    "notes": "SWE + Bio"
+  },
+  {
+    "query": "Redis caching for recommendation systems",
+    "intent": "conceptual",
+    "level": 3,
+    "expected": [
+      "redis",
+      "transformer-architecture"
+    ],
+    "unexpected": [],
+    "notes": "SWE + ML"
+  },
+  {
+    "query": "PostgreSQL for genomic data storage",
+    "intent": "conceptual",
+    "level": 3,
+    "expected": [
+      "postgresql",
+      "genomics",
+      "distributed-systems"
+    ],
+    "unexpected": [],
+    "notes": "SWE + Bio"
+  },
+  {
+    "query": "multi-modal AI for education",
+    "intent": "conceptual",
+    "level": 3,
+    "expected": [
+      "multi-modal-learning",
+      "digital-transformation-education",
+      "bloom-taxonomy"
+    ],
+    "unexpected": [],
+    "notes": "ML + Edu"
+  },
+  {
+    "query": "self-supervised learning for protein structure",
+    "intent": "conceptual",
+    "level": 3,
+    "expected": [
+      "self-supervised-learning",
+      "protein-folding",
+      "alphafold-nature-paper"
+    ],
+    "unexpected": [],
+    "notes": "ML + Bio"
+  },
+  {
+    "query": "embodied cognition and robotics",
+    "intent": "conceptual",
+    "level": 3,
+    "expected": [
+      "embodied-cognition",
+      "reinforcement-learning"
+    ],
+    "unexpected": [],
+    "notes": "CogSci + ML"
+  },
+  {
+    "query": "metacognition in AI agent design",
+    "intent": "conceptual",
+    "level": 3,
+    "expected": [
+      "metacognition",
+      "reinforcement-learning",
+      "ai-ethics"
+    ],
+    "unexpected": [],
+    "notes": "CogSci + ML"
+  },
+  {
+    "query": "Zettelkasten principles in code documentation",
+    "intent": "conceptual",
+    "level": 3,
+    "expected": [
+      "zettelkasten",
+      "code-review",
+      "technical-debt"
+    ],
+    "unexpected": [],
+    "notes": "Edu + SWE"
+  },
+  {
+    "query": "Marshall Plan和战后经济复苏",
+    "intent": "conceptual",
+    "level": 3,
+    "expected": [
+      "marshall-plan",
+      "bretton-woods",
+      "european-union"
+    ],
+    "unexpected": [],
+    "notes": "History postwar in Chinese"
+  },
+  {
+    "query": "核威慑与冷战军备竞赛",
+    "intent": "conceptual",
+    "level": 3,
+    "expected": [
+      "nuclear-deterrence",
+      "cold-war",
+      "nato"
+    ],
+    "unexpected": [],
+    "notes": "History military in Chinese"
+  },
+  {
+    "query": "数字主权与AI治理",
+    "intent": "conceptual",
+    "level": 3,
+    "expected": [
+      "digital-sovereignty",
+      "ai-ethics",
+      "globalization"
+    ],
+    "unexpected": [],
+    "notes": "History + ML in Chinese"
+  },
+  {
+    "query": "OPEC与全球能源地缘政治",
+    "intent": "conceptual",
+    "level": 3,
+    "expected": [
+      "opec",
+      "energy-policy-history",
+      "globalization"
+    ],
+    "unexpected": [],
+    "notes": "History + Energy in Chinese"
+  },
+  {
+    "query": "微电网在农村电气化中的作用",
+    "intent": "conceptual",
+    "level": 3,
+    "expected": [
+      "microgrid",
+      "photovoltaic-cell",
+      "battery-technology"
+    ],
+    "unexpected": [],
+    "notes": "Energy rural in Chinese"
+  },
+  {
+    "query": "碳定价对工业转型的影响",
+    "intent": "conceptual",
+    "level": 3,
+    "expected": [
+      "carbon-pricing",
+      "climate-economics",
+      "industrial-revolution"
+    ],
+    "unexpected": [],
+    "notes": "Energy + History in Chinese"
+  },
+  {
+    "query": "diffusion in physics vs AI",
+    "intent": "conceptual",
+    "level": 4,
+    "expected": [
+      "diffusion-model"
+    ],
+    "unexpected": [],
+    "notes": "diffusion model, not physical diffusion"
+  },
+  {
+    "query": "generation in GAN vs energy",
+    "intent": "conceptual",
+    "level": 4,
+    "expected": [
+      "generative-adversarial-network"
+    ],
+    "unexpected": [
+      "photovoltaic-cell"
+    ],
+    "notes": "image generation, not power generation"
+  },
+  {
+    "query": "flow in psychology vs data",
+    "intent": "conceptual",
+    "level": 4,
+    "expected": [
+      "flow-state"
+    ],
+    "unexpected": [
+      "event-driven-architecture"
+    ],
+    "notes": "flow state, not data flow"
+  },
+  {
+    "query": "agent in AI vs financial",
+    "intent": "conceptual",
+    "level": 4,
+    "expected": [
+      "reinforcement-learning"
+    ],
+    "unexpected": [
+      "jpmorgan"
+    ],
+    "notes": "AI agent, not financial agent"
+  },
+  {
+    "query": "cell in battery vs biology",
+    "intent": "conceptual",
+    "level": 4,
+    "expected": [
+      "battery-technology",
+      "photovoltaic-cell"
+    ],
+    "unexpected": [
+      "car-t-therapy"
+    ],
+    "notes": "energy cell, not biological cell"
+  },
+  {
+    "query": "grid in energy vs data",
+    "intent": "conceptual",
+    "level": 4,
+    "expected": [
+      "smart-grid"
+    ],
+    "unexpected": [
+      "distributed-systems"
+    ],
+    "notes": "power grid, not data grid"
+  },
+  {
+    "query": "protocol in blockchain vs network",
+    "intent": "conceptual",
+    "level": 4,
+    "expected": [
+      "blockchain"
+    ],
+    "unexpected": [
+      "distributed-systems"
+    ],
+    "notes": "consensus protocol, not network protocol"
+  },
+  {
+    "query": "exchange in crypto vs foreign",
+    "intent": "conceptual",
+    "level": 4,
+    "expected": [
+      "binance",
+      "cryptocurrency"
+    ],
+    "unexpected": [
+      "bretton-woods"
+    ],
+    "notes": "crypto exchange, not FX exchange"
+  },
+  {
+    "query": "hub in network vs knowledge",
+    "intent": "conceptual",
+    "level": 4,
+    "expected": [
+      "distributed-systems"
+    ],
+    "unexpected": [],
+    "notes": "network hub, not knowledge hub"
+  },
+  {
+    "query": "pruning in decision tree vs neural",
+    "intent": "conceptual",
+    "level": 4,
+    "expected": [
+      "model-compression"
+    ],
+    "unexpected": [],
+    "notes": "NN pruning, not tree pruning"
+  },
+  {
+    "query": "recall in memory vs information retrieval",
+    "intent": "conceptual",
+    "level": 4,
+    "expected": [
+      "active-recall",
+      "working-memory"
+    ],
+    "unexpected": [],
+    "notes": "memory recall, not IR recall"
+  },
+  {
+    "query": "precision in medicine vs metrics",
+    "intent": "conceptual",
+    "level": 4,
+    "expected": [
+      "genomics",
+      "drug-discovery-pipeline"
+    ],
+    "unexpected": [],
+    "notes": "precision medicine, not ML precision"
+  },
+  {
+    "query": "domain in DDD vs ML",
+    "intent": "conceptual",
+    "level": 4,
+    "expected": [
+      "domain-driven-design"
+    ],
+    "unexpected": [
+      "transfer-learning"
+    ],
+    "notes": "software domain, not ML domain"
+  },
+  {
+    "query": "service in microservices vs cloud",
+    "intent": "conceptual",
+    "level": 4,
+    "expected": [
+      "microservices",
+      "kubernetes"
+    ],
+    "unexpected": [],
+    "notes": "microservice, not cloud service"
+  },
+  {
+    "query": "image in Docker vs computer vision",
+    "intent": "conceptual",
+    "level": 4,
+    "expected": [
+      "docker"
+    ],
+    "unexpected": [
+      "convolutional-neural-network"
+    ],
+    "notes": "Docker image, not visual image"
+  },
+  {
+    "query": "registry in container vs tag",
+    "intent": "conceptual",
+    "level": 4,
+    "expected": [
+      "docker",
+      "kubernetes"
+    ],
+    "unexpected": [],
+    "notes": "container registry, not tag registry"
+  },
+  {
+    "query": "volume in container vs trading",
+    "intent": "conceptual",
+    "level": 4,
+    "expected": [
+      "docker"
+    ],
+    "unexpected": [
+      "quantitative-trading"
+    ],
+    "notes": "Docker volume, not trading volume"
+  },
+  {
+    "query": "cluster in Kubernetes vs ML",
+    "intent": "conceptual",
+    "level": 4,
+    "expected": [
+      "kubernetes"
+    ],
+    "unexpected": [],
+    "notes": "K8s cluster, not data cluster"
+  },
+  {
+    "query": "label in ML vs Kubernetes",
+    "intent": "conceptual",
+    "level": 4,
+    "expected": [
+      "convolutional-neural-network"
+    ],
+    "unexpected": [
+      "kubernetes"
+    ],
+    "notes": "training label, not K8s label"
+  },
+  {
+    "query": "reward in RL vs behavioral",
+    "intent": "conceptual",
+    "level": 4,
+    "expected": [
+      "reinforcement-learning"
+    ],
+    "unexpected": [
+      "behavioral-economics"
+    ],
+    "notes": "RL reward, not economic reward"
+  },
+  {
+    "query": "why do experts make different mistakes than beginners",
+    "intent": "exploratory",
+    "level": 5,
+    "expected": [
+      "dual-process-theory",
+      "cognitive-biases",
+      "deliberate-practice"
+    ],
+    "unexpected": [],
+    "notes": "expertise→biases"
+  },
+  {
+    "query": "how does competition drive innovation",
+    "intent": "exploratory",
+    "level": 5,
+    "expected": [
+      "pytorch-vs-tensorflow",
+      "openai",
+      "anthropic",
+      "deepmind"
+    ],
+    "unexpected": [],
+    "notes": "market→innovation"
+  },
+  {
+    "query": "what determines whether a technology becomes a standard",
+    "intent": "exploratory",
+    "level": 5,
+    "expected": [
+      "kubernetes",
+      "docker",
+      "transformer-architecture"
+    ],
+    "unexpected": [],
+    "notes": "standardization"
+  },
+  {
+    "query": "how do visualization tools help understanding",
+    "intent": "exploratory",
+    "level": 5,
+    "expected": [
+      "obsidian-app",
+      "knowledge-graph-methodology",
+      "grafana"
+    ],
+    "unexpected": [],
+    "notes": "visualization→understanding"
+  },
+  {
+    "query": "relationship between regulation and innovation speed",
+    "intent": "exploratory",
+    "level": 5,
+    "expected": [
+      "fda",
+      "clinical-trial-phases",
+      "sec",
+      "ai-ethics"
+    ],
+    "unexpected": [],
+    "notes": "regulation→innovation tension"
+  },
+  {
+    "query": "how does interdisciplinary thinking create breakthroughs",
+    "intent": "exploratory",
+    "level": 5,
+    "expected": [
+      "neuroscience-inspired-ai",
+      "ai-drug-discovery",
+      "behavioral-economics"
+    ],
+    "unexpected": [],
+    "notes": "cross-pollination"
+  },
+  {
+    "query": "why do some open standards win over proprietary ones",
+    "intent": "exploratory",
+    "level": 5,
+    "expected": [
+      "linux-foundation",
+      "kubernetes",
+      "pytorch"
+    ],
+    "unexpected": [],
+    "notes": "open vs closed"
+  },
+  {
+    "query": "how does feedback loop speed affect learning",
+    "intent": "exploratory",
+    "level": 5,
+    "expected": [
+      "test-driven-development",
+      "spaced-repetition",
+      "reinforcement-learning"
+    ],
+    "unexpected": [],
+    "notes": "feedback→learning across domains"
+  },
+  {
+    "query": "what role does serendipity play in discovery",
+    "intent": "exploratory",
+    "level": 5,
+    "expected": [
+      "crispr-gene-editing",
+      "convolutional-neural-network",
+      "neuroscience-inspired-ai"
+    ],
+    "unexpected": [],
+    "notes": "accidental discovery"
+  },
+  {
+    "query": "how do network effects shape technology adoption",
+    "intent": "exploratory",
+    "level": 5,
+    "expected": [
+      "pytorch",
+      "kubernetes",
+      "blockchain"
+    ],
+    "unexpected": [],
+    "notes": "network effects"
+  },
+  {
+    "query": "人才流动如何推动技术发展",
+    "intent": "exploratory",
+    "level": 5,
+    "expected": [
+      "geoffrey-hinton",
+      "google-brain",
+      "deepmind",
+      "openai",
+      "anthropic"
+    ],
+    "unexpected": [],
+    "notes": "Chinese: talent flow→tech progress"
+  },
+  {
+    "query": "标准化如何降低行业壁垒",
+    "intent": "exploratory",
+    "level": 5,
+    "expected": [
+      "kubernetes",
+      "docker",
+      "api-design"
+    ],
+    "unexpected": [],
+    "notes": "Chinese: standardization→barriers"
+  },
+  {
+    "query": "复杂系统中的涌现行为",
+    "intent": "exploratory",
+    "level": 5,
+    "expected": [
+      "distributed-systems",
+      "reinforcement-learning",
+      "smart-grid"
+    ],
+    "unexpected": [],
+    "notes": "Chinese: emergence in complex systems"
+  },
+  {
+    "query": "技术路线之争的决定因素",
+    "intent": "exploratory",
+    "level": 5,
+    "expected": [
+      "pytorch-vs-tensorflow",
+      "lithium-vs-solid-state",
+      "rest-vs-graphql"
+    ],
+    "unexpected": [],
+    "notes": "Chinese: tech route competition"
+  },
+  {
+    "query": "跨学科研究的方法论",
+    "intent": "exploratory",
+    "level": 5,
+    "expected": [
+      "neuroscience-inspired-ai",
+      "ai-drug-discovery",
+      "climate-economics"
+    ],
+    "unexpected": [],
+    "notes": "Chinese: interdisciplinary methodology"
+  },
+  {
+    "query": "how does geographic proximity affect research collaboration",
+    "intent": "exploratory",
+    "level": 5,
+    "expected": [
+      "google-brain",
+      "deepmind",
+      "openai"
+    ],
+    "unexpected": [],
+    "notes": "geography→research"
+  },
+  {
+    "query": "what makes a framework outlast its competitors",
+    "intent": "exploratory",
+    "level": 5,
+    "expected": [
+      "pytorch",
+      "tensorflow",
+      "kubernetes"
+    ],
+    "unexpected": [],
+    "notes": "technology longevity"
+  },
+  {
+    "query": "how do biases compound in complex systems",
+    "intent": "exploratory",
+    "level": 5,
+    "expected": [
+      "cognitive-biases",
+      "risk-management",
+      "ai-ethics"
+    ],
+    "unexpected": [],
+    "notes": "bias propagation"
+  },
+  {
+    "query": "the cost of switching between technologies",
+    "intent": "exploratory",
+    "level": 5,
+    "expected": [
+      "pytorch-vs-tensorflow",
+      "sql-vs-nosql",
+      "agile-vs-waterfall"
+    ],
+    "unexpected": [],
+    "notes": "switching costs"
+  },
+  {
+    "query": "how does documentation quality affect project success",
+    "intent": "exploratory",
+    "level": 5,
+    "expected": [
+      "code-review",
+      "technical-debt",
+      "zettelkasten"
+    ],
+    "unexpected": [],
+    "notes": "docs→success"
+  },
+  {
+    "query": "简单规则产生复杂行为",
+    "intent": "exploratory",
+    "level": 5,
+    "expected": [
+      "reinforcement-learning",
+      "generative-adversarial-network",
+      "distributed-systems"
+    ],
+    "unexpected": [],
+    "notes": "Chinese: simple rules→complexity"
+  },
+  {
+    "query": "模仿与创新的边界",
+    "intent": "exploratory",
+    "level": 5,
+    "expected": [
+      "transfer-learning",
+      "generative-adversarial-network",
+      "design-patterns"
+    ],
+    "unexpected": [],
+    "notes": "Chinese: imitation→innovation"
+  },
+  {
+    "query": "时间压力下的决策质量",
+    "intent": "exploratory",
+    "level": 5,
+    "expected": [
+      "decision-fatigue",
+      "dual-process-theory",
+      "agile-vs-waterfall"
+    ],
+    "unexpected": [],
+    "notes": "Chinese: time pressure→decisions"
+  },
+  {
+    "query": "信息不对称与市场效率",
+    "intent": "exploratory",
+    "level": 5,
+    "expected": [
+      "behavioral-economics",
+      "quantitative-trading",
+      "risk-management"
+    ],
+    "unexpected": [],
+    "notes": "Chinese: information asymmetry"
+  },
+  {
+    "query": "技术民主化的双刃剑",
+    "intent": "exploratory",
+    "level": 5,
+    "expected": [
+      "stable-diffusion",
+      "crispr-gene-editing",
+      "blockchain"
+    ],
+    "unexpected": [],
+    "notes": "Chinese: democratization of tech"
+  },
+  {
+    "query": "collaboration vs competition in scientific progress",
+    "intent": "exploratory",
+    "level": 5,
+    "expected": [
+      "openai",
+      "deepmind",
+      "anthropic",
+      "open-source-economics"
+    ],
+    "unexpected": [],
+    "notes": "collaboration→progress"
+  },
+  {
+    "query": "how mental models shape problem solving",
+    "intent": "exploratory",
+    "level": 5,
+    "expected": [
+      "dual-process-theory",
+      "design-patterns",
+      "metacognition"
+    ],
+    "unexpected": [],
+    "notes": "mental models"
+  },
+  {
+    "query": "why do paradigm shifts take so long",
+    "intent": "exploratory",
+    "level": 5,
+    "expected": [
+      "transformer-architecture",
+      "cnn-vs-transformer",
+      "industrial-revolution"
+    ],
+    "unexpected": [],
+    "notes": "paradigm shifts"
+  },
+  {
+    "query": "隐性知识的传递与管理",
+    "intent": "exploratory",
+    "level": 5,
+    "expected": [
+      "zettelkasten",
+      "feynman-technique",
+      "knowledge-distillation"
+    ],
+    "unexpected": [],
+    "notes": "Chinese: tacit knowledge across domains"
+  },
+  {
+    "query": "技术生态系统的正反馈循环",
+    "intent": "exploratory",
+    "level": 5,
+    "expected": [
+      "hugging-face",
+      "pytorch",
+      "kubernetes",
+      "github"
+    ],
+    "unexpected": [],
+    "notes": "Chinese: tech ecosystem feedback"
+  },
+  {
+    "query": "How did GPU gaming hardware enable AI breakthroughs",
+    "intent": "relationship",
+    "level": 6,
+    "expected": [
+      "nvidia",
+      "convolutional-neural-network",
+      "imagenet-paper",
+      "transformer-architecture"
+    ],
+    "unexpected": [],
+    "notes": "gaming GPU→CUDA→CNN→transformers (3 hops)"
+  },
+  {
+    "query": "From Ebbinghaus to modern AI training schedules",
+    "intent": "relationship",
+    "level": 6,
+    "expected": [
+      "spaced-repetition",
+      "neuroplasticity",
+      "neuroscience-inspired-ai",
+      "gradient-descent"
+    ],
+    "unexpected": [],
+    "notes": "forgetting curve→brain→neuro-AI→learning rate scheduling (3 hops)"
+  },
+  {
+    "query": "How Docker containers led to serverless computing",
+    "intent": "relationship",
+    "level": 6,
+    "expected": [
+      "docker",
+      "kubernetes",
+      "microservices",
+      "event-driven-architecture"
+    ],
+    "unexpected": [],
+    "notes": "Docker→K8s→microservices→event-driven (3 hops)"
+  },
+  {
+    "query": "From Luhmann's card box to AI knowledge graphs",
+    "intent": "relationship",
+    "level": 6,
+    "expected": [
+      "zettelkasten",
+      "knowledge-graph-methodology",
+      "transformer-architecture",
+      "multi-modal-learning"
+    ],
+    "unexpected": [],
+    "notes": "cards→KG→AI→multimodal (3 hops)"
+  },
+  {
+    "query": "How behavioral economics influenced AI alignment research",
+    "intent": "relationship",
+    "level": 6,
+    "expected": [
+      "behavioral-economics",
+      "cognitive-biases",
+      "ai-ethics",
+      "reinforcement-learning",
+      "anthropic"
+    ],
+    "unexpected": [],
+    "notes": "behav econ→biases→ethics→RLHF→Anthropic (4 hops)"
+  },
+  {
+    "query": "Connection between photovoltaics and electric vehicle adoption",
+    "intent": "relationship",
+    "level": 6,
+    "expected": [
+      "photovoltaic-cell",
+      "grid-parity",
+      "energy-storage",
+      "battery-technology",
+      "tesla-energy"
+    ],
+    "unexpected": [],
+    "notes": "PV→parity→storage→battery→EV (4 hops)"
+  },
+  {
+    "query": "How gene sequencing enabled mRNA vaccines",
+    "intent": "relationship",
+    "level": 6,
+    "expected": [
+      "illumina",
+      "genomics",
+      "mrna-technology",
+      "pfizer",
+      "covid-vaccine-development"
+    ],
+    "unexpected": [],
+    "notes": "sequencing→genomics→mRNA→Pfizer→COVID (4 hops)"
+  },
+  {
+    "query": "从SimCLR到GPT-4的自监督学习演化",
+    "intent": "relationship",
+    "level": 6,
+    "expected": [
+      "contrastive-learning",
+      "self-supervised-learning",
+      "bert-paper",
+      "transformer-architecture",
+      "gpt4-technical-report"
+    ],
+    "unexpected": [],
+    "notes": "Chinese: SimCLR→SSL→BERT→transformer→GPT-4 (4 hops)"
+  },
+  {
+    "query": "从工业革命到碳交易市场",
+    "intent": "relationship",
+    "level": 6,
+    "expected": [
+      "industrial-revolution",
+      "ipcc-ar6-report",
+      "carbon-capture",
+      "carbon-pricing",
+      "esg-investing"
+    ],
+    "unexpected": [],
+    "notes": "Chinese: industry→IPCC→CCS→carbon pricing→ESG (4 hops)"
+  },
+  {
+    "query": "从人类基因组计划到个性化癌症治疗",
+    "intent": "relationship",
+    "level": 6,
+    "expected": [
+      "human-genome-project",
+      "genomics",
+      "biomarker",
+      "car-t-therapy",
+      "novartis"
+    ],
+    "unexpected": [],
+    "notes": "Chinese: HGP→genomics→biomarker→CAR-T→Novartis (4 hops)"
+  },
+  {
+    "query": "How Obsidian connects to academic research workflow",
+    "intent": "relationship",
+    "level": 6,
+    "expected": [
+      "obsidian-app",
+      "zettelkasten",
+      "active-recall",
+      "spaced-repetition",
+      "metacognition"
+    ],
+    "unexpected": [],
+    "notes": "Obsidian→Zettel→recall→SRS→metacognition (4 hops)"
+  },
+  {
+    "query": "From clean code to system reliability",
+    "intent": "relationship",
+    "level": 6,
+    "expected": [
+      "clean-architecture",
+      "design-patterns",
+      "technical-debt",
+      "devops",
+      "google-sre-book"
+    ],
+    "unexpected": [],
+    "notes": "clean arch→patterns→tech debt→DevOps→SRE (4 hops)"
+  },
+  {
+    "query": "How OPEC shaped modern renewable energy policy",
+    "intent": "relationship",
+    "level": 6,
+    "expected": [
+      "opec",
+      "oil-century",
+      "energy-policy-history",
+      "ipcc-ar6-report",
+      "carbon-pricing"
+    ],
+    "unexpected": [],
+    "notes": "OPEC→oil→energy policy→IPCC→carbon pricing (4 hops)"
+  },
+  {
+    "query": "从费曼学习法到AI教学系统",
+    "intent": "relationship",
+    "level": 6,
+    "expected": [
+      "feynman-technique",
+      "bloom-taxonomy",
+      "metacognition",
+      "digital-transformation-education",
+      "transformer-architecture"
+    ],
+    "unexpected": [],
+    "notes": "Chinese: Feynman→Bloom→meta→edtech→AI (4 hops)"
+  },
+  {
+    "query": "How Redis caching connects to user experience",
+    "intent": "relationship",
+    "level": 6,
+    "expected": [
+      "redis",
+      "microservices",
+      "api-design",
+      "distributed-systems"
+    ],
+    "unexpected": [],
+    "notes": "Redis→microservices→API→UX (3 hops)"
+  },
+  {
+    "query": "From Markowitz to algorithmic trading",
+    "intent": "relationship",
+    "level": 6,
+    "expected": [
+      "modern-portfolio-theory",
+      "risk-management",
+      "quantitative-trading",
+      "algorithmic-trading-ml",
+      "lstm-network"
+    ],
+    "unexpected": [],
+    "notes": "MPT→risk→quant→ML trading→LSTM (4 hops)"
+  },
+  {
+    "query": "去殖民化如何影响当今全球经济格局",
+    "intent": "relationship",
+    "level": 6,
+    "expected": [
+      "decolonization",
+      "united-nations",
+      "globalization",
+      "wto",
+      "climate-economics"
+    ],
+    "unexpected": [],
+    "notes": "Chinese: decolonization→UN→globalization→WTO→climate econ (4 hops)"
+  },
+  {
+    "query": "从Dropout到现代大模型正则化",
+    "intent": "relationship",
+    "level": 6,
+    "expected": [
+      "dropout-paper",
+      "batch-normalization",
+      "transformer-architecture",
+      "gpt4-technical-report"
+    ],
+    "unexpected": [],
+    "notes": "Chinese: dropout→BN→transformer→GPT-4 (3 hops)"
+  },
+  {
+    "query": "How DDD principles improve ML system design",
+    "intent": "relationship",
+    "level": 6,
+    "expected": [
+      "domain-driven-design",
+      "microservices",
+      "devops",
+      "pytorch"
+    ],
+    "unexpected": [],
+    "notes": "DDD→microservices→DevOps→ML deployment (3 hops)"
+  },
+  {
+    "query": "From growth mindset to expert performance",
+    "intent": "relationship",
+    "level": 6,
+    "expected": [
+      "growth-mindset",
+      "deliberate-practice",
+      "peak-ericsson",
+      "flow-state"
+    ],
+    "unexpected": [],
+    "notes": "mindset→practice→expertise→flow (3 hops)"
+  },
+  {
+    "query": "Stable Diffusion和Midjourney对比",
+    "intent": "conceptual",
+    "level": 7,
+    "expected": [
+      "stable-diffusion",
+      "midjourney"
+    ],
+    "unexpected": [],
+    "notes": "Chinese + product names"
+  },
+  {
+    "query": "SimCLR vs MoCo对比学习",
+    "intent": "conceptual",
+    "level": 7,
+    "expected": [
+      "contrastive-learning",
+      "self-supervised-learning"
+    ],
+    "unexpected": [],
+    "notes": "Chinese + method names"
+  },
+  {
+    "query": "NASNet和EfficientNet的设计思路",
+    "intent": "conceptual",
+    "level": 7,
+    "expected": [
+      "neural-architecture-search"
+    ],
+    "unexpected": [],
+    "notes": "Chinese + model names"
+  },
+  {
+    "query": "Grafana监控dashboard配置",
+    "intent": "conceptual",
+    "level": 7,
+    "expected": [
+      "grafana",
+      "devops"
+    ],
+    "unexpected": [],
+    "notes": "Chinese + product name"
+  },
+  {
+    "query": "Redis和PostgreSQL怎么选",
+    "intent": "conceptual",
+    "level": 7,
+    "expected": [
+      "redis",
+      "postgresql",
+      "sql-vs-nosql"
+    ],
+    "unexpected": [],
+    "notes": "Chinese + DB names"
+  },
+  {
+    "query": "Istio vs Linkerd service mesh",
+    "intent": "conceptual",
+    "level": 7,
+    "expected": [
+      "service-mesh",
+      "microservices"
+    ],
+    "unexpected": [],
+    "notes": "product comparison names"
+  },
+  {
+    "query": "ADC抗体药物偶联物的MOA",
+    "intent": "conceptual",
+    "level": 7,
+    "expected": [
+      "antibody-drug-conjugate"
+    ],
+    "unexpected": [],
+    "notes": "Chinese + pharma acronyms"
+  },
+  {
+    "query": "GWAS and precision medicine",
+    "intent": "conceptual",
+    "level": 7,
+    "expected": [
+      "genomics",
+      "pharmacogenomics"
+    ],
+    "unexpected": [],
+    "notes": "English medical acronyms"
+  },
+  {
+    "query": "DDD中的bounded context",
+    "intent": "conceptual",
+    "level": 7,
+    "expected": [
+      "domain-driven-design"
+    ],
+    "unexpected": [],
+    "notes": "Chinese + DDD terms"
+  },
+  {
+    "query": "event sourcing和CQRS模式",
+    "intent": "conceptual",
+    "level": 7,
+    "expected": [
+      "event-driven-architecture",
+      "design-patterns"
+    ],
+    "unexpected": [],
+    "notes": "Chinese + architecture terms"
+  },
+  {
+    "query": "O(n²) attention complexity",
+    "intent": "conceptual",
+    "level": 7,
+    "expected": [
+      "attention-mechanism",
+      "transformer-architecture"
+    ],
+    "unexpected": [],
+    "notes": "Big-O notation + technical"
+  },
+  {
+    "query": "BTC/ETH加密资产配置",
+    "intent": "conceptual",
+    "level": 7,
+    "expected": [
+      "cryptocurrency",
+      "blockchain",
+      "binance"
+    ],
+    "unexpected": [],
+    "notes": "Chinese + crypto tickers"
+  },
+  {
+    "query": "SDR特别提款权和IMF",
+    "intent": "conceptual",
+    "level": 7,
+    "expected": [
+      "imf",
+      "bretton-woods"
+    ],
+    "unexpected": [],
+    "notes": "Chinese + financial acronym"
+  },
+  {
+    "query": "Piaget建构主义vs Vygotsky",
+    "intent": "conceptual",
+    "level": 7,
+    "expected": [
+      "constructivism"
+    ],
+    "unexpected": [],
+    "notes": "Chinese + person names"
+  },
+  {
+    "query": "Csikszentmihalyi心流理论",
+    "intent": "conceptual",
+    "level": 7,
+    "expected": [
+      "flow-state"
+    ],
+    "unexpected": [],
+    "notes": "Chinese + hard-to-spell name"
+  },
+  {
+    "query": "K. Anders Ericsson刻意练习",
+    "intent": "conceptual",
+    "level": 7,
+    "expected": [
+      "deliberate-practice",
+      "peak-ericsson"
+    ],
+    "unexpected": [],
+    "notes": "Chinese + person name"
+  },
+  {
+    "query": "float16 vs bfloat16 training precision",
+    "intent": "conceptual",
+    "level": 7,
+    "expected": [
+      "transformer-architecture",
+      "nvidia"
+    ],
+    "unexpected": [],
+    "notes": "data type formats"
+  },
+  {
+    "query": "LoRA低秩适配微调",
+    "intent": "conceptual",
+    "level": 7,
+    "expected": [
+      "transfer-learning",
+      "model-compression"
+    ],
+    "unexpected": [],
+    "notes": "Chinese + ML technique name"
+  },
+  {
+    "query": "Transformer encoder-decoder vs decoder-only",
+    "intent": "conceptual",
+    "level": 7,
+    "expected": [
+      "transformer-architecture",
+      "bert-paper",
+      "gpt4-technical-report"
+    ],
+    "unexpected": [],
+    "notes": "architecture variant names"
+  },
+  {
+    "query": "PV module degradation rate和LCOE",
+    "intent": "conceptual",
+    "level": 7,
+    "expected": [
+      "photovoltaic-cell",
+      "grid-parity"
+    ],
+    "unexpected": [],
+    "notes": "Chinese + energy acronyms"
+  }
+]
