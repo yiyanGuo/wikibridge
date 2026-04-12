@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react"
 import { Search, FileText } from "lucide-react"
-import { ScrollArea } from "@/components/ui/scroll-area"
 import { useWikiStore } from "@/stores/wiki-store"
 import { readFile } from "@/commands/fs"
 import { searchWiki, type SearchResult } from "@/lib/search"
@@ -59,8 +58,8 @@ export function SearchView() {
   }
 
   return (
-    <div className="flex h-full flex-col">
-      <div className="border-b px-4 py-3">
+    <div className="flex h-full flex-col overflow-hidden">
+      <div className="shrink-0 border-b px-4 py-3">
         <div className="relative">
           <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <input
@@ -74,7 +73,7 @@ export function SearchView() {
         </div>
       </div>
 
-      <ScrollArea className="flex-1">
+      <div className="flex-1 overflow-y-auto">
         {!query.trim() ? (
           <div className="flex flex-col items-center justify-center gap-2 p-8 text-center text-sm text-muted-foreground">
             <Search className="h-8 w-8 text-muted-foreground/30" />
@@ -101,7 +100,7 @@ export function SearchView() {
             ))}
           </div>
         )}
-      </ScrollArea>
+      </div>
     </div>
   )
 }

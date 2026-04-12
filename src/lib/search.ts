@@ -144,10 +144,21 @@ export async function searchWiki(
     const { useWikiStore } = await import("@/stores/wiki-store")
     const embCfg = useWikiStore.getState().embeddingConfig
     if (embCfg.enabled && embCfg.model) {
+      const t0 = performance.now()
       const { searchByEmbedding } = await import("@/lib/embedding")
       const llmCfg = useWikiStore.getState().llmConfig
       const vectorResults = await searchByEmbedding(pp, query, llmCfg, embCfg, 10)
+      const vectorMs = Math.round(performance.now() - t0)
 
+      console.log(
+        `[Vector Search] query="${query}" | ${vectorResults.length} results in ${vectorMs}ms | model=${embCfg.model}` +
+        (vectorResults.length > 0
+          ? ` | top: ${vectorResults.slice(0, 5).map((r) => `${r.id}(${r.score.toFixed(3)})`).join(", ")}`
+          : "")
+      )
+
+      let boosted = 0
+      let added = 0
       const existingPaths = new Set(results.map((r) => r.path))
 
       for (const vr of vectorResults) {
@@ -160,6 +171,7 @@ export async function searchWiki(
         if (existing) {
           // Boost score of existing result
           existing.score += vr.score * 5
+          boosted++
         } else {
           // Try to find the file and add it
           const dirs = ["entities", "concepts", "sources", "synthesis", "comparison", "queries"]
@@ -177,6 +189,7 @@ export async function searchWiki(
                 score: vr.score * 5,
               })
               existingPaths.add(tryPath)
+              added++
               break
             } catch {
               // not in this directory
@@ -184,13 +197,21 @@ export async function searchWiki(
           }
         }
       }
+
+      if (boosted > 0 || added > 0) {
+        console.log(`[Vector Search] Merged: ${boosted} boosted, ${added} new pages added`)
+      }
     }
-  } catch {
-    // Vector search failed or not available, continue without it
+  } catch (err) {
+    console.log(`[Vector Search] Skipped: ${err instanceof Error ? err.message : "not available"}`)
   }
 
   // Sort by score descending
   results.sort((a, b) => b.score - a.score)
+
+  const tokenCount = results.filter((r) => r.score > 0).length
+  console.log(`[Search] query="${query}" | ${tokenCount} token matches | ${results.length} total results`)
+
   return results.slice(0, MAX_RESULTS)
 }
 
