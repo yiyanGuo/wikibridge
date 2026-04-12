@@ -16,8 +16,6 @@ export function SearchView() {
   const [query, setQuery] = useState("")
   const [results, setResults] = useState<SearchResult[]>([])
   const [searching, setSearching] = useState(false)
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-
   const doSearch = useCallback(
     async (q: string) => {
       if (!project || !q.trim()) {
@@ -37,14 +35,6 @@ export function SearchView() {
     },
     [project],
   )
-
-  useEffect(() => {
-    if (debounceRef.current) clearTimeout(debounceRef.current)
-    debounceRef.current = setTimeout(() => doSearch(query), 300)
-    return () => {
-      if (debounceRef.current) clearTimeout(debounceRef.current)
-    }
-  }, [query, doSearch])
 
   async function handleOpen(result: SearchResult) {
     try {
@@ -66,7 +56,8 @@ export function SearchView() {
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder={t("search.placeholder")}
+            onKeyDown={(e) => { if (e.key === "Enter") doSearch(query) }}
+            placeholder={t("search.placeholder") + " (Enter to search)"}
             autoFocus
             className="w-full rounded-md border bg-background py-2 pl-9 pr-3 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
           />
