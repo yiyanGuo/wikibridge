@@ -71,6 +71,9 @@ jobs:
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          # Disable AVX-512 for x86_64 macOS cross-compilation (lance-linalg)
+          CFLAGS: ${{ matrix.rust_target == 'x86_64-apple-darwin' && '-mno-avx512f' || '' }}
+          CXXFLAGS: ${{ matrix.rust_target == 'x86_64-apple-darwin' && '-mno-avx512f' || '' }}
         with:
           tagName: ${{ github.ref_name }}
           releaseName: 'LLM Wiki ${{ github.ref_name }}'
