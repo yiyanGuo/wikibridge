@@ -36,7 +36,7 @@ function detectCommunities(
     return { assignments: new Map(), communities: [] }
   }
 
-  const g = new Graph()
+  const g = new Graph({ type: "undirected" })
   for (const node of nodes) {
     g.addNode(node.id)
   }
