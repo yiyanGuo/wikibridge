@@ -51,6 +51,17 @@ export function ActivityPanel() {
   const queueSummary = getQueueSummary()
   const hasQueue = queueSummary.total > 0
 
+  // All hooks must be before any conditional return
+  const handleRetry = useCallback((taskId: string) => {
+    if (!project) return
+    retryTask(normalizePath(project.path), taskId)
+  }, [project])
+
+  const handleCancel = useCallback((taskId: string) => {
+    if (!project) return
+    cancelTask(normalizePath(project.path), taskId)
+  }, [project])
+
   // Auto-expand when a new task starts running
   useEffect(() => {
     if (runningCount > 0 && prevRunningRef.current === 0) {
@@ -81,16 +92,6 @@ export function ActivityPanel() {
   }
 
   const isActive = runningCount > 0 || queueSummary.processing > 0 || queueSummary.pending > 0
-
-  const handleRetry = useCallback((taskId: string) => {
-    if (!project) return
-    retryTask(normalizePath(project.path), taskId)
-  }, [project])
-
-  const handleCancel = useCallback((taskId: string) => {
-    if (!project) return
-    cancelTask(normalizePath(project.path), taskId)
-  }, [project])
 
   return (
     <div className="border-t bg-muted/30">
