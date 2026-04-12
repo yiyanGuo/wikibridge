@@ -37,6 +37,7 @@ pub fn run() {
 
                 #[cfg(not(target_os = "macos"))]
                 {
+                    use tauri::Manager;
                     api.prevent_close();
                     let win = window.clone();
                     let app = window.app_handle().clone();
