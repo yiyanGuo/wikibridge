@@ -43,6 +43,8 @@ export function SettingsView() {
   const [searchProvider, setSearchProvider] = useState(searchApiConfig.provider)
   const [searchApiKey, setSearchApiKey] = useState(searchApiConfig.apiKey)
   const [embeddingEnabled, setEmbeddingEnabled] = useState(embeddingConfig.enabled)
+  const [embeddingEndpoint, setEmbeddingEndpoint] = useState(embeddingConfig.endpoint)
+  const [embeddingApiKey, setEmbeddingApiKey] = useState(embeddingConfig.apiKey)
   const [embeddingModel, setEmbeddingModel] = useState(embeddingConfig.model)
   const [saved, setSaved] = useState(false)
   const [currentLang, setCurrentLang] = useState(i18n.language)
@@ -66,7 +68,7 @@ export function SettingsView() {
     const { saveLlmConfig, saveSearchApiConfig, saveEmbeddingConfig } = await import("@/lib/project-store")
     const newConfig = { provider, apiKey, model, ollamaUrl, customEndpoint, maxContextSize }
     const newSearchConfig = { provider: searchProvider, apiKey: searchApiKey }
-    const newEmbeddingConfig = { enabled: embeddingEnabled, model: embeddingModel }
+    const newEmbeddingConfig = { enabled: embeddingEnabled, endpoint: embeddingEndpoint, apiKey: embeddingApiKey, model: embeddingModel }
     setSearchApiConfig(newSearchConfig)
     await saveSearchApiConfig(newSearchConfig)
     setEmbeddingConfig(newEmbeddingConfig)
@@ -292,15 +294,34 @@ export function SettingsView() {
               Enable semantic search using embeddings. Uses the same LLM provider endpoint. Improves search quality for synonym matching and cross-domain discovery.
             </p>
             {embeddingEnabled && (
-              <div className="space-y-2">
-                <Label>Embedding Model</Label>
-                <Input
-                  value={embeddingModel}
-                  onChange={(e) => setEmbeddingModel(e.target.value)}
-                  placeholder="e.g. text-embedding-3-small, nomic-embed-text"
-                />
+              <div className="space-y-3">
+                <div className="space-y-2">
+                  <Label>Endpoint</Label>
+                  <Input
+                    value={embeddingEndpoint}
+                    onChange={(e) => setEmbeddingEndpoint(e.target.value)}
+                    placeholder="e.g. http://127.0.0.1:1234/v1/embeddings"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>API Key (optional)</Label>
+                  <Input
+                    type="password"
+                    value={embeddingApiKey}
+                    onChange={(e) => setEmbeddingApiKey(e.target.value)}
+                    placeholder="Leave empty for local models"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Model</Label>
+                  <Input
+                    value={embeddingModel}
+                    onChange={(e) => setEmbeddingModel(e.target.value)}
+                    placeholder="e.g. text-embedding-qwen3-embedding-0.6b"
+                  />
+                </div>
                 <p className="text-xs text-muted-foreground">
-                  The embedding model name supported by your LLM provider.
+                  Embedding service can be different from the chat LLM. Supports any OpenAI-compatible /v1/embeddings endpoint.
                 </p>
               </div>
             )}

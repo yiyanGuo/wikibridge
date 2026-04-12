@@ -1,46 +1,26 @@
 import { readFile, listDirectory } from "@/commands/fs"
 import { invoke } from "@tauri-apps/api/core"
-import type { LlmConfig, EmbeddingConfig } from "@/stores/wiki-store"
+import type { EmbeddingConfig } from "@/stores/wiki-store"
 import type { FileNode } from "@/types/wiki"
 import { normalizePath } from "@/lib/path-utils"
 
 // ── Embedding API ─────────────────────────────────────────────────────────
 
-function getEmbeddingEndpoint(llmConfig: LlmConfig): string {
-  switch (llmConfig.provider) {
-    case "openai":
-      return "https://api.openai.com/v1/embeddings"
-    case "ollama":
-      return `${llmConfig.ollamaUrl}/v1/embeddings`
-    case "custom":
-      return llmConfig.customEndpoint.replace(/\/chat\/completions\/?$/, "/embeddings")
-    default:
-      return llmConfig.customEndpoint
-        ? llmConfig.customEndpoint.replace(/\/chat\/completions\/?$/, "/embeddings")
-        : ""
-  }
-}
-
-function getAuthHeaders(llmConfig: LlmConfig): Record<string, string> {
-  const headers: Record<string, string> = { "Content-Type": "application/json" }
-  if (llmConfig.apiKey) {
-    headers["Authorization"] = `Bearer ${llmConfig.apiKey}`
-  }
-  return headers
-}
-
 async function fetchEmbedding(
   text: string,
-  llmConfig: LlmConfig,
   embeddingConfig: EmbeddingConfig,
 ): Promise<number[] | null> {
-  const endpoint = getEmbeddingEndpoint(llmConfig)
-  if (!endpoint) return null
+  if (!embeddingConfig.endpoint) return null
+
+  const headers: Record<string, string> = { "Content-Type": "application/json" }
+  if (embeddingConfig.apiKey) {
+    headers["Authorization"] = `Bearer ${embeddingConfig.apiKey}`
+  }
 
   try {
-    const resp = await fetch(endpoint, {
+    const resp = await fetch(embeddingConfig.endpoint, {
       method: "POST",
-      headers: getAuthHeaders(llmConfig),
+      headers,
       body: JSON.stringify({
         model: embeddingConfig.model,
         input: text.slice(0, 2000),
@@ -96,14 +76,13 @@ export async function embedPage(
   pageId: string,
   title: string,
   content: string,
-  llmConfig: LlmConfig,
   embeddingConfig: EmbeddingConfig,
 ): Promise<void> {
   if (!embeddingConfig.enabled || !embeddingConfig.model) return
 
   const t0 = performance.now()
   const text = `${title}\n${content.slice(0, 1500)}`
-  const emb = await fetchEmbedding(text, llmConfig, embeddingConfig)
+  const emb = await fetchEmbedding(text, embeddingConfig)
   if (emb) {
     await vectorUpsert(projectPath, pageId, emb)
     console.log(`[Embedding] Indexed "${pageId}" (${emb.length}d) in ${Math.round(performance.now() - t0)}ms`)
@@ -118,7 +97,6 @@ export async function embedPage(
  */
 export async function embedAllPages(
   projectPath: string,
-  llmConfig: LlmConfig,
   embeddingConfig: EmbeddingConfig,
   onProgress?: (done: number, total: number) => void,
 ): Promise<number> {
@@ -156,7 +134,7 @@ export async function embedAllPages(
       const title = titleMatch ? titleMatch[1].trim() : file.id
 
       const text = `${title}\n${content.slice(0, 1500)}`
-      const emb = await fetchEmbedding(text, llmConfig, embeddingConfig)
+      const emb = await fetchEmbedding(text, embeddingConfig)
       if (emb) {
         await vectorUpsert(pp, file.id, emb)
       }
@@ -178,7 +156,6 @@ export async function embedAllPages(
 export async function searchByEmbedding(
   projectPath: string,
   query: string,
-  llmConfig: LlmConfig,
   embeddingConfig: EmbeddingConfig,
   topK: number = 10,
 ): Promise<Array<{ id: string; score: number }>> {

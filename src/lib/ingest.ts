@@ -185,7 +185,6 @@ export async function autoIngest(
   if (embCfg.enabled && embCfg.model && writtenPaths.length > 0) {
     try {
       const { embedPage } = await import("@/lib/embedding")
-      const llmCfg = useWikiStore.getState().llmConfig
       for (const wpath of writtenPaths) {
         const pageId = wpath.split("/").pop()?.replace(/\.md$/, "") ?? ""
         if (!pageId || ["index", "log", "overview"].includes(pageId)) continue
@@ -193,7 +192,7 @@ export async function autoIngest(
           const content = await readFile(`${pp}/${wpath}`)
           const titleMatch = content.match(/^---\n[\s\S]*?^title:\s*["']?(.+?)["']?\s*$/m)
           const title = titleMatch ? titleMatch[1].trim() : pageId
-          await embedPage(pp, pageId, title, content, llmCfg, embCfg)
+          await embedPage(pp, pageId, title, content, embCfg)
         } catch {
           // non-critical
         }

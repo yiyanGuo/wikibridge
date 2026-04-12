@@ -147,8 +147,7 @@ export async function searchWiki(
     if (embCfg.enabled && embCfg.model) {
       const t0 = performance.now()
       const { searchByEmbedding } = await import("@/lib/embedding")
-      const llmCfg = useWikiStore.getState().llmConfig
-      const vectorResults = await searchByEmbedding(pp, query, llmCfg, embCfg, 10)
+      const vectorResults = await searchByEmbedding(pp, query, embCfg, 10)
       const vectorMs = Math.round(performance.now() - t0)
 
       console.log(

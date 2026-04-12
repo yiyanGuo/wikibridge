@@ -17,6 +17,8 @@ interface SearchApiConfig {
 
 interface EmbeddingConfig {
   enabled: boolean
+  endpoint: string // e.g. "http://127.0.0.1:1234/v1/embeddings"
+  apiKey: string
   model: string // e.g. "text-embedding-qwen3-embedding-0.6b"
 }
 
@@ -75,6 +77,8 @@ export const useWikiStore = create<WikiState>((set) => ({
 
   embeddingConfig: {
     enabled: false,
+    endpoint: "",
+    apiKey: "",
     model: "",
   },
 
