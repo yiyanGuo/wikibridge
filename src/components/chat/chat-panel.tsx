@@ -213,60 +213,9 @@ export function ChatPanel() {
           }
         }
 
-        // ── Phase 1.5: Vector search (if embedding enabled) ─────
-        const embCfg = useWikiStore.getState().embeddingConfig
-        if (embCfg.enabled && embCfg.model) {
-          try {
-            const { searchByEmbedding } = await import("@/lib/embedding")
-            const llmCfg = useWikiStore.getState().llmConfig
-            const vectorResults = await searchByEmbedding(pp, text, llmCfg, embCfg, 10)
-            // Merge vector results into search results (avoid duplicates)
-            const existingPaths = new Set(topSearchResults.map((r) => r.path))
-            for (const vr of vectorResults) {
-              const pagePath = `${pp}/wiki`
-              // Find matching file in search results by page ID
-              const matchingSearch = searchResults.find((r) => {
-                const fileName = getFileName(r.path).replace(/\.md$/, "")
-                return fileName === vr.id
-              })
-              if (matchingSearch && !existingPaths.has(matchingSearch.path)) {
-                topSearchResults.push(matchingSearch)
-                existingPaths.add(matchingSearch.path)
-              } else if (!matchingSearch) {
-                // Try to find the file path by scanning wiki directories
-                const possiblePaths = [
-                  `${pp}/wiki/entities/${vr.id}.md`,
-                  `${pp}/wiki/concepts/${vr.id}.md`,
-                  `${pp}/wiki/sources/${vr.id}.md`,
-                  `${pp}/wiki/synthesis/${vr.id}.md`,
-                  `${pp}/wiki/comparison/${vr.id}.md`,
-                  `${pp}/wiki/queries/${vr.id}.md`,
-                ]
-                for (const tryPath of possiblePaths) {
-                  if (!existingPaths.has(tryPath)) {
-                    try {
-                      await readFile(tryPath)
-                      topSearchResults.push({
-                        path: tryPath,
-                        title: vr.id.replace(/-/g, " "),
-                        score: vr.score * 10,
-                        titleMatch: false,
-                      })
-                      existingPaths.add(tryPath)
-                      break
-                    } catch {
-                      // file doesn't exist at this path
-                    }
-                  }
-                }
-              }
-            }
-          } catch {
-            // Vector search failed, continue without it
-          }
-        }
-
         // ── Phase 2: Graph 1-level expansion ───────────────────
+        // Note: Vector search (if enabled) is already merged into searchResults
+        // by searchWiki() in search.ts — no duplicate code needed here.
         const graph = await buildRetrievalGraph(pp, dataVersion)
         const expandedIds = new Set<string>()
         const searchHitPaths = new Set(topSearchResults.map((r) => r.path))

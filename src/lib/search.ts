@@ -139,6 +139,56 @@ export async function searchWiki(
     // no raw sources
   }
 
+  // Vector search: merge semantic results if embedding enabled
+  try {
+    const { useWikiStore } = await import("@/stores/wiki-store")
+    const embCfg = useWikiStore.getState().embeddingConfig
+    if (embCfg.enabled && embCfg.model) {
+      const { searchByEmbedding } = await import("@/lib/embedding")
+      const llmCfg = useWikiStore.getState().llmConfig
+      const vectorResults = await searchByEmbedding(pp, query, llmCfg, embCfg, 10)
+
+      const existingPaths = new Set(results.map((r) => r.path))
+
+      for (const vr of vectorResults) {
+        // Check if already in results
+        const existing = results.find((r) => {
+          const fileName = r.path.split("/").pop()?.replace(/\.md$/, "") ?? ""
+          return fileName === vr.id
+        })
+
+        if (existing) {
+          // Boost score of existing result
+          existing.score += vr.score * 5
+        } else {
+          // Try to find the file and add it
+          const dirs = ["entities", "concepts", "sources", "synthesis", "comparison", "queries"]
+          for (const dir of dirs) {
+            const tryPath = `${pp}/wiki/${dir}/${vr.id}.md`
+            if (existingPaths.has(tryPath)) break
+            try {
+              const content = await readFile(tryPath)
+              const title = extractTitle(content, `${vr.id}.md`)
+              results.push({
+                path: tryPath,
+                title,
+                snippet: buildSnippet(content, query),
+                titleMatch: false,
+                score: vr.score * 5,
+              })
+              existingPaths.add(tryPath)
+              break
+            } catch {
+              // not in this directory
+            }
+          }
+        }
+      }
+    }
+  } catch {
+    // Vector search failed or not available, continue without it
+  }
+
   // Sort by score descending
   results.sort((a, b) => b.score - a.score)
   return results.slice(0, MAX_RESULTS)
