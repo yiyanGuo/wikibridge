@@ -652,7 +652,7 @@ pub fn list_directory(path: String) -> Result<Vec<FileNode>, String> {
     if !p.is_dir() {
         return Err(format!("Path is not a directory: '{}'", path));
     }
-    let nodes = build_tree(p, 0, 3)?;
+    let nodes = build_tree(p, 0, 10)?;
     Ok(nodes)
 }
 
