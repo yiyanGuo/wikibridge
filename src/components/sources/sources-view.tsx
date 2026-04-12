@@ -179,7 +179,6 @@ export function SourcesView() {
   }
 
   async function handleOpenSource(node: FileNode) {
-    setActiveView("wiki")
     setSelectedFile(node.path)
     try {
       const content = await readFile(node.path)
