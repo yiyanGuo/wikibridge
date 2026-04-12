@@ -161,7 +161,7 @@ export async function searchByEmbedding(
 ): Promise<Array<{ id: string; score: number }>> {
   if (!embeddingConfig.enabled || !embeddingConfig.model) return []
 
-  const queryEmb = await fetchEmbedding(query, llmConfig, embeddingConfig)
+  const queryEmb = await fetchEmbedding(query, embeddingConfig)
   if (!queryEmb) return []
 
   try {
