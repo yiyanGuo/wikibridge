@@ -1,12 +1,14 @@
 import { useState, useEffect, useCallback } from "react"
 import { open } from "@tauri-apps/plugin-dialog"
-import { Plus, FileText, RefreshCw, BookOpen, Trash2 } from "lucide-react"
+import { invoke } from "@tauri-apps/api/core"
+import { Plus, FileText, RefreshCw, BookOpen, Trash2, FolderOpen } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { useWikiStore } from "@/stores/wiki-store"
 import { copyFile, listDirectory, readFile, writeFile, deleteFile, findRelatedWikiPages, preprocessFile } from "@/commands/fs"
 import type { FileNode } from "@/types/wiki"
 import { startIngest, autoIngest } from "@/lib/ingest"
+import { enqueueIngest, enqueueBatch } from "@/lib/ingest-queue"
 import { useTranslation } from "react-i18next"
 import { normalizePath, getFileName } from "@/lib/path-utils"
 
@@ -102,14 +104,76 @@ export function SourcesView() {
     setImporting(false)
     await loadSources()
 
-    // Auto-ingest each imported file (runs in background, progress shown in activity panel)
-    if (llmConfig.apiKey || llmConfig.provider === "ollama") {
+    // Enqueue for serial ingest (runs in background via ingest queue)
+    if (llmConfig.apiKey || llmConfig.provider === "ollama" || llmConfig.provider === "custom") {
       for (const destPath of importedPaths) {
-        const name = getFileName(destPath)
-        autoIngest(pp, destPath, llmConfig).catch((err) =>
-          console.error(`Failed to auto-ingest ${name}:`, err)
+        enqueueIngest(pp, destPath).catch((err) =>
+          console.error(`Failed to enqueue ingest:`, err)
         )
       }
+    }
+  }
+
+  async function handleImportFolder() {
+    if (!project) return
+
+    const selected = await open({
+      directory: true,
+      title: "Import Source Folder",
+    })
+
+    if (!selected || typeof selected !== "string") return
+
+    setImporting(true)
+    const pp = normalizePath(project.path)
+    const folderName = getFileName(selected) || "imported"
+    const destDir = `${pp}/raw/sources/${folderName}`
+
+    try {
+      // Recursively copy the folder
+      const copiedFiles: string[] = await invoke("copy_directory", {
+        source: selected,
+        destination: destDir,
+      })
+
+      console.log(`[Folder Import] Copied ${copiedFiles.length} files from ${folderName}`)
+
+      // Preprocess all files
+      for (const filePath of copiedFiles) {
+        preprocessFile(filePath).catch(() => {})
+      }
+
+      setImporting(false)
+      await loadSources()
+
+      // Build ingest tasks with folder context
+      if (llmConfig.apiKey || llmConfig.provider === "ollama" || llmConfig.provider === "custom") {
+        const tasks = copiedFiles
+          .filter((fp) => {
+            const ext = fp.split(".").pop()?.toLowerCase() ?? ""
+            // Only ingest text-based files, skip images/media
+            return ["md", "mdx", "txt", "pdf", "docx", "pptx", "xlsx", "xls",
+                    "csv", "json", "html", "htm", "rtf", "xml", "yaml", "yml"].includes(ext)
+          })
+          .map((filePath) => {
+            // Build folder context from relative path
+            const relPath = filePath.replace(destDir + "/", "")
+            const parts = relPath.split("/")
+            parts.pop() // remove filename
+            const context = parts.length > 0
+              ? `${folderName} > ${parts.join(" > ")}`
+              : folderName
+            return { sourcePath: filePath, folderContext: context }
+          })
+
+        if (tasks.length > 0) {
+          await enqueueBatch(pp, tasks)
+          console.log(`[Folder Import] Enqueued ${tasks.length} files for ingest`)
+        }
+      }
+    } catch (err) {
+      console.error(`Failed to import folder:`, err)
+      setImporting(false)
     }
   }
 
@@ -286,6 +350,10 @@ export function SourcesView() {
             <Plus className="mr-1 h-4 w-4" />
             {importing ? t("sources.importing") : t("sources.import")}
           </Button>
+          <Button size="sm" variant="outline" onClick={handleImportFolder} disabled={importing}>
+            <FolderOpen className="mr-1 h-4 w-4" />
+            Folder
+          </Button>
         </div>
       </div>
 
@@ -294,10 +362,16 @@ export function SourcesView() {
           <div className="flex flex-col items-center justify-center gap-3 p-8 text-center text-sm text-muted-foreground">
             <p>{t("sources.noSources")}</p>
             <p>{t("sources.importHint")}</p>
-            <Button variant="outline" size="sm" onClick={handleImport}>
-              <Plus className="mr-1 h-4 w-4" />
-              {t("sources.importFiles")}
-            </Button>
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" onClick={handleImport}>
+                <Plus className="mr-1 h-4 w-4" />
+                {t("sources.importFiles")}
+              </Button>
+              <Button variant="outline" size="sm" onClick={handleImportFolder}>
+                <FolderOpen className="mr-1 h-4 w-4" />
+                Folder
+              </Button>
+            </div>
           </div>
         ) : (
           <div className="p-2">

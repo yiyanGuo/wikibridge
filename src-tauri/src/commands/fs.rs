@@ -730,6 +730,57 @@ pub fn copy_file(source: String, destination: String) -> Result<(), String> {
     Ok(())
 }
 
+/// Recursively copy a directory, preserving structure.
+/// Returns list of copied file paths (destination paths).
+#[tauri::command]
+pub fn copy_directory(source: String, destination: String) -> Result<Vec<String>, String> {
+    let src = Path::new(&source);
+    let dest = Path::new(&destination);
+
+    if !src.is_dir() {
+        return Err(format!("'{}' is not a directory", source));
+    }
+
+    let mut copied_files = Vec::new();
+
+    fn copy_recursive(
+        src: &Path,
+        dest: &Path,
+        files: &mut Vec<String>,
+    ) -> Result<(), String> {
+        fs::create_dir_all(dest)
+            .map_err(|e| format!("Failed to create dir '{}': {}", dest.display(), e))?;
+
+        let entries = fs::read_dir(src)
+            .map_err(|e| format!("Failed to read dir '{}': {}", src.display(), e))?;
+
+        for entry in entries {
+            let entry = entry.map_err(|e| format!("Dir entry error: {}", e))?;
+            let path = entry.path();
+            let name = entry.file_name();
+            let dest_path = dest.join(&name);
+
+            // Skip hidden files/dirs
+            if name.to_string_lossy().starts_with('.') {
+                continue;
+            }
+
+            if path.is_dir() {
+                copy_recursive(&path, &dest_path, files)?;
+            } else {
+                fs::copy(&path, &dest_path).map_err(|e| {
+                    format!("Failed to copy '{}': {}", path.display(), e)
+                })?;
+                files.push(dest_path.to_string_lossy().to_string());
+            }
+        }
+        Ok(())
+    }
+
+    copy_recursive(src, dest, &mut copied_files)?;
+    Ok(copied_files)
+}
+
 #[tauri::command]
 pub fn delete_file(path: String) -> Result<(), String> {
     let p = Path::new(&path);

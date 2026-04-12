@@ -21,6 +21,7 @@ export async function autoIngest(
   sourcePath: string,
   llmConfig: LlmConfig,
   signal?: AbortSignal,
+  folderContext?: string,
 ): Promise<string[]> {
   const pp = normalizePath(projectPath)
   const sp = normalizePath(sourcePath)
@@ -68,7 +69,7 @@ export async function autoIngest(
     llmConfig,
     [
       { role: "system", content: buildAnalysisPrompt(purpose, index) },
-      { role: "user", content: `Analyze this source document:\n\n**File:** ${fileName}\n\n---\n\n${truncatedContent}` },
+      { role: "user", content: `Analyze this source document:\n\n**File:** ${fileName}${folderContext ? `\n**Folder context:** ${folderContext}` : ""}\n\n---\n\n${truncatedContent}` },
     ],
     {
       onToken: (token) => { analysis += token },
@@ -350,6 +351,8 @@ function buildAnalysisPrompt(purpose: string, index: string): string {
     "- Any open questions worth flagging for the user?",
     "",
     "Be thorough but concise. Focus on what's genuinely important.",
+    "",
+    "If a folder context is provided, use it as a hint for categorization — the folder structure often reflects the user's organizational intent (e.g., 'papers/energy' suggests the file is an energy-related paper).",
     "",
     purpose ? `## Wiki Purpose (for context)\n${purpose}` : "",
     index ? `## Current Wiki Index (for checking existing content)\n${index}` : "",

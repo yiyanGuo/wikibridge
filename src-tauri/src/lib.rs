@@ -17,6 +17,7 @@ pub fn run() {
             commands::fs::write_file,
             commands::fs::list_directory,
             commands::fs::copy_file,
+            commands::fs::copy_directory,
             commands::fs::preprocess_file,
             commands::fs::delete_file,
             commands::fs::find_related_wiki_pages,

@@ -72,6 +72,13 @@ function App() {
     setSelectedFile(null)
     setActiveView("wiki")
     await saveLastProject(proj)
+
+    // Restore ingest queue (resume interrupted tasks)
+    import("@/lib/ingest-queue").then(({ restoreQueue }) => {
+      restoreQueue(proj.path).catch((err) =>
+        console.error("Failed to restore ingest queue:", err)
+      )
+    })
     // Notify local clip server of the current project + all recent projects
     fetch("http://127.0.0.1:19827/project", {
       method: "POST",
