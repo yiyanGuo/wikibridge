@@ -16,6 +16,7 @@ export function SearchView() {
   const [query, setQuery] = useState("")
   const [results, setResults] = useState<SearchResult[]>([])
   const [searching, setSearching] = useState(false)
+  const [hasSearched, setHasSearched] = useState(false)
   const doSearch = useCallback(
     async (q: string) => {
       if (!project || !q.trim()) {
@@ -23,6 +24,7 @@ export function SearchView() {
         return
       }
       setSearching(true)
+      setHasSearched(true)
       try {
         const found = await searchWiki(normalizePath(project.path), q)
         setResults(found)
@@ -65,13 +67,13 @@ export function SearchView() {
       </div>
 
       <div className="flex-1 overflow-y-auto">
-        {!query.trim() ? (
+        {searching ? (
+          <div className="p-4 text-center text-sm text-muted-foreground">Searching...</div>
+        ) : !hasSearched ? (
           <div className="flex flex-col items-center justify-center gap-2 p-8 text-center text-sm text-muted-foreground">
             <Search className="h-8 w-8 text-muted-foreground/30" />
-            <p>{t("search.startSearching")}</p>
+            <p>Press Enter to search</p>
           </div>
-        ) : searching ? (
-          <div className="p-4 text-center text-sm text-muted-foreground">Searching...</div>
         ) : results.length === 0 ? (
           <div className="p-4 text-center text-sm text-muted-foreground">
             {t("search.noResults")} <span className="font-medium">"{query}"</span>
