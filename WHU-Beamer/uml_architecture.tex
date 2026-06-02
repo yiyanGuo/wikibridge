@@ -1,0 +1,53 @@
+\documentclass[tikz,border=4pt]{standalone}
+\usepackage{ctex}
+\usepackage{xcolor}
+\usetikzlibrary{arrows.meta,positioning,fit,calc,shapes.geometric}
+
+\definecolor{whu}{RGB}{30,55,113}
+\definecolor{server}{RGB}{231,239,252}
+\definecolor{client}{RGB}{232,248,239}
+\definecolor{external}{RGB}{255,246,229}
+
+\begin{document}
+\begin{tikzpicture}[
+    font=\sffamily\small,
+    component/.style={draw=whu, thick, rounded corners=3pt, fill=white, align=center, minimum width=3.1cm, minimum height=0.82cm},
+    area/.style={draw=whu, thick, rounded corners=6pt, inner sep=8pt},
+    data/.style={draw=whu, thick, cylinder, shape border rotate=90, aspect=0.23, fill=white, align=center, minimum height=0.9cm, minimum width=1.8cm},
+    flow/.style={draw=whu, thick, -{Stealth[length=2.2mm]}},
+    dashedflow/.style={draw=whu, thick, dashed, -{Stealth[length=2.2mm]}},
+    label/.style={font=\scriptsize, fill=white, inner sep=1pt}
+]
+
+\node[component] (gui) at (0,2.1) {GUI 软件\\部署/发布控制台};
+\node[component] (kbserver) at (0,0.75) {知识库 Server\\索引/检索/问答 API};
+\node[data] (localdata) at (0,-0.85) {本地资料\\向量索引};
+\node[component] (frpc) at (0,-2.35) {魔改 frpc\\隧道配置与连接};
+\node[area, fill=client, fit=(gui)(kbserver)(localdata)(frpc), label={[anchor=north west, text=whu, font=\bfseries]north west:用户端}] (userarea) {};
+
+\node[component] (panel) at (6.1,1.55) {管理面板\\用户/发布记录};
+\node[component] (api) at (6.1,0.15) {管理 API\\端口分配/鉴权};
+\node[component] (frps) at (6.1,-1.35) {frps 服务\\公网入口};
+\node[data] (serverdb) at (6.1,-2.8) {用户与端口\\状态数据};
+\node[area, fill=server, fit=(panel)(api)(frps)(serverdb), label={[anchor=north west, text=whu, font=\bfseries]north west:服务器}] (serverarea) {};
+
+\node[component] (kbclient) at (11.8,0.95) {知识库 Client\\访问公开入口};
+\node[component] (chatbox) at (11.8,-0.65) {ChatBox Client\\对话式使用};
+\node[area, fill=external, fit=(kbclient)(chatbox), label={[anchor=north west, text=whu, font=\bfseries]north west:用户的用户}] (externalarea) {};
+
+\draw[flow] (gui) -- node[label, right] {启动/配置} (kbserver);
+\draw[flow] (kbserver) -- node[label, right] {读取/索引} (localdata);
+\draw[flow] (gui) -- node[label, left] {生成隧道配置} (frpc);
+
+\draw[dashedflow] (gui.east) -- node[label, above] {登录、申请端口、发布} (api.west);
+\draw[flow] (api) -- node[label, right] {写入权限和状态} (serverdb);
+\draw[flow] (panel) -- node[label, right] {管理操作} (api);
+\draw[flow] (api) -- node[label, right] {配置约束} (frps);
+\draw[flow] (frpc.east) -- node[label, below] {frp 隧道} (frps.west);
+\draw[flow] (frps.east) -- node[label, above] {公网访问入口} (kbclient.west);
+\draw[flow] (frps.east) -- node[label, below] {OpenAI 兼容/HTTP 接入} (chatbox.west);
+
+\node[draw=orange!80!black, fill=external, rounded corners=3pt, align=center, minimum width=11.8cm] at (5.9,-4.25) {架构原则：知识库服务与 frp 管理面板独立演进，通过发布 API、端口权限和隧道配置进行定制化联动。};
+
+\end{tikzpicture}
+\end{document}

@@ -1,4 +1,4 @@
-This is XeTeX, Version 3.141592653-2.6-0.999996 (TeX Live 2025/dev/Debian) (preloaded format=xelatex 2026.5.29)  2 JUN 2026 13:53
+This is XeTeX, Version 3.141592653-2.6-0.999996 (TeX Live 2025/dev/Debian) (preloaded format=xelatex 2026.5.29)  2 JUN 2026 14:07
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -1153,13 +1153,16 @@ File: pic/whu_bg.pdf Graphic file (type pdf)
 <use pic/whu_bg.pdf>
 [8
 
-] (./project_report.toc)
+]
+File: uml_architecture.pdf Graphic file (type pdf)
+<use uml_architecture.pdf>
+
 
 File: pic/whu_bg.pdf Graphic file (type pdf)
 <use pic/whu_bg.pdf>
 [9
 
-]
+] (./project_report.toc)
 
 File: pic/whu_bg.pdf Graphic file (type pdf)
 <use pic/whu_bg.pdf>
@@ -1172,12 +1175,15 @@ File: pic/whu_bg.pdf Graphic file (type pdf)
 [11
 
 ]
+File: uml_requirements.pdf Graphic file (type pdf)
+<use uml_requirements.pdf>
+
 
 File: pic/whu_bg.pdf Graphic file (type pdf)
 <use pic/whu_bg.pdf>
 [12
 
-] (./project_report.toc)
+]
 
 File: pic/whu_bg.pdf Graphic file (type pdf)
 <use pic/whu_bg.pdf>
@@ -1189,13 +1195,13 @@ File: pic/whu_bg.pdf Graphic file (type pdf)
 <use pic/whu_bg.pdf>
 [14
 
-]
+] (./project_report.toc)
 
 File: pic/whu_bg.pdf Graphic file (type pdf)
 <use pic/whu_bg.pdf>
 [15
 
-] (./project_report.toc)
+]
 
 File: pic/whu_bg.pdf Graphic file (type pdf)
 <use pic/whu_bg.pdf>
@@ -1207,7 +1213,7 @@ File: pic/whu_bg.pdf Graphic file (type pdf)
 <use pic/whu_bg.pdf>
 [17
 
-]
+] (./project_report.toc)
 
 File: pic/whu_bg.pdf Graphic file (type pdf)
 <use pic/whu_bg.pdf>
@@ -1218,6 +1224,18 @@ File: pic/whu_bg.pdf Graphic file (type pdf)
 File: pic/whu_bg.pdf Graphic file (type pdf)
 <use pic/whu_bg.pdf>
 [19
+
+]
+
+File: pic/whu_bg.pdf Graphic file (type pdf)
+<use pic/whu_bg.pdf>
+[20
+
+]
+
+File: pic/whu_bg.pdf Graphic file (type pdf)
+<use pic/whu_bg.pdf>
+[21
 
 ]
 \tf@nav=\write6
@@ -1238,12 +1256,12 @@ Package rerunfilecheck Info: File `project_report.out' has not changed.
 (rerunfilecheck)             Checksum: 227EA78A6F7E04402E15D27D035F6301;383.
  ) 
 Here is how much of TeX's memory you used:
- 26963 strings out of 475381
- 596966 string characters out of 5762518
- 999829 words of memory out of 5000000
- 49369 multiletter control sequences out of 15000+600000
+ 26985 strings out of 475381
+ 597486 string characters out of 5762518
+ 1003648 words of memory out of 5000000
+ 49389 multiletter control sequences out of 15000+600000
  567482 words of font info for 102 fonts, out of 8000000 for 9000
  264 hyphenation exceptions out of 8191
  101i,20n,112p,427b,809s stack positions out of 10000i,1000n,20000p,200000b,200000s
 
-Output written on project_report.pdf (19 pages).
+Output written on project_report.pdf (21 pages).
