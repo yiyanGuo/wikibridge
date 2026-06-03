@@ -9,13 +9,14 @@
 \usepackage{xcolor}
 \usepackage[blue]{WHUBeamer}
 
-\title[本地知识库一键部署平台]{\textbf{个性化本地知识库一键部署与发布平台}}
-\subtitle{软件工程项目阶段报告：选题、计划与需求分析}
+\title[WikiBridge]{\textbf{WikiBridge}}
+\subtitle{零代码本地知识库编译与公网发布平台\\{\small 软件工程项目阶段报告：选题、需求分析与项目计划}}
 \author[项目小组]{\textbf{项目小组}}
 \institute{武汉大学}
 \date{\today}
 
 \newcommand{\keypoint}[1]{\textcolor{whu}{\textbf{#1}}}
+\AtBeginSection[]{}
 
 \begin{document}
 
@@ -33,218 +34,96 @@
 
 \section{选题背景}
 
-\begin{frame}{问题场景}
-    \begin{block}{我们观察到的痛点}
+\begin{frame}{为什么需要 WikiBridge？}
+    \begin{block}{三类核心痛点}
         \begin{itemize}
-            \item \keypoint{知识分散}：文档、聊天记录、网页资料、个人笔记难以沉淀归档。
-            \item \keypoint{话题多样}：不同主题之间缺少结构化联系，后续检索和复用成本高。
-            \item \keypoint{部署门槛高}：低技术背景用户难以独立完成本地知识库搭建、联网发布和客户端接入。
+            \item \keypoint{知识零散难归档}：文档、网页、笔记和聊天记录分散，难以沉淀为可复用知识。
+            \item \keypoint{AI 知识库门槛高}：现有 RAG 方案依赖环境配置、模型服务和数据库。
+            \item \keypoint{本地共享困难}：本地知识库很难低成本、安全地发布到公网供他人访问。
         \end{itemize}
     \end{block}
 
-    \vspace{0.3cm}
-    \begin{alertblock}{核心矛盾}
-        个人或小团队有本地知识管理和智能问答需求，但缺少一个“无需写代码、可本地部署、可一键发布”的平台化工具。
+    \vspace{0.25cm}
+    \begin{alertblock}{阶段选题}
+        面向低技术门槛用户，构建一个从本地资料整理到公网访问的零代码知识库发布工具。
     \end{alertblock}
 \end{frame}
 
-\begin{frame}{项目目标}
-    \begin{columns}[T]
-        \begin{column}{0.48\textwidth}
-            \begin{block}{用户目标}
-                \begin{itemize}
-                    \item 0 代码搭建个性化本地知识库。
-                    \item 一键部署知识库服务。
-                    \item 一键发布，允许外部用户访问。
-                    \item 通过常见 ChatBox / Client 工具使用知识库能力。
-                \end{itemize}
-            \end{block}
-        \end{column}
-        \begin{column}{0.48\textwidth}
-            \begin{block}{工程目标}
-                \begin{itemize}
-                    \item 封装知识库服务端和客户端流程。
-                    \item 集成改造后的 frpc，实现穿透发布。
-                    \item 提供 frp 连接端口管理和用户系统。
-                    \item 保持知识库模块与 frp 管理面板相互独立。
-                \end{itemize}
-            \end{block}
-        \end{column}
-    \end{columns}
-\end{frame}
-
-\section{总体方案}
-
-\begin{frame}{三个端的系统定位}
+\begin{frame}{选题价值：本地编译，轻量分发}
     \small
-    \begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{0.18\textwidth}X X}
+    \begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{0.2\textwidth}X}
         \toprule
-        \textbf{端} & \textbf{运行内容} & \textbf{主要职责} \\
+        \textbf{环节} & \textbf{价值} \\
         \midrule
-        服务器 & frps + 管理面板 & 管理 frp 连接端口、用户账号、发布状态和访问入口。 \\
-        用户端 & GUI 软件 + 知识库 server + 改造后的 frpc & 让知识库在本地运行，并通过 GUI 完成配置、部署、发布。 \\
-        用户的用户 & 知识库 client + ChatBox client & 通过公开入口访问知识库，完成检索、问答和资料消费。 \\
+        素材输入 & 用户将 Word、PDF、网页摘录放入本地素材箱。 \\
+        LLM-Wiki 编译 & 大模型 Agent 提炼、去重，生成双向链接 Markdown Wiki。 \\
+        frp 无感发布 & 本地静态站点通过后台隧道映射为公网 URL。 \\
+        浏览器消费 & 外部用户直接浏览知识图谱，并通过 Chatbox 问答。 \\
         \bottomrule
     \end{tabularx}
 
-    \vspace{0.4cm}
-    \begin{block}{设计原则}
-        知识库 server/client 与 frp 管理面板相互独立，但围绕部署和发布流程做足够定制化集成。
-    \end{block}
-\end{frame}
-
-\begin{frame}{系统边界与模块关系}
-    \begin{columns}[T]
-        \begin{column}{0.5\textwidth}
-            \begin{block}{知识库模块}
-                \begin{itemize}
-                    \item 本地资料导入与索引。
-                    \item 本地知识库服务启动。
-                    \item Client / ChatBox 接入配置。
-                    \item 面向终端用户的问答入口。
-                \end{itemize}
-            \end{block}
-        \end{column}
-        \begin{column}{0.5\textwidth}
-            \begin{block}{发布管理模块}
-                \begin{itemize}
-                    \item frps 服务端统一管理。
-                    \item frpc 配置生成与状态监控。
-                    \item 用户身份和端口权限管理。
-                    \item 外部访问地址分配与回收。
-                \end{itemize}
-            \end{block}
-        \end{column}
-    \end{columns}
-
     \vspace{0.35cm}
     \centering
-    \keypoint{本地知识沉淀} $\rightarrow$ \keypoint{一键部署} $\rightarrow$ \keypoint{穿透发布} $\rightarrow$ \keypoint{外部访问}
-\end{frame}
-
-\begin{frame}{UML 架构图}
-    \centering
-    \includegraphics[width=0.98\textwidth,height=0.78\textheight,keepaspectratio]{uml_architecture.pdf}
+    \keypoint{本地保存数据与计算} $\rightarrow$
+    \keypoint{云端只做账号、鉴权和流量调度}
 \end{frame}
 
 \section{需求分析}
 
-\begin{frame}{目标用户与使用流程}
-    \begin{block}{目标用户}
-        \begin{itemize}
-            \item 有个人知识库需求，但不熟悉服务部署的普通用户。
-            \item 需要快速搭建资料问答入口的小团队、课程小组或社团。
-            \item 希望将本地资料临时或长期开放给他人访问的内容维护者。
-        \end{itemize}
-    \end{block}
-
-    \begin{block}{典型流程}
-        选择资料 $\rightarrow$ 创建知识库 $\rightarrow$ 本地启动服务 $\rightarrow$ 一键发布 $\rightarrow$ 分享访问入口 $\rightarrow$ 外部用户通过 Client / ChatBox 使用
-    \end{block}
-\end{frame}
-
-\begin{frame}{UML 需求图}
-    \centering
-    \includegraphics[width=0.98\textwidth,height=0.78\textheight,keepaspectratio]{uml_requirements.pdf}
-\end{frame}
-
-\begin{frame}{核心功能需求}
-    \begin{columns}[T]
-        \begin{column}{0.5\textwidth}
-            \begin{block}{用户端 GUI}
-                \begin{itemize}
-                    \item 知识库创建、配置和启动。
-                    \item 本地服务状态展示。
-                    \item frpc 自动配置和连接控制。
-                    \item 访问地址、端口和日志展示。
-                \end{itemize}
-            \end{block}
-        \end{column}
-        \begin{column}{0.5\textwidth}
-            \begin{block}{服务器管理面板}
-                \begin{itemize}
-                    \item 用户注册、登录和权限控制。
-                    \item 端口分配、回收和连接记录。
-                    \item frps 状态监控。
-                    \item 发布链接管理。
-                \end{itemize}
-            \end{block}
-        \end{column}
-    \end{columns}
+\begin{frame}{核心功能需求：三端拆分}
+    \small
+    \begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{0.18\textwidth}p{0.42\textwidth}X}
+        \toprule
+        \textbf{端} & \textbf{核心能力} & \textbf{阶段目标} \\
+        \midrule
+        用户端 GUI & 登录、素材箱、Add / Compile / Lint、静态站托管、公网 URL。 & 零代码生成与发布知识库。 \\
+        服务器管理面板 & 用户认证、Token 鉴权、端口 / 子域名分配、frps 状态。 & 只管控制面，不保存知识内容。 \\
+        知识库消费端 & 静态 Wiki 浏览、双向链接、Chatbox、引用展示。 & 外部访问者用浏览器直接使用。 \\
+        \bottomrule
+    \end{tabularx}
 \end{frame}
 
 \begin{frame}{非功能需求}
     \begin{itemize}
-        \item \keypoint{易用性}：部署和发布流程尽量图形化，减少命令行操作。
-        \item \keypoint{可靠性}：服务启动失败、端口占用、网络断开时给出明确提示。
-        \item \keypoint{安全性}：用户认证、端口权限、访问入口回收机制需要可控。
-        \item \keypoint{可维护性}：知识库模块与 frp 管理模块解耦，避免互相强绑定。
-        \item \keypoint{可扩展性}：后续可扩展不同知识库引擎、不同客户端和更多发布策略。
+        \item \keypoint{易用性}：用户端尽量双击即用，不要求安装 Python、Docker 或手动配置命令行。
+        \item \keypoint{隐私安全}：云端不存储用户笔记、文档、Wiki 页面或向量数据。
+        \item \keypoint{低成本}：静态 Wiki 浏览不消耗 Token，只有编译、检查或问答时产生 AI 开销。
+        \item \keypoint{可靠性}：编译失败、网络断开、端口占用时给出可理解的状态提示。
+        \item \keypoint{可维护性}：知识库生成模块与 frp 管理模块解耦，便于后续扩展。
     \end{itemize}
 \end{frame}
 
-\section{项目计划}
+\section{项目开发计划}
 
-\begin{frame}{阶段计划}
+\begin{frame}{3-4 周原型计划}
     \small
-    \begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{0.18\textwidth}X X}
+    \begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{0.16\textwidth}p{0.39\textwidth}X}
         \toprule
-        \textbf{阶段} & \textbf{主要任务} & \textbf{产出} \\
+        \textbf{阶段} & \textbf{核心目标} & \textbf{关键输出物} \\
         \midrule
-        需求确认 & 明确用户角色、核心流程、模块边界和验收标准。 & 需求说明、用例和原型草图。 \\
-        原型开发 & 搭建 GUI、知识库服务启动流程、frpc 配置流程。 & 可演示的用户端最小原型。 \\
-        服务端开发 & 实现用户系统、端口管理、frps 状态管理。 & 管理面板和基础 API。 \\
-        联调测试 & 打通本地部署、穿透发布、外部访问流程。 & 完整演示链路和测试记录。 \\
-        优化交付 & 改进交互、错误提示、文档和稳定性。 & 最终展示版本与项目文档。 \\
+        第 1 周 & 明确角色、三端边界和核心流程。 & 需求说明、架构图、流程图、原型草图。 \\
+        第 2 周 & 打通素材读取、Wiki 生成和本地渲染。 & 编译脚本、本地 Web Server、基础 Wiki 页面。 \\
+        第 3 周 & 接入 frp、用户鉴权和公网 URL。 & frps / frpc 联调、公网演示地址。 \\
+        第 4 周 & 完善日志、错误提示和 Lint 检查。 & 端到端原型、测试记录、阶段汇报 PPT。 \\
         \bottomrule
     \end{tabularx}
 \end{frame}
 
-\begin{frame}{当前优先级}
+\begin{frame}{阶段优先级}
     \begin{enumerate}
-        \item \keypoint{先打通主链路}：本地知识库服务能够启动，并通过 frp 发布到外网。
-        \item \keypoint{再完善管理能力}：用户、端口、连接状态和发布记录可视化。
-        \item \keypoint{最后优化体验}：减少配置项，提供清晰错误提示和操作引导。
+        \item \keypoint{先打通主链路}：从本地素材到 Wiki 页面，再到公网 URL 访问。
+        \item \keypoint{再完善可控性}：账号、Token、端口、连接状态和访问入口可管理。
+        \item \keypoint{最后优化体验}：减少用户配置，完善日志、错误提示和演示效果。
     \end{enumerate}
 
     \vspace{0.35cm}
-    \begin{alertblock}{阶段报告重点}
-        本阶段重点说明选题合理性、总体架构、需求拆解与后续计划；项目代码实现将在后续阶段推进。
+    \begin{alertblock}{阶段一目标}
+        验证“LLM-Wiki 本地编译 + frp 无感穿透”的端到端可行性。
     \end{alertblock}
-\end{frame}
 
-\section{风险与总结}
-
-\begin{frame}{主要风险与应对}
-    \small
-    \begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{0.25\textwidth}X}
-        \toprule
-        \textbf{风险} & \textbf{应对思路} \\
-        \midrule
-        知识库部署链路复杂 & 先选择稳定开源方案，封装启动和配置流程，降低早期不确定性。 \\
-        frp 端口管理冲突 & 服务器端统一分配端口，记录占用状态，提供回收机制。 \\
-        普通用户配置困难 & GUI 中预置默认配置，只暴露必要选项，异常时给出可读提示。 \\
-        模块耦合过高 & 将知识库能力与发布管理拆成独立模块，通过清晰接口联动。 \\
-        \bottomrule
-    \end{tabularx}
-\end{frame}
-
-\begin{frame}{总结}
-    \begin{block}{一句话概括}
-        我们希望做一个面向低技术门槛用户的本地知识库平台，让用户能够 0 代码完成知识库搭建，并通过一键发布让他人访问。
-    \end{block}
-
-    \begin{itemize}
-        \item 选题围绕个人知识沉淀、资料复用和低门槛部署的真实需求。
-        \item 总体方案分为服务器、用户端、用户的用户三个端。
-        \item 核心难点在于知识库服务、GUI 操作和 frp 发布链路的稳定集成。
-        \item 后续将优先实现可演示的端到端最小闭环。
-    \end{itemize}
-\end{frame}
-
-\begin{frame}
+    \vspace{0.25cm}
     \centering
-    \Huge 谢谢！
+    \Large 谢谢！
 \end{frame}
 
 \end{document}
