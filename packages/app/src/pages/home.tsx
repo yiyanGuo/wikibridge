@@ -43,7 +43,7 @@ import { sessionTitle } from "@/utils/session-title"
 import { pathKey } from "@/utils/path-key"
 import { useGlobal } from "@/context/global"
 import { useCommand } from "@/context/command"
-import { useSettings } from "@/context/settings"
+import { newLayoutDesignsDefault, useOptionalSettings } from "@/context/settings"
 import { ServerRowMenu } from "@/components/server/server-row-menu"
 import { ServerHealthIndicator } from "@/components/server/server-row"
 import { type ServerHealth } from "@/utils/server-health"
@@ -114,9 +114,9 @@ function homeSessionSearchKey(record: HomeSessionRecord) {
 }
 
 export default function Home() {
-  const settings = useSettings()
+  const settings = useOptionalSettings()
   return (
-    <Show when={settings.general.newLayoutDesigns()} fallback={<LegacyHome />}>
+    <Show when={settings?.general.newLayoutDesigns() ?? newLayoutDesignsDefault} fallback={<LegacyHome />}>
       <HomeDesign />
     </Show>
   )
@@ -150,7 +150,23 @@ function HomeDesign() {
     return global.createServerCtx(conn)
   })
   const focusedSync = () => focusedServerCtx()?.sync ?? sync()
-  const projects = createMemo(() => focusedServerCtx()?.projects.list() ?? layout.projects.list())
+  const openedProjects = createMemo(() => focusedServerCtx()?.projects.list() ?? layout.projects.list())
+  const currentServerProject = createMemo(() => {
+    const data = focusedSync().data
+    const worktree = data.path.worktree || data.path.directory
+    const project =
+      data.project.find((project) => project.worktree === worktree) ??
+      data.project.find((project) => project.id !== "global")
+    if (!project) return
+    return { ...project, expanded: true }
+  })
+  const projects = createMemo(() => {
+    const list = openedProjects()
+    if (list.length > 0) return list
+    const project = currentServerProject()
+    if (!project) return []
+    return [project]
+  })
   const selectedProject = createMemo(() => projects().find((project) => project.worktree === state.selection.directory))
   const newSessionProject = createMemo(
     () =>

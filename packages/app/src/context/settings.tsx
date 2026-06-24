@@ -346,3 +346,12 @@ export const { use: useSettings, provider: SettingsProvider } = createSimpleCont
     }
   },
 })
+
+export function useOptionalSettings() {
+  try {
+    return useSettings()
+  } catch (error) {
+    if (error instanceof Error && error.message === "Settings context must be used within a context provider") return
+    throw error
+  }
+}

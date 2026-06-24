@@ -121,6 +121,45 @@ function DraftServerLayout(props: ParentProps) {
   )
 }
 
+const SelectedHomeRoute = Object.assign(
+  () => (
+    <ServerKey>
+      <ServerSDKProvider>
+        <ServerSyncProvider>
+          <PermissionProvider>
+            <LayoutProvider>
+              <NotificationProvider>
+                <ModelsProvider>
+                  <Layout>
+                    <HomeRoute />
+                  </Layout>
+                </ModelsProvider>
+              </NotificationProvider>
+            </LayoutProvider>
+          </PermissionProvider>
+        </ServerSyncProvider>
+      </ServerSDKProvider>
+    </ServerKey>
+  ),
+  { preload: HomeRoute.preload },
+)
+
+function SelectedDirectoryLayout(props: ParentProps) {
+  return (
+    <SelectedServerLayout>
+      <DirectoryLayout>{props.children}</DirectoryLayout>
+    </SelectedServerLayout>
+  )
+}
+
+function DraftNewSessionRoute() {
+  return (
+    <DraftServerLayout>
+      <DraftRoute />
+    </DraftServerLayout>
+  )
+}
+
 function DraftRoute() {
   const [search] = useSearchParams<{ draftId?: string }>()
   const tabs = useTabs()
@@ -206,16 +245,13 @@ function BodyDesignClass() {
   return null
 }
 
-// Server-agnostic providers shared across every route. These live in the shared
-// shell (router root) so they stay mounted regardless of the active server/route.
+// Server-agnostic providers that still depend on router-level tab/server state.
+// Settings lives in AppBaseProviders so lazy routes can read it during route creation.
 function SharedProviders(props: ParentProps) {
   return (
-    <SettingsProvider>
-      <BodyDesignClass />
-      <CommandProvider>
-        <HighlightsProvider>{props.children}</HighlightsProvider>
-      </CommandProvider>
-    </SettingsProvider>
+    <CommandProvider>
+      <HighlightsProvider>{props.children}</HighlightsProvider>
+    </CommandProvider>
   )
 }
 
@@ -271,22 +307,25 @@ export function AppBaseProviders(props: ParentProps<{ locale?: Locale }>) {
       >
         <LanguageProvider locale={props.locale}>
           <UiI18nBridge>
-            <ErrorBoundary
-              fallback={(error) => {
-                Sentry.captureException(error)
-                return <ErrorPage error={error} />
-              }}
-            >
-              <QueryProvider>
-                <WslServersProvider>
-                  <DialogProvider>
-                    <MarkedProvider>
-                      <FileComponentProvider component={File}>{props.children}</FileComponentProvider>
-                    </MarkedProvider>
-                  </DialogProvider>
-                </WslServersProvider>
-              </QueryProvider>
-            </ErrorBoundary>
+            <SettingsProvider>
+              <BodyDesignClass />
+              <ErrorBoundary
+                fallback={(error) => {
+                  Sentry.captureException(error)
+                  return <ErrorPage error={error} />
+                }}
+              >
+                <QueryProvider>
+                  <WslServersProvider>
+                    <DialogProvider>
+                      <MarkedProvider>
+                        <FileComponentProvider component={File}>{props.children}</FileComponentProvider>
+                      </MarkedProvider>
+                    </DialogProvider>
+                  </WslServersProvider>
+                </QueryProvider>
+              </ErrorBoundary>
+            </SettingsProvider>
           </UiI18nBridge>
         </LanguageProvider>
       </ThemeProvider>
@@ -418,8 +457,8 @@ export function AppInterface(props: {
   router?: Component<BaseRouterProps>
   disableHealthCheck?: boolean
 }) {
-  // The shared shell holds only server-agnostic providers (QueryClient + Settings/
-  // Command/Highlights) and stays mounted across every route. The server-scoped
+  // The shared shell holds router-scoped, server-agnostic providers (Command/Highlights)
+  // and stays mounted across every route. The server-scoped
   // providers and the visual Layout live in the per-route layouts below, so they
   // resolve to that route's server (selected for most routes, the draft's server for
   // /new-session). appChildren is server-agnostic, so it renders here once.
@@ -448,16 +487,12 @@ export function AppInterface(props: {
               </TabsProvider>
             )}
           >
-            <Route component={SelectedServerLayout}>
-              <Route path="/" component={HomeRoute} />
-              <Route path="/:dir" component={DirectoryLayout}>
-                <Route path="/" component={() => <Navigate href="session" />} />
-                <Route path="/session/:id?" component={SessionRoute} />
-              </Route>
+            <Route path="/" component={SelectedHomeRoute} />
+            <Route path="/:dir" component={SelectedDirectoryLayout}>
+              <Route path="/" component={() => <Navigate href="session" />} />
+              <Route path="/session/:id?" component={SessionRoute} />
             </Route>
-            <Route component={DraftServerLayout}>
-              <Route path="/new-session" component={DraftRoute} />
-            </Route>
+            <Route path="/new-session" component={DraftNewSessionRoute} />
           </Dynamic>
         </ConnectionGate>
       </GlobalProvider>
