@@ -1,1 +1,17 @@
 .DS_Store
+.venv/
+.pytest_cache/
+__pycache__/
+*.py[cod]
+config/users.json
+config/*.db
+config/*.db-*
+docs/doxygen/
+/frpc
+/frpc.toml
+desktop-frp/node_modules/
+desktop-frp/dist/
+desktop-frp/src-tauri/target/
+desktop-frp/src-tauri/gen/
+desktop-frp/src-tauri/binaries/frpc/**/frpc
+desktop-frp/src-tauri/binaries/frpc/**/frpc.exe
