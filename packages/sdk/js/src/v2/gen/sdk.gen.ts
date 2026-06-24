@@ -60,14 +60,24 @@ import type {
   ExperimentalWorkspaceSyncListResponses,
   ExperimentalWorkspaceWarpErrors,
   ExperimentalWorkspaceWarpResponses,
+  FileCreateErrors,
+  FileCreateResponses,
   FileListErrors,
   FileListResponses,
+  FileMkdirErrors,
+  FileMkdirResponses,
   FilePartInput,
   FilePartSource,
   FileReadErrors,
   FileReadResponses,
+  FileRemoveErrors,
+  FileRemoveResponses,
+  FileRenameErrors,
+  FileRenameResponses,
   FileStatusErrors,
   FileStatusResponses,
+  FileWriteErrors,
+  FileWriteResponses,
   FindFilesErrors,
   FindFilesResponses,
   FindSymbolsErrors,
@@ -1800,6 +1810,38 @@ export class Find extends HeyApiClient {
 
 export class File extends HeyApiClient {
   /**
+   * Remove file or directory
+   *
+   * Remove a file or directory in the project.
+   */
+  public remove<ThrowOnError extends boolean = false>(
+    parameters: {
+      directory?: string
+      workspace?: string
+      path: string
+    },
+    options?: Options<never, ThrowOnError>,
+  ) {
+    const params = buildClientParams(
+      [parameters],
+      [
+        {
+          args: [
+            { in: "query", key: "directory" },
+            { in: "query", key: "workspace" },
+            { in: "query", key: "path" },
+          ],
+        },
+      ],
+    )
+    return (options?.client ?? this.client).delete<FileRemoveResponses, FileRemoveErrors, ThrowOnError>({
+      url: "/file",
+      ...options,
+      ...params,
+    })
+  }
+
+  /**
    * List files
    *
    * List files and directories in a specified path.
@@ -1890,6 +1932,158 @@ export class File extends HeyApiClient {
       url: "/file/status",
       ...options,
       ...params,
+    })
+  }
+
+  /**
+   * Write file
+   *
+   * Write content to a file in the project.
+   */
+  public write<ThrowOnError extends boolean = false>(
+    parameters?: {
+      directory?: string
+      workspace?: string
+      path?: string
+      content?: string
+    },
+    options?: Options<never, ThrowOnError>,
+  ) {
+    const params = buildClientParams(
+      [parameters],
+      [
+        {
+          args: [
+            { in: "query", key: "directory" },
+            { in: "query", key: "workspace" },
+            { in: "body", key: "path" },
+            { in: "body", key: "content" },
+          ],
+        },
+      ],
+    )
+    return (options?.client ?? this.client).post<FileWriteResponses, FileWriteErrors, ThrowOnError>({
+      url: "/file/write",
+      ...options,
+      ...params,
+      headers: {
+        "Content-Type": "application/json",
+        ...options?.headers,
+        ...params.headers,
+      },
+    })
+  }
+
+  /**
+   * Create file
+   *
+   * Create an empty file in the project.
+   */
+  public create<ThrowOnError extends boolean = false>(
+    parameters?: {
+      directory?: string
+      workspace?: string
+      path?: string
+    },
+    options?: Options<never, ThrowOnError>,
+  ) {
+    const params = buildClientParams(
+      [parameters],
+      [
+        {
+          args: [
+            { in: "query", key: "directory" },
+            { in: "query", key: "workspace" },
+            { in: "body", key: "path" },
+          ],
+        },
+      ],
+    )
+    return (options?.client ?? this.client).post<FileCreateResponses, FileCreateErrors, ThrowOnError>({
+      url: "/file/create",
+      ...options,
+      ...params,
+      headers: {
+        "Content-Type": "application/json",
+        ...options?.headers,
+        ...params.headers,
+      },
+    })
+  }
+
+  /**
+   * Create directory
+   *
+   * Create a directory in the project.
+   */
+  public mkdir<ThrowOnError extends boolean = false>(
+    parameters?: {
+      directory?: string
+      workspace?: string
+      path?: string
+    },
+    options?: Options<never, ThrowOnError>,
+  ) {
+    const params = buildClientParams(
+      [parameters],
+      [
+        {
+          args: [
+            { in: "query", key: "directory" },
+            { in: "query", key: "workspace" },
+            { in: "body", key: "path" },
+          ],
+        },
+      ],
+    )
+    return (options?.client ?? this.client).post<FileMkdirResponses, FileMkdirErrors, ThrowOnError>({
+      url: "/file/mkdir",
+      ...options,
+      ...params,
+      headers: {
+        "Content-Type": "application/json",
+        ...options?.headers,
+        ...params.headers,
+      },
+    })
+  }
+
+  /**
+   * Rename file or directory
+   *
+   * Rename a file or directory in the project.
+   */
+  public rename<ThrowOnError extends boolean = false>(
+    parameters?: {
+      directory?: string
+      workspace?: string
+      oldPath?: string
+      newPath?: string
+    },
+    options?: Options<never, ThrowOnError>,
+  ) {
+    const params = buildClientParams(
+      [parameters],
+      [
+        {
+          args: [
+            { in: "query", key: "directory" },
+            { in: "query", key: "workspace" },
+            { in: "body", key: "oldPath" },
+            { in: "body", key: "newPath" },
+          ],
+        },
+      ],
+    )
+    return (options?.client ?? this.client).post<FileRenameResponses, FileRenameErrors, ThrowOnError>({
+      url: "/file/rename",
+      ...options,
+      ...params,
+      headers: {
+        "Content-Type": "application/json",
+        ...options?.headers,
+        ...params.headers,
+      },
     })
   }
 }

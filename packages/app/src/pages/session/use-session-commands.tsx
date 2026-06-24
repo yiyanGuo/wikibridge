@@ -451,13 +451,17 @@ export const useSessionCommands = (actions: SessionCommandContext) => {
   ]
 
   const viewCmds = () => [
-    viewCommand({
-      id: "terminal.toggle",
-      title: language.t("command.terminal.toggle"),
-      keybind: "ctrl+`",
-      slash: "terminal",
-      onSelect: () => view().terminal.toggle(),
-    }),
+    ...(!kbMode()
+      ? [
+          viewCommand({
+            id: "terminal.toggle",
+            title: language.t("command.terminal.toggle"),
+            keybind: "ctrl+`",
+            slash: "terminal",
+            onSelect: () => view().terminal.toggle(),
+          }),
+        ]
+      : []),
     viewCommand({
       id: "review.toggle",
       title: language.t("command.review.toggle"),

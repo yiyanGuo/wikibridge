@@ -16,6 +16,7 @@ import * as HttpServerResponse from "effect/unstable/http/HttpServerResponse"
 import { HttpApiBuilder, HttpApiError } from "effect/unstable/httpapi"
 import { InstanceHttpApi } from "../api"
 import { ConsoleSwitchPayload, SessionListQuery, ToolListQuery, WorktreeApiError } from "../groups/experimental"
+import { kbForbidden } from "./kb-mode"
 
 function mapWorktreeError<A, R>(self: Effect.Effect<A, Worktree.Error, R>) {
   return self.pipe(
@@ -109,6 +110,7 @@ export const experimentalHandlers = HttpApiBuilder.group(InstanceHttpApi, "exper
     })
 
     const worktree = Effect.fn("ExperimentalHttpApi.worktree")(function* () {
+      yield* kbForbidden("Worktree is disabled in knowledge base mode.")
       const ctx = yield* InstanceState.context
       return yield* project.sandboxes(ctx.project.id)
     })
@@ -116,12 +118,14 @@ export const experimentalHandlers = HttpApiBuilder.group(InstanceHttpApi, "exper
     const worktreeCreate = Effect.fn("ExperimentalHttpApi.worktreeCreate")(function* (ctx: {
       payload: typeof Worktree.CreateInput.Type | void
     }) {
+      yield* kbForbidden("Worktree is disabled in knowledge base mode.")
       return yield* mapWorktreeError(worktreeSvc.create(ctx.payload ?? undefined))
     })
 
     const worktreeRemove = Effect.fn("ExperimentalHttpApi.worktreeRemove")(function* (input: {
       payload: Worktree.RemoveInput
     }) {
+      yield* kbForbidden("Worktree is disabled in knowledge base mode.")
       const ctx = yield* InstanceState.context
       yield* mapWorktreeError(worktreeSvc.remove(input.payload))
       yield* project.removeSandbox(ctx.project.id, input.payload.directory)
@@ -131,6 +135,7 @@ export const experimentalHandlers = HttpApiBuilder.group(InstanceHttpApi, "exper
     const worktreeReset = Effect.fn("ExperimentalHttpApi.worktreeReset")(function* (ctx: {
       payload: Worktree.ResetInput
     }) {
+      yield* kbForbidden("Worktree is disabled in knowledge base mode.")
       yield* mapWorktreeError(worktreeSvc.reset(ctx.payload))
       return true
     })

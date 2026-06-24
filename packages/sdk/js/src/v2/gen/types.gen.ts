@@ -2047,6 +2047,11 @@ export type Config = {
   }
 }
 
+export type ForbiddenError = {
+  _tag: "ForbiddenError"
+  message: string
+}
+
 export type Model = {
   id: string
   providerID: string
@@ -2761,11 +2766,6 @@ export type SessionMessagesResponse = {
 export type ProviderNotFoundError = {
   _tag: "ProviderNotFoundError"
   providerID: string
-  message: string
-}
-
-export type ForbiddenError = {
-  _tag: "ForbiddenError"
   message: string
 }
 
@@ -5507,6 +5507,10 @@ export type ConfigUpdateErrors = {
    * BadRequest | InvalidRequestError
    */
   400: EffectHttpApiErrorBadRequest | InvalidRequestError
+  /**
+   * ForbiddenError
+   */
+  403: ForbiddenError
 }
 
 export type ConfigUpdateError = ConfigUpdateErrors[keyof ConfigUpdateErrors]
@@ -5754,6 +5758,10 @@ export type WorktreeRemoveErrors = {
    * WorktreeError | InvalidRequestError
    */
   400: WorktreeError | InvalidRequestError
+  /**
+   * ForbiddenError
+   */
+  403: ForbiddenError
 }
 
 export type WorktreeRemoveError = WorktreeRemoveErrors[keyof WorktreeRemoveErrors]
@@ -5782,6 +5790,10 @@ export type WorktreeListErrors = {
    * WorktreeError | InvalidRequestError
    */
   400: WorktreeError | InvalidRequestError
+  /**
+   * ForbiddenError
+   */
+  403: ForbiddenError
 }
 
 export type WorktreeListError = WorktreeListErrors[keyof WorktreeListErrors]
@@ -5810,6 +5822,10 @@ export type WorktreeCreateErrors = {
    * WorktreeError | InvalidRequestError
    */
   400: WorktreeError | InvalidRequestError
+  /**
+   * ForbiddenError
+   */
+  403: ForbiddenError
 }
 
 export type WorktreeCreateError = WorktreeCreateErrors[keyof WorktreeCreateErrors]
@@ -5838,6 +5854,10 @@ export type WorktreeResetErrors = {
    * WorktreeError | InvalidRequestError
    */
   400: WorktreeError | InvalidRequestError
+  /**
+   * ForbiddenError
+   */
+  403: ForbiddenError
 }
 
 export type WorktreeResetError = WorktreeResetErrors[keyof WorktreeResetErrors]
@@ -6054,6 +6074,35 @@ export type FindSymbolsResponses = {
 
 export type FindSymbolsResponse = FindSymbolsResponses[keyof FindSymbolsResponses]
 
+export type FileRemoveData = {
+  body?: never
+  path?: never
+  query: {
+    directory?: string
+    workspace?: string
+    path: string
+  }
+  url: "/file"
+}
+
+export type FileRemoveErrors = {
+  /**
+   * Bad request
+   */
+  400: BadRequestError
+}
+
+export type FileRemoveError = FileRemoveErrors[keyof FileRemoveErrors]
+
+export type FileRemoveResponses = {
+  /**
+   * File or directory removed successfully
+   */
+  200: boolean
+}
+
+export type FileRemoveResponse = FileRemoveResponses[keyof FileRemoveResponses]
+
 export type FileListData = {
   body?: never
   path?: never
@@ -6140,6 +6189,128 @@ export type FileStatusResponses = {
 
 export type FileStatusResponse = FileStatusResponses[keyof FileStatusResponses]
 
+export type FileWriteData = {
+  body?: {
+    path: string
+    content: string
+  }
+  path?: never
+  query?: {
+    directory?: string
+    workspace?: string
+  }
+  url: "/file/write"
+}
+
+export type FileWriteErrors = {
+  /**
+   * Bad request
+   */
+  400: BadRequestError
+}
+
+export type FileWriteError = FileWriteErrors[keyof FileWriteErrors]
+
+export type FileWriteResponses = {
+  /**
+   * File written successfully
+   */
+  200: boolean
+}
+
+export type FileWriteResponse = FileWriteResponses[keyof FileWriteResponses]
+
+export type FileCreateData = {
+  body?: {
+    path: string
+  }
+  path?: never
+  query?: {
+    directory?: string
+    workspace?: string
+  }
+  url: "/file/create"
+}
+
+export type FileCreateErrors = {
+  /**
+   * Bad request
+   */
+  400: BadRequestError
+}
+
+export type FileCreateError = FileCreateErrors[keyof FileCreateErrors]
+
+export type FileCreateResponses = {
+  /**
+   * File created successfully
+   */
+  200: boolean
+}
+
+export type FileCreateResponse = FileCreateResponses[keyof FileCreateResponses]
+
+export type FileMkdirData = {
+  body?: {
+    path: string
+  }
+  path?: never
+  query?: {
+    directory?: string
+    workspace?: string
+  }
+  url: "/file/mkdir"
+}
+
+export type FileMkdirErrors = {
+  /**
+   * Bad request
+   */
+  400: BadRequestError
+}
+
+export type FileMkdirError = FileMkdirErrors[keyof FileMkdirErrors]
+
+export type FileMkdirResponses = {
+  /**
+   * Directory created successfully
+   */
+  200: boolean
+}
+
+export type FileMkdirResponse = FileMkdirResponses[keyof FileMkdirResponses]
+
+export type FileRenameData = {
+  body?: {
+    oldPath: string
+    newPath: string
+  }
+  path?: never
+  query?: {
+    directory?: string
+    workspace?: string
+  }
+  url: "/file/rename"
+}
+
+export type FileRenameErrors = {
+  /**
+   * Bad request
+   */
+  400: BadRequestError
+}
+
+export type FileRenameError = FileRenameErrors[keyof FileRenameErrors]
+
+export type FileRenameResponses = {
+  /**
+   * File or directory renamed successfully
+   */
+  200: boolean
+}
+
+export type FileRenameResponse = FileRenameResponses[keyof FileRenameResponses]
+
 export type InstanceDisposeData = {
   body?: never
   path?: never
@@ -6211,6 +6382,10 @@ export type VcsGetErrors = {
    * Bad request
    */
   400: BadRequestError
+  /**
+   * ForbiddenError
+   */
+  403: ForbiddenError
 }
 
 export type VcsGetError = VcsGetErrors[keyof VcsGetErrors]
@@ -6239,6 +6414,10 @@ export type VcsStatusErrors = {
    * Bad request
    */
   400: BadRequestError
+  /**
+   * ForbiddenError
+   */
+  403: ForbiddenError
 }
 
 export type VcsStatusError = VcsStatusErrors[keyof VcsStatusErrors]
@@ -6269,6 +6448,10 @@ export type VcsDiffErrors = {
    * Bad request
    */
   400: BadRequestError
+  /**
+   * ForbiddenError
+   */
+  403: ForbiddenError
 }
 
 export type VcsDiffError = VcsDiffErrors[keyof VcsDiffErrors]
@@ -6297,6 +6480,10 @@ export type VcsDiffRawErrors = {
    * Bad request
    */
   400: BadRequestError
+  /**
+   * ForbiddenError
+   */
+  403: ForbiddenError
 }
 
 export type VcsDiffRawError = VcsDiffRawErrors[keyof VcsDiffRawErrors]
@@ -6327,6 +6514,10 @@ export type VcsApplyErrors = {
    * VcsApplyError | InvalidRequestError
    */
   400: VcsApplyError | InvalidRequestError
+  /**
+   * ForbiddenError
+   */
+  403: ForbiddenError
 }
 
 export type VcsApplyError2 = VcsApplyErrors[keyof VcsApplyErrors]
@@ -6535,6 +6726,10 @@ export type McpAddErrors = {
    * BadRequest | InvalidRequestError
    */
   400: EffectHttpApiErrorBadRequest | InvalidRequestError
+  /**
+   * ForbiddenError
+   */
+  403: ForbiddenError
 }
 
 export type McpAddError = McpAddErrors[keyof McpAddErrors]
@@ -6973,6 +7168,10 @@ export type PtyShellsErrors = {
    * Bad request
    */
   400: BadRequestError
+  /**
+   * ForbiddenError
+   */
+  403: ForbiddenError
 }
 
 export type PtyShellsError = PtyShellsErrors[keyof PtyShellsErrors]
@@ -7005,6 +7204,10 @@ export type PtyListErrors = {
    * Bad request
    */
   400: BadRequestError
+  /**
+   * ForbiddenError
+   */
+  403: ForbiddenError
 }
 
 export type PtyListError = PtyListErrors[keyof PtyListErrors]
@@ -7041,6 +7244,10 @@ export type PtyCreateErrors = {
    * BadRequest | InvalidRequestError
    */
   400: EffectHttpApiErrorBadRequest | InvalidRequestError
+  /**
+   * ForbiddenError
+   */
+  403: ForbiddenError
 }
 
 export type PtyCreateError = PtyCreateErrors[keyof PtyCreateErrors]
@@ -7071,6 +7278,10 @@ export type PtyRemoveErrors = {
    * Bad request
    */
   400: BadRequestError
+  /**
+   * ForbiddenError
+   */
+  403: ForbiddenError
   /**
    * PtyNotFoundError
    */
@@ -7105,6 +7316,10 @@ export type PtyGetErrors = {
    * Bad request
    */
   400: BadRequestError
+  /**
+   * ForbiddenError
+   */
+  403: ForbiddenError
   /**
    * PtyNotFoundError
    */
@@ -7146,6 +7361,10 @@ export type PtyUpdateErrors = {
    */
   400: EffectHttpApiErrorBadRequest | InvalidRequestError
   /**
+   * ForbiddenError
+   */
+  403: ForbiddenError
+  /**
    * PtyNotFoundError
    */
   404: PtyNotFoundError
@@ -7180,9 +7399,9 @@ export type PtyConnectTokenErrors = {
    */
   400: BadRequestError
   /**
-   * PtyForbiddenError
+   * PtyForbiddenError | ForbiddenError
    */
-  403: PtyForbiddenError
+  403: PtyForbiddenError | ForbiddenError
   /**
    * PtyNotFoundError
    */
@@ -8335,6 +8554,10 @@ export type SessionShellErrors = {
    * BadRequest | InvalidRequestError
    */
   400: EffectHttpApiErrorBadRequest | InvalidRequestError
+  /**
+   * ForbiddenError
+   */
+  403: ForbiddenError
   /**
    * NotFoundError
    */

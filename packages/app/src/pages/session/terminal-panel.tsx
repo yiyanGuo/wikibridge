@@ -20,6 +20,7 @@ import { terminalTabLabel } from "@/pages/session/terminal-label"
 import { createSizing, focusTerminalById } from "@/pages/session/helpers"
 import { getTerminalHandoff, setTerminalHandoff } from "@/pages/session/handoff"
 import { useSessionLayout } from "@/pages/session/session-layout"
+import { kbMode } from "@/context/kb"
 
 export function TerminalPanel() {
   const delays = [120, 240]
@@ -193,14 +194,15 @@ export function TerminalPanel() {
   }
 
   return (
-    <div
-      ref={root}
-      id="terminal-panel"
-      role="region"
-      aria-label={language.t("terminal.title")}
-      aria-hidden={!opened()}
-      inert={!opened()}
-      class="relative w-full shrink-0 bg-background-stronger"
+    <Show when={!kbMode()}>
+      <div
+        ref={root}
+        id="terminal-panel"
+        role="region"
+        aria-label={language.t("terminal.title")}
+        aria-hidden={!opened()}
+        inert={!opened()}
+        class="relative w-full shrink-0 bg-background-stronger"
       classList={{
         "transition-[height] duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] will-change-[height] motion-reduce:transition-none":
           !size.active(),
@@ -334,5 +336,6 @@ export function TerminalPanel() {
         </Show>
       </div>
     </div>
+    </Show>
   )
 }

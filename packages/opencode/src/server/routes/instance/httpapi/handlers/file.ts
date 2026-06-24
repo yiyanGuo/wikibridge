@@ -9,6 +9,7 @@ import { Effect, Layer, Option } from "effect"
 import ignore from "ignore"
 import path from "path"
 import { Kb } from "@/kb/guard"
+import fs from "node:fs/promises"
 import { HttpApiBuilder } from "effect/unstable/httpapi"
 import { InstanceHttpApi } from "../api"
 
@@ -41,8 +42,44 @@ export const fileHandlers = HttpApiBuilder.group(InstanceHttpApi, "file", (handl
     })
 
     const findText = Effect.fn("FileHttpApi.findText")(function* (ctx: { query: { pattern: string } }) {
-      // Knowledge base mode: project-wide search would leak source files. Disabled.
-      if (Kb.enabled()) return []
+      if (Kb.enabled()) {
+        const privSearch = ripgrep
+          .grep({ cwd: Kb.privateRoot(), pattern: ctx.query.pattern, limit: 10 })
+          .pipe(
+            Effect.map((matches) =>
+              matches.map((match) => ({
+                path: { text: path.join(Kb.privateRelative(), match.entry.path).replaceAll("\\", "/") },
+                lines: { text: match.text },
+                line_number: match.line,
+                absolute_offset: match.offset,
+                submatches: match.submatches.map((submatch) => ({
+                  match: { text: submatch.text },
+                  start: submatch.start,
+                  end: submatch.end,
+                })),
+              })),
+            ),
+          )
+        const wikiSearch = ripgrep
+          .grep({ cwd: Kb.wikiRoot(), pattern: ctx.query.pattern, limit: 10 })
+          .pipe(
+            Effect.map((matches) =>
+              matches.map((match) => ({
+                path: { text: path.join(Kb.wikiRelative(), match.entry.path).replaceAll("\\", "/") },
+                lines: { text: match.text },
+                line_number: match.line,
+                absolute_offset: match.offset,
+                submatches: match.submatches.map((submatch) => ({
+                  match: { text: submatch.text },
+                  start: submatch.start,
+                  end: submatch.end,
+                })),
+              })),
+            ),
+          )
+        const [privMatches, wikiMatches] = yield* Effect.all([privSearch, wikiSearch], { concurrency: "unbounded" }).pipe(Effect.orDie)
+        return [...privMatches, ...wikiMatches].slice(0, 10)
+      }
       return (yield* ripgrep
         .grep({ cwd: (yield* InstanceState.context).directory, pattern: ctx.query.pattern, limit: 10 })
         .pipe(Effect.orDie)).map((match) => ({
@@ -61,22 +98,29 @@ export const fileHandlers = HttpApiBuilder.group(InstanceHttpApi, "file", (handl
     const findFile = Effect.fn("FileHttpApi.findFile")(function* (ctx: {
       query: { query: string; dirs?: "true" | "false"; type?: "file" | "directory"; limit?: number }
     }) {
-      // Knowledge base mode: project-wide fuzzy file search would leak source files. Disabled.
-      if (Kb.enabled()) return []
       const directory = (yield* InstanceState.context).directory
       const limit = ctx.query.limit ?? 10
       const type = ctx.query.type ?? (ctx.query.dirs === "false" ? "file" : undefined)
       const started = performance.now()
-      const found = yield* filesystem(FileSystem.Service.use((fs) => fs.find({ query: ctx.query.query, limit, type })))
+      const searchLimit = Kb.enabled() ? Math.max(limit * 20, 200) : limit
+      const found = yield* filesystem(FileSystem.Service.use((fs) => fs.find({ query: ctx.query.query, limit: searchLimit, type })))
+      let filtered = found
+      if (Kb.enabled()) {
+        filtered = found.filter((item) => {
+          const absolute = path.resolve(directory, item.path)
+          return !Kb.deny(absolute, "read")
+        })
+      }
+      const results = filtered.slice(0, limit)
       yield* Effect.logInfo("find file", {
         query: ctx.query.query,
         type,
         directory,
         limit,
-        results: found.length,
+        results: results.length,
         duration: Math.round(performance.now() - started),
       })
-      return found.map((item) => item.path)
+      return results.map((item) => item.path)
     })
 
     const findSymbol = Effect.fn("FileHttpApi.findSymbol")(function* () {
@@ -162,6 +206,75 @@ export const fileHandlers = HttpApiBuilder.group(InstanceHttpApi, "file", (handl
       return []
     })
 
+    const write = Effect.fn("FileHttpApi.write")(function* (ctx: {
+      payload: { path: string; content: string }
+    }) {
+      const directory = (yield* InstanceState.context).directory
+      const file = path.resolve(directory, ctx.payload.path)
+      if (Kb.enabled()) {
+        Kb.assert(file, "write")
+      }
+      yield* Effect.promise(async () => {
+        await fs.mkdir(path.dirname(file), { recursive: true })
+        await fs.writeFile(file, ctx.payload.content, "utf8")
+      })
+      return true
+    })
+
+    const create = Effect.fn("FileHttpApi.create")(function* (ctx: {
+      payload: { path: string }
+    }) {
+      const directory = (yield* InstanceState.context).directory
+      const file = path.resolve(directory, ctx.payload.path)
+      if (Kb.enabled()) {
+        Kb.assert(file, "write")
+      }
+      yield* Effect.promise(async () => {
+        await fs.mkdir(path.dirname(file), { recursive: true })
+        await fs.writeFile(file, "", "utf8")
+      })
+      return true
+    })
+
+    const mkdir = Effect.fn("FileHttpApi.mkdir")(function* (ctx: {
+      payload: { path: string }
+    }) {
+      const directory = (yield* InstanceState.context).directory
+      const dir = path.resolve(directory, ctx.payload.path)
+      if (Kb.enabled()) {
+        Kb.assert(dir, "write")
+      }
+      yield* Effect.promise(() => fs.mkdir(dir, { recursive: true }))
+      return true
+    })
+
+    const remove = Effect.fn("FileHttpApi.remove")(function* (ctx: { query: { path: string } }) {
+      const directory = (yield* InstanceState.context).directory
+      const file = path.resolve(directory, ctx.query.path)
+      if (Kb.enabled()) {
+        Kb.assert(file, "write")
+      }
+      yield* Effect.promise(() => fs.rm(file, { recursive: true, force: true }))
+      return true
+    })
+
+    const rename = Effect.fn("FileHttpApi.rename")(function* (ctx: {
+      payload: { oldPath: string; newPath: string }
+    }) {
+      const directory = (yield* InstanceState.context).directory
+      const oldFile = path.resolve(directory, ctx.payload.oldPath)
+      const newFile = path.resolve(directory, ctx.payload.newPath)
+      if (Kb.enabled()) {
+        Kb.assert(oldFile, "write")
+        Kb.assert(newFile, "write")
+      }
+      yield* Effect.promise(async () => {
+        await fs.mkdir(path.dirname(newFile), { recursive: true })
+        await fs.rename(oldFile, newFile)
+      })
+      return true
+    })
+
     return handlers
       .handle("findText", findText)
       .handle("findFile", findFile)
@@ -169,5 +282,10 @@ export const fileHandlers = HttpApiBuilder.group(InstanceHttpApi, "file", (handl
       .handle("list", list)
       .handle("content", content)
       .handle("status", status)
+      .handle("write", write)
+      .handle("create", create)
+      .handle("mkdir", mkdir)
+      .handle("remove", remove)
+      .handle("rename", rename)
   }),
 ).pipe(Layer.provide(LocationServiceMap.layer))

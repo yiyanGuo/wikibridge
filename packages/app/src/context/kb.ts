@@ -56,3 +56,11 @@ export function isPrivatePath(filepath: string): boolean {
 export function isReadonlyPath(filepath: string): boolean {
   return kbMode() && isWikiPath(filepath)
 }
+
+export function isPrivateRoot(filepath: string): boolean {
+  return normalize(filepath) === info().privateRoot
+}
+
+export function isWikiRoot(filepath: string): boolean {
+  return normalize(filepath) === info().wikiRoot
+}

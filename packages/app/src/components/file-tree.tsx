@@ -3,6 +3,10 @@ import { encodeFilePath } from "@/context/file/path"
 import { Collapsible } from "@opencode-ai/ui/collapsible"
 import { FileIcon } from "@opencode-ai/ui/file-icon"
 import { Icon } from "@opencode-ai/ui/icon"
+import { useSDK } from "@/context/sdk"
+import { showToast } from "@/utils/toast"
+import { kbMode, isPrivatePath, isPrivateRoot } from "@/context/kb"
+import { IconButton } from "@opencode-ai/ui/icon-button"
 import {
   createEffect,
   createMemo,
@@ -142,11 +146,80 @@ const FileTreeNode = (
     return kindTextColor(value)
   }
 
+  const sdk = useSDK()
+  const file = useFile()
+
+  const getParentPath = (filePath: string) => {
+    const parts = filePath.split("/")
+    parts.pop()
+    return parts.join("/")
+  }
+
+  const handleDelete = async (e: Event, path: string) => {
+    e.stopPropagation()
+    e.preventDefault()
+    if (!confirm(`确定要删除 ${path} 吗？`)) return
+    try {
+      await sdk().client.file.remove({ path })
+      const parent = getParentPath(path)
+      await file.tree.refresh(parent)
+      showToast({ variant: "success", title: "删除成功" })
+    } catch (err: any) {
+      showToast({ variant: "error", title: "删除失败", description: err.message || String(err) })
+    }
+  }
+
+  const handleRename = async (e: Event, oldPath: string) => {
+    e.stopPropagation()
+    e.preventDefault()
+    const name = prompt("请输入新名称:", oldPath.split("/").pop() || "")
+    if (!name) return
+    const parent = getParentPath(oldPath)
+    const newPath = parent ? `${parent}/${name}` : name
+    try {
+      await sdk().client.file.rename({ oldPath, newPath })
+      await file.tree.refresh(parent)
+      showToast({ variant: "success", title: "重命名成功" })
+    } catch (err: any) {
+      showToast({ variant: "error", title: "重命名失败", description: err.message || String(err) })
+    }
+  }
+
+  const handleNewFile = async (e: Event, dirPath: string) => {
+    e.stopPropagation()
+    e.preventDefault()
+    const name = prompt("请输入新建文件名:")
+    if (!name) return
+    const filePath = dirPath ? `${dirPath}/${name}` : name
+    try {
+      await sdk().client.file.create({ path: filePath })
+      await file.tree.refresh(dirPath)
+      showToast({ variant: "success", title: "新建文件成功" })
+    } catch (err: any) {
+      showToast({ variant: "error", title: "新建文件失败", description: err.message || String(err) })
+    }
+  }
+
+  const handleNewDir = async (e: Event, dirPath: string) => {
+    e.stopPropagation()
+    e.preventDefault()
+    const name = prompt("请输入新建目录名:")
+    if (!name) return
+    const newDirPath = dirPath ? `${dirPath}/${name}` : name
+    try {
+      await sdk().client.file.mkdir({ path: newDirPath })
+      await file.tree.refresh(dirPath)
+      showToast({ variant: "success", title: "新建目录成功" })
+    } catch (err: any) {
+      showToast({ variant: "error", title: "新建目录失败", description: err.message || String(err) })
+    }
+  }
+
   return (
     <Dynamic
       component={local.as ?? "div"}
       classList={{
-        "w-full min-w-0 h-6 flex items-center justify-start gap-x-1.5 rounded-md px-1.5 py-0 text-left hover:bg-surface-raised-base-hover active:bg-surface-base-active transition-colors cursor-pointer": true,
+        "w-full min-w-0 h-6 flex items-center justify-start gap-x-1.5 rounded-md px-1.5 py-0 text-left hover:bg-surface-raised-base-hover active:bg-surface-base-active transition-colors cursor-pointer group": true,
         "bg-surface-base-active": local.node.path === local.active,
         ...local.classList,
         [local.class ?? ""]: !!local.class,
@@ -174,6 +247,46 @@ const FileTreeNode = (
       >
         {local.node.name}
       </span>
+      <Show when={kbMode() && isPrivatePath(local.node.path)}>
+        <div class="hidden group-hover:flex items-center gap-1 shrink-0 ml-auto pr-1" onClick={(e) => e.stopPropagation()}>
+          <Show when={local.node.type === "directory"}>
+            <IconButton
+              icon="plus"
+              variant="ghost"
+              size="small"
+              class="w-4 h-4 p-0 text-icon-weak hover:text-text-strong"
+              onClick={(e: Event) => handleNewFile(e, local.node.path)}
+              title="新建文件"
+            />
+            <IconButton
+              icon="folder"
+              variant="ghost"
+              size="small"
+              class="w-4 h-4 p-0 text-icon-weak hover:text-text-strong"
+              onClick={(e: Event) => handleNewDir(e, local.node.path)}
+              title="新建目录"
+            />
+          </Show>
+          <Show when={!isPrivateRoot(local.node.path)}>
+            <IconButton
+              icon="edit"
+              variant="ghost"
+              size="small"
+              class="w-4 h-4 p-0 text-icon-weak hover:text-text-strong"
+              onClick={(e: Event) => handleRename(e, local.node.path)}
+              title="重命名"
+            />
+            <IconButton
+              icon="trash"
+              variant="ghost"
+              size="small"
+              class="w-4 h-4 p-0 text-icon-weak hover:text-text-strong"
+              onClick={(e: Event) => handleDelete(e, local.node.path)}
+              title="删除"
+            />
+          </Show>
+        </div>
+      </Show>
       {(() => {
         const value = kind()
         if (!value) return null

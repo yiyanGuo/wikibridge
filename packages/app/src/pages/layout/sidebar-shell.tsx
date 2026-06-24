@@ -11,6 +11,7 @@ import { ConstrainDragXAxis } from "@/utils/solid-dnd"
 import { IconButton } from "@opencode-ai/ui/icon-button"
 import { Tooltip, TooltipKeybind } from "@opencode-ai/ui/tooltip"
 import { type LocalProject } from "@/context/layout"
+import { kbMode } from "@/context/kb"
 
 export const SidebarContent = (props: {
   mobile?: boolean
@@ -90,15 +91,17 @@ export const SidebarContent = (props: {
           </DragDropProvider>
         </div>
         <div class="shrink-0 w-full pt-3 pb-6 flex flex-col items-center gap-2">
-          <TooltipKeybind placement={placement()} title={props.settingsLabel()} keybind={props.settingsKeybind() ?? ""}>
-            <IconButton
-              icon="settings-gear"
-              variant="ghost"
-              size="large"
-              onClick={props.onOpenSettings}
-              aria-label={props.settingsLabel()}
-            />
-          </TooltipKeybind>
+          <Show when={!kbMode()}>
+            <TooltipKeybind placement={placement()} title={props.settingsLabel()} keybind={props.settingsKeybind() ?? ""}>
+              <IconButton
+                icon="settings-gear"
+                variant="ghost"
+                size="large"
+                onClick={props.onOpenSettings}
+                aria-label={props.settingsLabel()}
+              />
+            </TooltipKeybind>
+          </Show>
           <Tooltip placement={placement()} value={props.helpLabel()}>
             <IconButton
               icon="help"

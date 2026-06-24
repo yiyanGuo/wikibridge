@@ -14,6 +14,7 @@ import {
   WorkspaceRoutingQueryFields,
 } from "../middleware/workspace-routing"
 import { described } from "./metadata"
+import { ForbiddenError } from "../errors"
 
 const PathInfo = Schema.Struct({
   home: Schema.String,
@@ -83,6 +84,7 @@ export const InstanceApi = HttpApi.make("instance")
         HttpApiEndpoint.get("vcs", InstancePaths.vcs, {
           query: WorkspaceRoutingQuery,
           success: described(Vcs.Info, "VCS info"),
+          error: ForbiddenError,
         }).annotateMerge(
           OpenApi.annotations({
             identifier: "vcs.get",
@@ -94,6 +96,7 @@ export const InstanceApi = HttpApi.make("instance")
         HttpApiEndpoint.get("vcsStatus", InstancePaths.vcsStatus, {
           query: WorkspaceRoutingQuery,
           success: described(Schema.Array(Vcs.FileStatus), "VCS status"),
+          error: ForbiddenError,
         }).annotateMerge(
           OpenApi.annotations({
             identifier: "vcs.status",
@@ -104,6 +107,7 @@ export const InstanceApi = HttpApi.make("instance")
         HttpApiEndpoint.get("vcsDiff", InstancePaths.vcsDiff, {
           query: VcsDiffQuery,
           success: described(Schema.Array(Vcs.FileDiff), "VCS diff"),
+          error: ForbiddenError,
         }).annotateMerge(
           OpenApi.annotations({
             identifier: "vcs.diff",
@@ -117,6 +121,7 @@ export const InstanceApi = HttpApi.make("instance")
             Schema.String.pipe(HttpApiSchema.asText({ contentType: "text/x-diff; charset=utf-8" })),
             "Raw VCS diff",
           ),
+          error: ForbiddenError,
         }).annotateMerge(
           OpenApi.annotations({
             identifier: "vcs.diff.raw",
@@ -128,7 +133,7 @@ export const InstanceApi = HttpApi.make("instance")
           query: WorkspaceRoutingQuery,
           payload: Vcs.ApplyInput,
           success: described(Vcs.ApplyResult, "VCS patch applied"),
-          error: ApiVcsApplyError,
+          error: [ApiVcsApplyError, ForbiddenError],
         }).annotateMerge(
           OpenApi.annotations({
             identifier: "vcs.apply",

@@ -57,6 +57,7 @@ import { setNavigate } from "@/utils/notification-click"
 import { Worktree as WorktreeState } from "@/utils/worktree"
 import { setSessionHandoff } from "@/pages/session/handoff"
 import { SessionRouteKey, SessionStateKey } from "@/utils/server-scope"
+import { kbMode } from "@/context/kb"
 
 import { useDialog } from "@opencode-ai/ui/context/dialog"
 import { useTheme, type ColorScheme } from "@opencode-ai/ui/theme/context"
@@ -1032,13 +1033,17 @@ export default function Layout(props: ParentProps) {
         category: language.t("command.category.server"),
         onSelect: () => openServer(),
       },
-      {
-        id: "settings.open",
-        title: language.t("command.settings.open"),
-        category: language.t("command.category.settings"),
-        keybind: "mod+comma",
-        onSelect: () => openSettings(),
-      },
+      ...(!kbMode()
+        ? [
+            {
+              id: "settings.open",
+              title: language.t("command.settings.open"),
+              category: language.t("command.category.settings"),
+              keybind: "mod+comma",
+              onSelect: () => openSettings(),
+            },
+          ]
+        : []),
       ...(platform.platform === "desktop" && platform.exportDebugLogs
         ? [
             {

@@ -165,6 +165,60 @@ export const FileApi = HttpApi.make("file")
             description: "Get the git status of all files in the project.",
           }),
         ),
+        HttpApiEndpoint.post("write", "/file/write", {
+          query: WorkspaceRoutingQuery,
+          payload: Schema.Struct({ path: Schema.String, content: Schema.String }),
+          success: described(Schema.Boolean, "File written successfully"),
+        }).annotateMerge(
+          OpenApi.annotations({
+            identifier: "file.write",
+            summary: "Write file",
+            description: "Write content to a file in the project.",
+          }),
+        ),
+        HttpApiEndpoint.post("create", "/file/create", {
+          query: WorkspaceRoutingQuery,
+          payload: Schema.Struct({ path: Schema.String }),
+          success: described(Schema.Boolean, "File created successfully"),
+        }).annotateMerge(
+          OpenApi.annotations({
+            identifier: "file.create",
+            summary: "Create file",
+            description: "Create an empty file in the project.",
+          }),
+        ),
+        HttpApiEndpoint.post("mkdir", "/file/mkdir", {
+          query: WorkspaceRoutingQuery,
+          payload: Schema.Struct({ path: Schema.String }),
+          success: described(Schema.Boolean, "Directory created successfully"),
+        }).annotateMerge(
+          OpenApi.annotations({
+            identifier: "file.mkdir",
+            summary: "Create directory",
+            description: "Create a directory in the project.",
+          }),
+        ),
+        HttpApiEndpoint.delete("remove", "/file", {
+          query: FileQuery,
+          success: described(Schema.Boolean, "File or directory removed successfully"),
+        }).annotateMerge(
+          OpenApi.annotations({
+            identifier: "file.remove",
+            summary: "Remove file or directory",
+            description: "Remove a file or directory in the project.",
+          }),
+        ),
+        HttpApiEndpoint.post("rename", "/file/rename", {
+          query: WorkspaceRoutingQuery,
+          payload: Schema.Struct({ oldPath: Schema.String, newPath: Schema.String }),
+          success: described(Schema.Boolean, "File or directory renamed successfully"),
+        }).annotateMerge(
+          OpenApi.annotations({
+            identifier: "file.rename",
+            summary: "Rename file or directory",
+            description: "Rename a file or directory in the project.",
+          }),
+        ),
       )
       .annotateMerge(
         OpenApi.annotations({

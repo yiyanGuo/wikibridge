@@ -20,6 +20,8 @@ import { usePrompt } from "@/context/prompt"
 import { getSessionHandoff } from "@/pages/session/handoff"
 import { useSessionLayout } from "@/pages/session/session-layout"
 import { createSessionTabs } from "@/pages/session/helpers"
+import { useSDK } from "@/context/sdk"
+
 
 function FileCommentMenu(props: {
   moreLabel: string
@@ -200,6 +202,54 @@ export function FileTabContent(props: { tab: string }) {
     return file.get(p)
   })
   const contents = createMemo(() => state()?.content?.content ?? "")
+  const [editing, setEditing] = createSignal(false)
+  const [editContent, setEditContent] = createSignal("")
+  const sdk = useSDK()
+
+  createEffect(() => {
+    path()
+    setEditing(false)
+  })
+
+  const startEdit = () => {
+    setEditContent(contents())
+    setEditing(true)
+  }
+
+  const cancelEdit = () => {
+    setEditing(false)
+  }
+
+  const saveEdit = async () => {
+    const p = path()
+    if (!p) return
+    try {
+      await sdk().client.file.write({
+        path: p,
+        content: editContent()
+      })
+      await file.load(p, { force: true })
+      setEditing(false)
+      showToast({
+        variant: "success",
+        title: "保存成功",
+      })
+    } catch (e: any) {
+      showToast({
+        variant: "error",
+        title: "保存失败",
+        description: e.message || String(e),
+      })
+    }
+  }
+
+  const handleEditorKeyDown = (e: KeyboardEvent) => {
+    if ((e.ctrlKey || e.metaKey) && e.key === "s") {
+      e.preventDefault()
+      void saveEdit()
+    }
+  }
+
   const cacheKey = createMemo(() => sampledChecksum(contents()))
   const selectedLines = createMemo<SelectedLineRange | null>(() => {
     const p = path()
@@ -403,51 +453,88 @@ export function FileTabContent(props: { tab: string }) {
         </div>
       </Show>
       <Show when={kbMode() && isPrivatePath(path() ?? "")}>
-        <div class="px-6 py-1.5 text-xs text-text-weak bg-surface-base-active border-b border-border-base">
-          我的知识库
+        <div class="px-6 py-1.5 text-xs text-text-weak bg-surface-base-active border-b border-border-base flex items-center justify-between">
+          <span>我的知识库</span>
+          <div class="flex items-center gap-2">
+            <Show when={editing()} fallback={
+              <button
+                type="button"
+                class="px-2 py-0.5 text-xs rounded border border-border-base bg-background-base hover:bg-surface-raised-base-hover active:bg-surface-base-active text-text-strong transition-colors cursor-pointer"
+                onClick={startEdit}
+              >
+                编辑
+              </button>
+            }>
+              <button
+                type="button"
+                class="px-2 py-0.5 text-xs rounded bg-brand-primary hover:bg-brand-primary-hover active:bg-brand-primary-active text-white transition-colors cursor-pointer"
+                onClick={saveEdit}
+              >
+                保存
+              </button>
+              <button
+                type="button"
+                class="px-2 py-0.5 text-xs rounded border border-border-base bg-background-base hover:bg-surface-raised-base-hover active:bg-surface-base-active text-text-strong transition-colors cursor-pointer"
+                onClick={cancelEdit}
+              >
+                取消
+              </button>
+            </Show>
+          </div>
         </div>
       </Show>
-      <Dynamic
-        component={fileComponent}
-        mode="text"
-        file={{
-          name: path() ?? "",
-          contents: source,
-          cacheKey: cacheKey(),
-        }}
-        enableLineSelection
-        enableHoverUtility
-        selectedLines={activeSelection()}
-        commentedLines={commentedLines()}
-        onRendered={() => {
-          scrollSync.queueRestore()
-        }}
-        annotations={commentsUi.annotations()}
-        renderAnnotation={commentsUi.renderAnnotation}
-        renderHoverUtility={commentsUi.renderHoverUtility}
-        onLineSelected={(range: SelectedLineRange | null) => {
-          commentsUi.onLineSelected(range)
-        }}
-        onLineNumberSelectionEnd={commentsUi.onLineNumberSelectionEnd}
-        onLineSelectionEnd={(range: SelectedLineRange | null) => {
-          commentsUi.onLineSelectionEnd(range)
-        }}
-        search={search}
-        class="select-text"
-        media={{
-          mode: "auto",
-          path: path(),
-          current: state()?.content,
-          onLoad: scrollSync.queueRestore,
-          onError: (args: { kind: "image" | "audio" | "svg" }) => {
-            if (args.kind !== "svg") return
-            showToast({
-              variant: "error",
-              title: language.t("toast.file.loadFailed.title"),
-            })
-          },
-        }}
-      />
+      <Show when={editing()} fallback={
+        <Dynamic
+          component={fileComponent}
+          mode="text"
+          file={{
+            name: path() ?? "",
+            contents: source,
+            cacheKey: cacheKey(),
+          }}
+          enableLineSelection
+          enableHoverUtility
+          selectedLines={activeSelection()}
+          commentedLines={commentedLines()}
+          onRendered={() => {
+            scrollSync.queueRestore()
+          }}
+          annotations={commentsUi.annotations()}
+          renderAnnotation={commentsUi.renderAnnotation}
+          renderHoverUtility={commentsUi.renderHoverUtility}
+          onLineSelected={(range: SelectedLineRange | null) => {
+            commentsUi.onLineSelected(range)
+          }}
+          onLineNumberSelectionEnd={commentsUi.onLineNumberSelectionEnd}
+          onLineSelectionEnd={(range: SelectedLineRange | null) => {
+            commentsUi.onLineSelectionEnd(range)
+          }}
+          search={search}
+          class="select-text"
+          media={{
+            mode: "auto",
+            path: path(),
+            current: state()?.content,
+            onLoad: scrollSync.queueRestore,
+            onError: (args: { kind: "image" | "audio" | "svg" }) => {
+              if (args.kind !== "svg") return
+              showToast({
+                variant: "error",
+                title: language.t("toast.file.loadFailed.title"),
+              })
+            },
+          }}
+        />
+      }>
+        <div class="px-6 py-4 h-[calc(100vh-220px)] flex flex-col">
+          <textarea
+            class="flex-1 w-full p-3 font-mono text-[14px] bg-background-base border border-border-base rounded-md focus:outline-none focus:border-brand-primary resize-none text-text-strong"
+            value={editContent()}
+            onInput={(e) => setEditContent(e.currentTarget.value)}
+            onKeyDown={handleEditorKeyDown}
+          />
+        </div>
+      </Show>
     </div>
   )
 

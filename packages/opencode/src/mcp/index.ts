@@ -35,6 +35,7 @@ import { InstanceState } from "@/effect/instance-state"
 import { ChildProcess, ChildProcessSpawner } from "effect/unstable/process"
 import { CrossSpawnSpawner } from "@opencode-ai/core/cross-spawn-spawner"
 import { McpCatalog } from "./catalog"
+import { Kb } from "@/kb/guard"
 
 const DEFAULT_TIMEOUT = 30_000
 const CLIENT_OPTIONS = {
@@ -328,6 +329,12 @@ export const layer = Layer.effect(
       key: string,
       mcp: ConfigMCPV1.Info & { type: "local" },
     ) {
+      if (Kb.enabled()) {
+        return {
+          client: undefined,
+          status: { status: "disabled" as const },
+        }
+      }
       const [cmd, ...args] = mcp.command
       const baseDir = yield* InstanceState.directory
       const cwd = mcp.cwd ? path.resolve(baseDir, mcp.cwd) : baseDir

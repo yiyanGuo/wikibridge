@@ -23,6 +23,7 @@ import * as Socket from "effect/unstable/socket/Socket"
 import { InstanceHttpApi } from "../api"
 import * as ApiError from "../errors"
 import { kbForbidden } from "./kb-mode"
+import { Kb } from "@/kb/guard"
 import { CursorQuery, PtyConnectApi } from "../groups/pty"
 import { WebSocketTracker } from "../websocket-tracker"
 
@@ -64,6 +65,7 @@ export const ptyHandlers = HttpApiBuilder.group(InstanceHttpApi, "pty", (handler
     })
 
     const list = Effect.fn("PtyHttpApi.list")(function* () {
+      yield* kbForbidden("Terminal is disabled in knowledge base mode.")
       const sessions = yield* pty(Pty.Service.use((service) => service.list()))
       return sessions.filter((info) => info.status === "running")
     })
@@ -85,6 +87,7 @@ export const ptyHandlers = HttpApiBuilder.group(InstanceHttpApi, "pty", (handler
     })
 
     const get = Effect.fn("PtyHttpApi.get")(function* (ctx: { params: { ptyID: PtyID } }) {
+      yield* kbForbidden("Terminal is disabled in knowledge base mode.")
       return yield* pty(Pty.Service.use((service) => service.get(ctx.params.ptyID))).pipe(
         Effect.catchTag(
           "Pty.NotFoundError",
@@ -145,6 +148,7 @@ export const ptyHandlers = HttpApiBuilder.group(InstanceHttpApi, "pty", (handler
     })
 
     const connectToken = Effect.fn("PtyHttpApi.connectToken")(function* (ctx: { params: { ptyID: PtyID } }) {
+      yield* kbForbidden("Terminal is disabled in knowledge base mode.")
       const request = yield* HttpServerRequest.HttpServerRequest
       if (request.headers[PTY_CONNECT_TOKEN_HEADER] !== PTY_CONNECT_TOKEN_HEADER_VALUE || !validOrigin(request, cors))
         return yield* new ApiError.PtyForbiddenError({ message: "Invalid PTY connect token request" })
@@ -187,6 +191,9 @@ export const ptyConnectHandlers = HttpApiBuilder.group(PtyConnectApi, "pty-conne
         params: { ptyID: PtyID }
         request: HttpServerRequest.HttpServerRequest
       }) {
+        if (Kb.enabled()) {
+          return HttpServerResponse.empty({ status: 403 })
+        }
         const exists = yield* pty(Pty.Service.use((service) => service.get(ctx.params.ptyID))).pipe(
           Effect.map((info) => info.status === "running"),
           Effect.catchTag("Pty.NotFoundError", () => Effect.succeed(false)),

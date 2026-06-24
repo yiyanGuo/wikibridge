@@ -25,6 +25,7 @@ import { DialogServerV2 } from "@/components/settings-v2/dialog-server-v2"
 import { ServerConnection, useServer } from "@/context/server"
 import { sessionHasOpenTab, useTabs } from "@/context/tabs"
 import { useServerSync, type ServerSync } from "@/context/server-sync"
+import { kbMode } from "@/context/kb"
 import { useLanguage } from "@/context/language"
 import { useNotification } from "@/context/notification"
 import {
@@ -516,14 +517,16 @@ function HomeProjectColumn(props: {
         </For>
       </Show>
       <div class="mt-4 flex min-w-0 flex-col gap-1">
-        <button
-          type="button"
-          class={`${HOME_PROJECT_NAV_ROW} text-v2-text-text-faint [&>[data-slot=icon-svg]]:text-v2-icon-icon-muted`}
-          onClick={props.openSettings}
-        >
-          <IconV2 name="settings-gear" size="small" />
-          <span class={HOME_PROJECT_NAV_LABEL}>{props.language.t("sidebar.settings")}</span>
-        </button>
+        <Show when={!kbMode()}>
+          <button
+            type="button"
+            class={`${HOME_PROJECT_NAV_ROW} text-v2-text-text-faint [&>[data-slot=icon-svg]]:text-v2-icon-icon-muted`}
+            onClick={props.openSettings}
+          >
+            <IconV2 name="settings-gear" size="small" />
+            <span class={HOME_PROJECT_NAV_LABEL}>{props.language.t("sidebar.settings")}</span>
+          </button>
+        </Show>
         <button
           type="button"
           class={`${HOME_PROJECT_NAV_ROW} text-v2-text-text-faint [&>[data-slot=icon-svg]]:text-v2-icon-icon-muted`}

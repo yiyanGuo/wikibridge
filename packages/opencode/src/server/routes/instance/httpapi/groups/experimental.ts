@@ -15,6 +15,7 @@ import {
   WorkspaceRoutingQueryFields,
 } from "../middleware/workspace-routing"
 import { described } from "./metadata"
+import { ForbiddenError } from "../errors"
 import { QueryBoolean } from "./query"
 import { ProviderV2 } from "@opencode-ai/core/provider"
 import { ModelV2 } from "@opencode-ai/core/model"
@@ -176,7 +177,7 @@ export const ExperimentalApi = HttpApi.make("experimental")
         HttpApiEndpoint.get("worktree", ExperimentalPaths.worktree, {
           query: WorkspaceRoutingQuery,
           success: described(WorktreeList, "List of worktree directories"),
-          error: WorktreeApiError,
+          error: [WorktreeApiError, ForbiddenError],
         }).annotateMerge(
           OpenApi.annotations({
             identifier: "worktree.list",
@@ -189,7 +190,7 @@ export const ExperimentalApi = HttpApi.make("experimental")
           query: WorkspaceRoutingQuery,
           payload: [HttpApiSchema.NoContent, Worktree.CreateInput],
           success: described(Worktree.Info, "Worktree created"),
-          error: WorktreeApiError,
+          error: [WorktreeApiError, ForbiddenError],
         }).annotateMerge(
           OpenApi.annotations({
             identifier: "worktree.create",
@@ -201,7 +202,7 @@ export const ExperimentalApi = HttpApi.make("experimental")
           query: WorkspaceRoutingQuery,
           payload: Worktree.RemoveInput,
           success: described(Schema.Boolean, "Worktree removed"),
-          error: WorktreeApiError,
+          error: [WorktreeApiError, ForbiddenError],
         }).annotateMerge(
           OpenApi.annotations({
             identifier: "worktree.remove",
@@ -213,7 +214,7 @@ export const ExperimentalApi = HttpApi.make("experimental")
           query: WorkspaceRoutingQuery,
           payload: Worktree.ResetInput,
           success: described(Schema.Boolean, "Worktree reset"),
-          error: WorktreeApiError,
+          error: [WorktreeApiError, ForbiddenError],
         }).annotateMerge(
           OpenApi.annotations({
             identifier: "worktree.reset",
