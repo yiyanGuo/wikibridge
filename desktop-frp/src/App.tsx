@@ -128,36 +128,51 @@ export default function App() {
     return items;
   }, []);
 
-  const refreshWorkspace = useCallback(async () => {
-    const [nextProjects, nextConnections] = await Promise.all([refreshProjects(), refreshConnections()]);
+  const updateConnectableProject = useCallback((nextProjects: KnowledgeProject[], nextConnections: ProjectConnection[]) => {
     const used = new Set(nextConnections.map((connection) => connection.project_id));
     const firstAvailable = nextProjects.find((project) => !used.has(project.project_id));
     setConnectionProjectId((current) => {
       if (current && nextProjects.some((project) => project.project_id === current) && !used.has(current)) return current;
       return firstAvailable?.project_id || '';
     });
-  }, [refreshConnections, refreshProjects]);
+  }, []);
+
+  const refreshAuthenticatedWorkspace = useCallback(async () => {
+    const [nextProjects, nextConnections] = await Promise.all([refreshProjects(), refreshConnections()]);
+    updateConnectableProject(nextProjects, nextConnections);
+    return { nextProjects, nextConnections };
+  }, [refreshConnections, refreshProjects, updateConnectableProject]);
+
+  const refreshWorkspace = useCallback(async () => {
+    if (user) return refreshAuthenticatedWorkspace();
+    const nextProjects = await refreshProjects();
+    setConnections([]);
+    updateConnectableProject(nextProjects, []);
+    return { nextProjects, nextConnections: [] };
+  }, [refreshAuthenticatedWorkspace, refreshProjects, updateConnectableProject, user]);
 
   const loadSession = useCallback(async () => {
     setError('');
+    const nextProjects = await refreshProjects();
     const snapshot = await invoke<AppSnapshot>('get_state');
     if (!snapshot.is_authenticated) {
       setUser(null);
-      setProjects([]);
       setConnections([]);
+      updateConnectableProject(nextProjects, []);
       return;
     }
     try {
       const current = await invoke<UserDto>('get_current_user');
+      const nextConnections = await refreshConnections();
       setUser(current);
-      await refreshWorkspace();
+      updateConnectableProject(nextProjects, nextConnections);
     } catch (err) {
       setUser(null);
-      setProjects([]);
       setConnections([]);
+      updateConnectableProject(nextProjects, []);
       setError(friendlyError(err));
     }
-  }, [refreshWorkspace]);
+  }, [refreshConnections, refreshProjects, updateConnectableProject]);
 
   useEffect(() => {
     loadSession().catch((err) => setError(friendlyError(err)));
@@ -185,9 +200,8 @@ export default function App() {
       const command = authMode === 'login' ? 'login_user' : 'register_user';
       const current = await invoke<UserDto>(command, { username, password });
       setUser(current);
-      setActivePage('projects');
       setPassword('');
-      await refreshWorkspace();
+      await refreshAuthenticatedWorkspace();
     } catch (err) {
       setError(friendlyError(err));
     } finally {
@@ -201,10 +215,10 @@ export default function App() {
     try {
       await invoke('logout_user');
       setUser(null);
-      setProjects([]);
       setConnections([]);
       setActivePage('projects');
       closeReader();
+      await refreshProjects();
     } catch (err) {
       setError(friendlyError(err));
     } finally {
@@ -467,6 +481,42 @@ export default function App() {
     setNotice('访问地址已复制');
   }
 
+  function renderAuthPanel() {
+    return (
+      <section className="auth-panel connection-auth-panel">
+        <div className="segmented">
+          <button className={authMode === 'login' ? 'active' : ''} onClick={() => setAuthMode('login')}>
+            <LogIn size={17} aria-hidden="true" />
+            登录
+          </button>
+          <button className={authMode === 'register' ? 'active' : ''} onClick={() => setAuthMode('register')}>
+            <UserPlus size={17} aria-hidden="true" />
+            注册
+          </button>
+        </div>
+        <form onSubmit={submitAuth} className="stack">
+          <label>
+            用户名
+            <input value={username} onChange={(event) => setUsername(event.target.value)} autoComplete="username" />
+          </label>
+          <label>
+            密码
+            <input
+              value={password}
+              type="password"
+              onChange={(event) => setPassword(event.target.value)}
+              autoComplete={authMode === 'login' ? 'current-password' : 'new-password'}
+            />
+          </label>
+          <button className="primary" disabled={busy === 'auth'}>
+            {authMode === 'login' ? <LogIn size={17} /> : <UserPlus size={17} />}
+            {authMode === 'login' ? '登录' : '注册并登录'}
+          </button>
+        </form>
+      </section>
+    );
+  }
+
   function switchPage(page: AppPage) {
     setActivePage(page);
     if (page === 'connections') closeReader();
@@ -482,19 +532,17 @@ export default function App() {
             <span>知识库访问</span>
           </div>
         </div>
-        {user && (
-          <nav className="main-nav" aria-label="主导航">
-            <button className={activePage === 'projects' ? 'active' : ''} onClick={() => switchPage('projects')}>
-              <BookOpen size={17} />
-              知识库
-            </button>
-            <button className={activePage === 'connections' ? 'active' : ''} onClick={() => switchPage('connections')}>
-              <Link2 size={17} />
-              访问连接
-            </button>
-          </nav>
-        )}
-        {user && (
+        <nav className="main-nav" aria-label="主导航">
+          <button className={activePage === 'projects' ? 'active' : ''} onClick={() => switchPage('projects')}>
+            <BookOpen size={17} />
+            知识库
+          </button>
+          <button className={activePage === 'connections' ? 'active' : ''} onClick={() => switchPage('connections')}>
+            <Link2 size={17} />
+            访问连接
+          </button>
+        </nav>
+        {user ? (
           <div className="account">
             <span>{user.username}</span>
             <span>可用额度：{user.balance_mb} MB</span>
@@ -509,6 +557,14 @@ export default function App() {
               <LogOut size={17} aria-hidden="true" />
             </button>
           </div>
+        ) : (
+          <div className="account">
+            <span>本地知识库</span>
+            <button className="secondary compact" onClick={() => switchPage('connections')}>
+              <LogIn size={16} />
+              登录连接
+            </button>
+          </div>
         )}
       </header>
 
@@ -519,41 +575,7 @@ export default function App() {
         </div>
       )}
 
-      {!user ? (
-        <main className="auth-layout">
-          <section className="auth-panel">
-            <div className="segmented">
-              <button className={authMode === 'login' ? 'active' : ''} onClick={() => setAuthMode('login')}>
-                <LogIn size={17} aria-hidden="true" />
-                登录
-              </button>
-              <button className={authMode === 'register' ? 'active' : ''} onClick={() => setAuthMode('register')}>
-                <UserPlus size={17} aria-hidden="true" />
-                注册
-              </button>
-            </div>
-            <form onSubmit={submitAuth} className="stack">
-              <label>
-                用户名
-                <input value={username} onChange={(event) => setUsername(event.target.value)} autoComplete="username" />
-              </label>
-              <label>
-                密码
-                <input
-                  value={password}
-                  type="password"
-                  onChange={(event) => setPassword(event.target.value)}
-                  autoComplete={authMode === 'login' ? 'current-password' : 'new-password'}
-                />
-              </label>
-              <button className="primary" disabled={busy === 'auth'}>
-                {authMode === 'login' ? <LogIn size={17} /> : <UserPlus size={17} />}
-                {authMode === 'login' ? '登录' : '注册并登录'}
-              </button>
-            </form>
-          </section>
-        </main>
-      ) : readerProject && activePage === 'projects' ? (
+      {readerProject && activePage === 'projects' ? (
         <main className="reader-layout">
           <section className="panel reader-panel">
             <div className="reader-header">
@@ -716,7 +738,7 @@ export default function App() {
               )}
             </div>
           </section>
-          ) : (
+          ) : user ? (
           <section className="panel">
             <div className="section-heading">
               <div>
@@ -830,6 +852,8 @@ export default function App() {
               )}
             </div>
           </section>
+          ) : (
+            renderAuthPanel()
           )}
         </main>
       )}

@@ -132,6 +132,12 @@ button {
   padding: 24px;
 }
 
+.connection-auth-panel {
+  justify-self: center;
+  align-self: start;
+  margin-top: 48px;
+}
+
 .workspace {
   flex: 1;
   display: grid;

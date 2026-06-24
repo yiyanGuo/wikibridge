@@ -15,3 +15,4 @@ desktop-frp/src-tauri/target/
 desktop-frp/src-tauri/gen/
 desktop-frp/src-tauri/binaries/frpc/**/frpc
 desktop-frp/src-tauri/binaries/frpc/**/frpc.exe
+frps/frps
