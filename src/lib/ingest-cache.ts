@@ -124,3 +124,11 @@ export async function removeFromIngestCache(
   delete newEntries[sourceFileName]
   await saveCache(projectPath, { entries: newEntries })
 }
+
+/**
+ * Clear the entire ingest cache for a project.
+ * Used when forcing re-compilation of all sources.
+ */
+export async function clearIngestCache(projectPath: string): Promise<void> {
+  await saveCache(projectPath, { entries: {} })
+}

@@ -112,7 +112,7 @@ export function CreateProjectDialog({ open: isOpen, onOpenChange, onCreated }: C
     setCreating(true)
     setError("")
     try {
-      const project = await createProject(name.trim(), path.trim())
+      const project = await createProject({ name: name.trim(), path: path.trim() })
       const pp = normalizePath(project.path)
 
       const template = getTemplate(selectedTemplate)

@@ -121,7 +121,7 @@ export async function streamChat(
     })
   } catch (err) {
     if (signal?.aborted) {
-      onDone()
+      onError(new Error("Request was cancelled"))
       return
     }
     if ((err instanceof Error && err.name === "AbortError") || isRequestCancelledError(err)) {
@@ -131,7 +131,7 @@ export async function streamChat(
         onError(new Error(`Request timed out after ${Math.round(timeoutMs / 60000)} min. Try a faster model or a smaller context.`))
         return
       }
-      onDone()
+      onError(new Error("Request was cancelled"))
       return
     }
     if (isFetchNetworkError(err)) {

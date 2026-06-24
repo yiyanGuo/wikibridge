@@ -24,7 +24,7 @@ import {
   writeFrontmatterArray,
   writeSources,
 } from "@/lib/sources-merge"
-import { removeFromIngestCache } from "@/lib/ingest-cache"
+import { removeFromIngestCache, clearIngestCache } from "@/lib/ingest-cache"
 import { removePageEmbedding } from "@/lib/embedding"
 import {
   buildDeletedKeys,
@@ -151,6 +151,59 @@ export async function enqueueSourceIngest(
   return enqueueBatch(project.id, files)
 }
 
+/**
+ * Scan raw/sources directory and enqueue all ingestable files
+ * that are not already in the queue. Used for manual "compile all" trigger.
+ */
+export async function scanAndEnqueueAllSources(
+  project: WikiProject,
+  llmConfig: LlmConfig,
+): Promise<number> {
+  if (!hasUsableLlm(llmConfig)) return 0
+  const pp = normalizePath(project.path)
+  const sourcesDir = `${pp}/raw/sources`
+
+  let allFiles: FileNode[] = []
+  try {
+    const nodes = await listDirectory(sourcesDir)
+    allFiles = flattenFiles(nodes)
+  } catch {
+    return 0
+  }
+
+  const ingestablePaths = allFiles
+    .filter(f => isIngestableSourcePath(f.path))
+    .map(f => f.path)
+
+  if (ingestablePaths.length === 0) return 0
+
+  const files = ingestablePaths.map(sourcePath => ({
+    sourcePath,
+    folderContext: folderContextForSourcePath(sourcePath),
+  }))
+
+  await enqueueBatch(project.id, files)
+  return files.length
+}
+
+/**
+ * Force re-compile all sources by clearing the ingest cache first.
+ * This ensures all files are re-processed even if they were already ingested.
+ */
+export async function forceRecompileAllSources(
+  project: WikiProject,
+  llmConfig: LlmConfig,
+): Promise<number> {
+  if (!hasUsableLlm(llmConfig)) return 0
+  const pp = normalizePath(project.path)
+
+  // Clear the entire ingest cache so all files will be re-processed
+  await clearIngestCache(pp)
+
+  // Now scan and enqueue all sources
+  return scanAndEnqueueAllSources(project, llmConfig)
+}
+
 export async function importSourceFiles(
   project: WikiProject,
   sourcePaths: string[],
@@ -178,7 +231,7 @@ export async function importSourceFiles(
     try {
       await copyFile(sourcePath, destPath)
       importedPaths.push(destPath)
-      preprocessFile(destPath).catch(() => {})
+      preprocessFile(destPath).catch(() => { })
     } catch (err) {
       console.error(`Failed to import ${originalName}:`, err)
     }
@@ -224,7 +277,7 @@ export async function importSourceFolder(
     if (parent) await createDirectory(parent)
     await copyFile(file.path, destPath)
     allowedFiles.push(destPath)
-    preprocessFile(destPath).catch(() => {})
+    preprocessFile(destPath).catch(() => { })
   }
 
   if (hasUsableLlm(llmConfig)) {

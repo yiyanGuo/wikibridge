@@ -77,6 +77,12 @@ export function sanitizeIngestedFileContent(content: string): string {
   // clearly emitted frontmatter lines followed by a closing fence.
   cleaned = addMissingOpeningFrontmatterFence(cleaned)
 
+  // (2.6) Repair frontmatter that the LLM collapsed onto a single
+  // line, e.g. "type: concept title: Foo created: 2024-01-01 ...".
+  // Each key: value pair needs to be on its own line, wrapped in
+  // --- fences, for the read-time parser to recognise it.
+  cleaned = expandSingleLineFrontmatter(cleaned)
+
   // (3) Repair `key: [[a]], [[b]], [[c]]` lines inside the
   // frontmatter block so they're valid YAML. Body wikilinks are
   // left alone — those render fine via the wikilink → markdown
@@ -133,6 +139,108 @@ function addMissingOpeningFrontmatterFence(content: string): string {
   }
 
   return content
+}
+
+/**
+ * Detect and expand frontmatter that the LLM collapsed onto a single
+ * line, e.g.:
+ *
+ *     type: concept title: Foo created: 2024-01-01 tags: [a, b] sources: ["x.pdf"]
+ *
+ * into proper multi-line YAML wrapped in `---` fences:
+ *
+ *     ---
+ *     type: concept
+ *     title: Foo
+ *     created: 2024-01-01
+ *     tags: [a, b]
+ *     sources: ["x.pdf"]
+ *     ---
+ *
+ * Known frontmatter keys are used as split anchors. The function only
+ * acts when the very first non-empty line of the document looks like
+ * collapsed frontmatter (starts with a known key and contains at
+ * least one more known key later on the same line).
+ */
+const FRONTMATTER_KEYS = [
+  "type", "title", "created", "updated", "tags", "related",
+  "sources", "origin", "summary", "language", "status",
+]
+
+function expandSingleLineFrontmatter(content: string): string {
+  // Only act on documents that don't already have a frontmatter fence.
+  if (/^---\s*\r?\n/.test(content)) return content
+
+  const lines = content.split(/\r?\n/)
+  const firstContentIdx = lines.findIndex((line) => line.trim().length > 0)
+  if (firstContentIdx < 0) return content
+
+  const firstLine = lines[firstContentIdx].trim()
+
+  // Must start with a known frontmatter key.
+  const firstKey = FRONTMATTER_KEYS.find((k) =>
+    new RegExp(`^${k}\\s*:`, "i").test(firstLine),
+  )
+  if (!firstKey) return content
+
+  // Count how many known frontmatter keys appear on this line.
+  // If only one, it's a normal single-field line, not collapsed.
+  const allKeysRe = new RegExp(
+    `(?<![\\w-])(${FRONTMATTER_KEYS.join("|")})\\s*:`,
+    "gi",
+  )
+  const keyMatches = firstLine.match(allKeysRe)
+  if (!keyMatches || keyMatches.length < 2) return content
+
+  // Split the single line into separate key: value lines.
+  // Find each ` key:` occurrence (preceded by whitespace, not mid-word)
+  // and split there.
+  const splitRe = new RegExp(
+    `\\s+(${FRONTMATTER_KEYS.join("|")})\\s*:`,
+    "gi",
+  )
+
+  const splits: { start: number }[] = []
+  let m: RegExpExecArray | null
+  while ((m = splitRe.exec(firstLine)) !== null) {
+    splits.push({ start: m.index })
+  }
+
+  if (splits.length === 0) return content
+
+  // Build the expanded lines from split positions.
+  // The first segment is from the start of the line to the first split
+  // (e.g. "type: concept"). Subsequent segments are between splits.
+  const expandedLines: string[] = []
+  if (splits.length > 0 && splits[0].start > 0) {
+    const firstSegment = firstLine.slice(0, splits[0].start).trim()
+    if (firstSegment) expandedLines.push(firstSegment)
+  }
+  for (let i = 0; i < splits.length; i++) {
+    const start = splits[i].start
+    const end = i + 1 < splits.length ? splits[i + 1].start : firstLine.length
+    const segment = firstLine.slice(start, end).trim()
+    if (segment) {
+      expandedLines.push(segment)
+    }
+  }
+
+  // Reconstruct: --- + expanded lines + --- + rest of document
+  const beforeFirst = lines.slice(0, firstContentIdx).join("\n")
+  const afterFirst = lines.slice(firstContentIdx + 1).join("\n")
+
+  const parts = [
+    beforeFirst,
+    "---",
+    ...expandedLines,
+    "---",
+    afterFirst,
+  ].filter((s, i) => !(i === 0 && s === ""))
+
+  const result = parts.join("\n")
+
+  // Clean up any leading newlines
+  return result.replace(/^\n+/, "")
 }
 
 /**

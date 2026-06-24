@@ -572,7 +572,18 @@ async function processNext(projectId: string): Promise<void> {
   lastWrittenFiles = []
 
   try {
-    const writtenFiles = await autoIngest(pp, fullSourcePath, llmConfig, currentAbortController.signal, next.folderContext)
+    // Add timeout to prevent LLM call from hanging indefinitely (5 minutes)
+    const LLM_TIMEOUT_MS = 5 * 60 * 1000
+    const timeoutPromise = new Promise<never>((_, reject) => {
+      setTimeout(() => {
+        currentAbortController?.abort()
+        reject(new Error(`LLM 调用超时（${LLM_TIMEOUT_MS / 1000}秒），请检查 API 连接或模型配置`))
+      }, LLM_TIMEOUT_MS)
+    })
+    const writtenFiles = await Promise.race([
+      autoIngest(pp, fullSourcePath, llmConfig, currentAbortController.signal, next.folderContext),
+      timeoutPromise
+    ])
     // Stale-context guard: project switched during the long LLM call.
     // Bail without mutating queue or writing to disk — pauseQueue has
     // already persisted the correct state to the old project's file,
