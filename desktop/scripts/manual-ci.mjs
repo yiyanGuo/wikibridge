@@ -25,10 +25,26 @@ const steps = [
   },
   {
     name: "tauri rust tests",
-    command: cargoBin,
-    args: ["test", "--manifest-path", cargoManifest, "--locked"],
+    command: npmBin,
+    args: ["run", "test:contracts"],
   },
 ]
+
+if (options.includeSystem) {
+  steps.push({
+    name: "desktop system tests",
+    command: npmBin,
+    args: ["run", "test:system"],
+  })
+}
+
+if (options.includeIntegration) {
+  steps.push({
+    name: "desktop integration tests",
+    command: npmBin,
+    args: ["run", "test:integration:desktop"],
+  })
+}
 
 const startedAt = Date.now()
 
@@ -59,12 +75,23 @@ console.log(`\nManual CI checks passed in ${elapsedSeconds}s.`)
 
 function parseArgs(rawArgs) {
   const sidecarArgs = []
+  let includeSystem = false
+  let includeIntegration = false
 
   for (let index = 0; index < rawArgs.length; index += 1) {
     const arg = rawArgs[index]
     if (arg === "--help" || arg === "-h") {
       printHelp()
       process.exit(0)
+    }
+    if (arg === "--include-system") {
+      includeSystem = true
+      continue
+    }
+    if (arg === "--include-integration") {
+      includeIntegration = true
+      includeSystem = true
+      continue
     }
     if (arg === "--platform") {
       const value = rawArgs[index + 1]
@@ -80,18 +107,20 @@ function parseArgs(rawArgs) {
     fail(`Unknown option "${arg}"`)
   }
 
-  return { sidecarArgs }
+  return { sidecarArgs, includeSystem, includeIntegration }
 }
 
 function printHelp() {
-  console.log(`Usage: npm run ci:check -- [--platform <platform>]
+  console.log(`Usage: npm run ci:check -- [--platform <platform>] [--include-system] [--include-integration]
 
 Runs the minimal manual CI checks for the desktop app:
   1. frontend TypeScript/Vite build
   2. required sidecar binary layout check
   3. Tauri Rust tests
 
-Use --platform when checking sidecars for a non-host packaging target.`)
+Use --platform when checking sidecars for a non-host packaging target.
+Use --include-system to also run Playwright system tests.
+Use --include-integration to also run real desktop integration tests.`)
 }
 
 function fail(message) {
