@@ -16,6 +16,7 @@ import { EventV2Bridge } from "@/event-v2-bridge"
 import { Format } from "@/format"
 import { Git } from "@/git"
 import { Installation } from "@/installation"
+import { LlmWikiService } from "@/llm-wiki/service"
 import { LSP } from "@/lsp/lsp"
 import { MCP } from "@/mcp"
 import { McpAuth } from "@/mcp/auth"
@@ -84,6 +85,7 @@ import { experimentalHandlers } from "./handlers/experimental"
 import { fileHandlers } from "./handlers/file"
 import { globalHandlers } from "./handlers/global"
 import { instanceHandlers } from "./handlers/instance"
+import { llmWikiHandlers } from "./handlers/llm-wiki"
 import { mcpHandlers } from "./handlers/mcp"
 import { permissionHandlers } from "./handlers/permission"
 import { projectHandlers } from "./handlers/project"
@@ -148,6 +150,7 @@ const instanceApiRoutes = HttpApiBuilder.layer(InstanceHttpApi).pipe(
     experimentalHandlers,
     fileHandlers,
     instanceHandlers,
+    llmWikiHandlers,
     mcpHandlers,
     projectHandlers,
     projectCopyHandlers,
@@ -160,6 +163,7 @@ const instanceApiRoutes = HttpApiBuilder.layer(InstanceHttpApi).pipe(
     tuiHandlers,
     workspaceHandlers,
   ]),
+  Layer.provide(LlmWikiService.defaultLayer),
 )
 
 const instanceRoutes = instanceApiRoutes.pipe(
@@ -247,8 +251,8 @@ const app = LayerNode.group([
   Vcs.node,
   Workspace.node,
   Worktree.node,
-  Installation.node,
-  ShareNext.node,
+    Installation.node,
+    ShareNext.node,
   SessionShare.node,
   InstanceStore.node,
   httpClient,

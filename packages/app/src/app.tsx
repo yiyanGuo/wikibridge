@@ -54,6 +54,7 @@ import { useCheckServerHealth } from "./utils/server-health"
 const HomeRoute = lazy(() => import("@/pages/home"))
 const Session = lazy(() => import("@/pages/session"))
 const NewSession = lazy(() => import("@/pages/new-session"))
+const LlmWiki = lazy(() => import("@/pages/llm-wiki"))
 
 const SessionRoute = Object.assign(
   () => {
@@ -148,6 +149,14 @@ function SelectedDirectoryLayout(props: ParentProps) {
   return (
     <SelectedServerLayout>
       <DirectoryLayout>{props.children}</DirectoryLayout>
+    </SelectedServerLayout>
+  )
+}
+
+function LlmWikiRoute() {
+  return (
+    <SelectedServerLayout>
+      <LlmWiki />
     </SelectedServerLayout>
   )
 }
@@ -488,6 +497,7 @@ export function AppInterface(props: {
             )}
           >
             <Route path="/" component={SelectedHomeRoute} />
+            <Route path="/llm-wiki" component={LlmWikiRoute} />
             <Route path="/:dir" component={SelectedDirectoryLayout}>
               <Route path="/" component={() => <Navigate href="session" />} />
               <Route path="/session/:id?" component={SessionRoute} />

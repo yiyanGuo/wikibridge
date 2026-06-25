@@ -468,6 +468,7 @@ function HomeProjectColumn(props: {
 }) {
   const global = useGlobal()
   const dialog = useDialog()
+  const navigate = useNavigate()
   const controller = useServerManagementController({ navigateOnAdd: false })
   return (
     <aside class="flex min-w-0 flex-col lg:pt-[52px] mt-14 gap-4" aria-label={props.language.t("home.projects")}>
@@ -517,16 +518,28 @@ function HomeProjectColumn(props: {
         </For>
       </Show>
       <div class="mt-4 flex min-w-0 flex-col gap-1">
-        <Show when={!kbMode()}>
-          <button
-            type="button"
-            class={`${HOME_PROJECT_NAV_ROW} text-v2-text-text-faint [&>[data-slot=icon-svg]]:text-v2-icon-icon-muted`}
-            onClick={props.openSettings}
-          >
-            <IconV2 name="settings-gear" size="small" />
-            <span class={HOME_PROJECT_NAV_LABEL}>{props.language.t("sidebar.settings")}</span>
-          </button>
-        </Show>
+        <Switch>
+          <Match when={kbMode()}>
+            <button
+              type="button"
+              class={`${HOME_PROJECT_NAV_ROW} text-v2-text-text-faint [&>[data-slot=icon-svg]]:text-v2-icon-icon-muted`}
+              onClick={() => navigate("/llm-wiki")}
+            >
+              <IconV2 name="book-open" size="small" />
+              <span class={HOME_PROJECT_NAV_LABEL}>Knowledge Base</span>
+            </button>
+          </Match>
+          <Match when={!kbMode()}>
+            <button
+              type="button"
+              class={`${HOME_PROJECT_NAV_ROW} text-v2-text-text-faint [&>[data-slot=icon-svg]]:text-v2-icon-icon-muted`}
+              onClick={props.openSettings}
+            >
+              <IconV2 name="settings-gear" size="small" />
+              <span class={HOME_PROJECT_NAV_LABEL}>{props.language.t("sidebar.settings")}</span>
+            </button>
+          </Match>
+        </Switch>
         <button
           type="button"
           class={`${HOME_PROJECT_NAV_ROW} text-v2-text-text-faint [&>[data-slot=icon-svg]]:text-v2-icon-icon-muted`}

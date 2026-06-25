@@ -2405,6 +2405,164 @@ export type FormatterStatus = {
   enabled: boolean
 }
 
+export type LlmWikiHealthResponse = {
+  ok: true
+  status: string
+  version: string
+  enabled: boolean
+  authRequired: boolean
+  authConfigured: boolean
+  allowUnauthenticated: boolean
+  mcpEnabled: boolean
+}
+
+export type LlmWikiUnauthorizedError = {
+  _tag: "LlmWikiUnauthorizedError"
+  message: string
+}
+
+export type LlmWikiNotFoundError = {
+  _tag: "LlmWikiNotFoundError"
+  message: string
+}
+
+export type LlmWikiUnavailableError = {
+  _tag: "LlmWikiUnavailableError"
+  message: string
+  status?: number | "NaN" | "Infinity" | "-Infinity" | "Infinity" | "-Infinity" | "NaN"
+}
+
+export type LlmWikiProject = {
+  id: string
+  name: string
+  path: string
+  current: boolean
+}
+
+export type LlmWikiProjectsResponse = {
+  ok: true
+  projects: Array<LlmWikiProject>
+  currentProject: LlmWikiProject
+}
+
+export type LlmWikiProjectRoot1 = "wiki" | "sources" | "all"
+
+export type LlmWikiProjectRoot = LlmWikiProjectRoot1
+
+export type LlmWikiFileNode = {
+  name: string
+  path: string
+  isDir: boolean
+  size: number | "NaN" | "Infinity" | "-Infinity" | "Infinity" | "-Infinity" | "NaN"
+  children?: Array<LlmWikiFileNode>
+}
+
+export type Suspend = LlmWikiFileNode
+
+export type LlmWikiFilesResponse = {
+  ok: true
+  projectId: string
+  root: LlmWikiProjectRoot1
+  files: Array<LlmWikiFileNode>
+}
+
+export type LlmWikiFileContentResponse = {
+  ok: true
+  projectId: string
+  path: string
+  content: string
+}
+
+export type LlmWikiReviewStatus = "unresolved" | "resolved" | "all"
+
+export type LlmWikiReviewOption = {
+  label: string
+  action: string
+}
+
+export type LlmWikiReview = {
+  id: string
+  type: string
+  title: string
+  description: string
+  sourcePath?: string
+  affectedPages?: Array<string>
+  searchQueries?: Array<string>
+  options: Array<LlmWikiReviewOption>
+  resolved: boolean
+  resolvedAction?: string
+  createdAt: number | "NaN" | "Infinity" | "-Infinity" | "Infinity" | "-Infinity" | "NaN"
+}
+
+export type LlmWikiReviewsResponse = {
+  ok: true
+  projectId: string
+  status: LlmWikiReviewStatus
+  count: number | "NaN" | "Infinity" | "-Infinity" | "Infinity" | "-Infinity" | "NaN"
+  reviews: Array<LlmWikiReview>
+}
+
+export type LlmWikiSearchRequest = {
+  query: string
+  topK?: number | "NaN" | "Infinity" | "-Infinity" | "Infinity" | "-Infinity" | "NaN"
+  includeContent?: boolean
+  queryEmbedding?: Array<number | "NaN" | "Infinity" | "-Infinity" | "Infinity" | "-Infinity" | "NaN">
+}
+
+export type LlmWikiSearchResult = {
+  path: string
+  title: string
+  snippet: string
+  score: number | "NaN" | "Infinity" | "-Infinity" | "Infinity" | "-Infinity" | "NaN"
+  content?: string
+}
+
+export type LlmWikiSearchResponse = {
+  ok: true
+  projectId: string
+  mode: string
+  tokenHits: number | "NaN" | "Infinity" | "-Infinity" | "Infinity" | "-Infinity" | "NaN"
+  vectorHits: number | "NaN" | "Infinity" | "-Infinity" | "Infinity" | "-Infinity" | "NaN"
+  results: Array<LlmWikiSearchResult>
+}
+
+export type LlmWikiGraphNode = {
+  id: string
+  label: string
+  nodeType: string
+  path?: string
+  linkCount: number | "NaN" | "Infinity" | "-Infinity" | "Infinity" | "-Infinity" | "NaN"
+}
+
+export type LlmWikiGraphEdge = {
+  source: string
+  target: string
+  weight: number | "NaN" | "Infinity" | "-Infinity" | "Infinity" | "-Infinity" | "NaN"
+}
+
+export type LlmWikiGraphResponse = {
+  ok: true
+  projectId: string
+  nodes: Array<LlmWikiGraphNode>
+  edges: Array<LlmWikiGraphEdge>
+}
+
+export type LlmWikiRescanQueue = {
+  version: number | "NaN" | "Infinity" | "-Infinity" | "Infinity" | "-Infinity" | "NaN"
+  tasks: Array<unknown>
+}
+
+export type LlmWikiRescanResult = {
+  queue: LlmWikiRescanQueue
+  changedTasks: Array<unknown>
+}
+
+export type LlmWikiRescanResponse = {
+  ok: true
+  projectId: string
+  result: LlmWikiRescanResult
+}
+
 export type McpStatusConnected = {
   status: "connected"
 }
@@ -6677,6 +6835,316 @@ export type FormatterStatusResponses = {
 }
 
 export type FormatterStatusResponse = FormatterStatusResponses[keyof FormatterStatusResponses]
+
+export type LlmWikiHealthData = {
+  body?: never
+  path?: never
+  query?: {
+    directory?: string
+    workspace?: string
+  }
+  url: "/instance/llm-wiki/health"
+}
+
+export type LlmWikiHealthErrors = {
+  /**
+   * Bad request
+   */
+  400: BadRequestError
+  /**
+   * LlmWikiNotFoundError
+   */
+  404: LlmWikiNotFoundError
+  /**
+   * LlmWikiUnavailableError
+   */
+  503: LlmWikiUnavailableError
+}
+
+export type LlmWikiHealthError = LlmWikiHealthErrors[keyof LlmWikiHealthErrors]
+
+export type LlmWikiHealthResponses = {
+  /**
+   * llm_wiki service health
+   */
+  200: LlmWikiHealthResponse
+}
+
+export type LlmWikiHealthResponse2 = LlmWikiHealthResponses[keyof LlmWikiHealthResponses]
+
+export type LlmWikiProjectsData = {
+  body?: never
+  path?: never
+  query?: {
+    directory?: string
+    workspace?: string
+  }
+  url: "/instance/llm-wiki/projects"
+}
+
+export type LlmWikiProjectsErrors = {
+  /**
+   * Bad request
+   */
+  400: BadRequestError
+  /**
+   * LlmWikiNotFoundError
+   */
+  404: LlmWikiNotFoundError
+  /**
+   * LlmWikiUnavailableError
+   */
+  503: LlmWikiUnavailableError
+}
+
+export type LlmWikiProjectsError = LlmWikiProjectsErrors[keyof LlmWikiProjectsErrors]
+
+export type LlmWikiProjectsResponses = {
+  /**
+   * Known llm_wiki projects
+   */
+  200: LlmWikiProjectsResponse
+}
+
+export type LlmWikiProjectsResponse2 = LlmWikiProjectsResponses[keyof LlmWikiProjectsResponses]
+
+export type LlmWikiFilesData = {
+  body?: never
+  path: {
+    projectID: string
+  }
+  query: {
+    directory?: string
+    workspace?: string
+    root: LlmWikiProjectRoot1
+    recursive?: "true" | "false"
+    maxFiles?: string
+  }
+  url: "/instance/llm-wiki/projects/{projectID}/files"
+}
+
+export type LlmWikiFilesErrors = {
+  /**
+   * Bad request
+   */
+  400: BadRequestError
+  /**
+   * LlmWikiNotFoundError
+   */
+  404: LlmWikiNotFoundError
+  /**
+   * LlmWikiUnavailableError
+   */
+  503: LlmWikiUnavailableError
+}
+
+export type LlmWikiFilesError = LlmWikiFilesErrors[keyof LlmWikiFilesErrors]
+
+export type LlmWikiFilesResponses = {
+  /**
+   * llm_wiki project files
+   */
+  200: LlmWikiFilesResponse
+}
+
+export type LlmWikiFilesResponse2 = LlmWikiFilesResponses[keyof LlmWikiFilesResponses]
+
+export type LlmWikiFileContentData = {
+  body?: never
+  path: {
+    projectID: string
+  }
+  query: {
+    directory?: string
+    workspace?: string
+    path: string
+  }
+  url: "/instance/llm-wiki/projects/{projectID}/files/content"
+}
+
+export type LlmWikiFileContentErrors = {
+  /**
+   * Bad request
+   */
+  400: BadRequestError
+  /**
+   * LlmWikiNotFoundError
+   */
+  404: LlmWikiNotFoundError
+  /**
+   * LlmWikiUnavailableError
+   */
+  503: LlmWikiUnavailableError
+}
+
+export type LlmWikiFileContentError = LlmWikiFileContentErrors[keyof LlmWikiFileContentErrors]
+
+export type LlmWikiFileContentResponses = {
+  /**
+   * llm_wiki file content
+   */
+  200: LlmWikiFileContentResponse
+}
+
+export type LlmWikiFileContentResponse2 = LlmWikiFileContentResponses[keyof LlmWikiFileContentResponses]
+
+export type LlmWikiReviewsData = {
+  body?: never
+  path: {
+    projectID: string
+  }
+  query?: {
+    directory?: string
+    workspace?: string
+    status?: LlmWikiReviewStatus
+    type?: string
+    limit?: string
+  }
+  url: "/instance/llm-wiki/projects/{projectID}/reviews"
+}
+
+export type LlmWikiReviewsErrors = {
+  /**
+   * Bad request
+   */
+  400: BadRequestError
+  /**
+   * LlmWikiNotFoundError
+   */
+  404: LlmWikiNotFoundError
+  /**
+   * LlmWikiUnavailableError
+   */
+  503: LlmWikiUnavailableError
+}
+
+export type LlmWikiReviewsError = LlmWikiReviewsErrors[keyof LlmWikiReviewsErrors]
+
+export type LlmWikiReviewsResponses = {
+  /**
+   * llm_wiki reviews
+   */
+  200: LlmWikiReviewsResponse
+}
+
+export type LlmWikiReviewsResponse2 = LlmWikiReviewsResponses[keyof LlmWikiReviewsResponses]
+
+export type LlmWikiSearchData = {
+  body?: LlmWikiSearchRequest
+  path: {
+    projectID: string
+  }
+  query?: {
+    directory?: string
+    workspace?: string
+  }
+  url: "/instance/llm-wiki/projects/{projectID}/search"
+}
+
+export type LlmWikiSearchErrors = {
+  /**
+   * Bad request
+   */
+  400: BadRequestError
+  /**
+   * LlmWikiNotFoundError
+   */
+  404: LlmWikiNotFoundError
+  /**
+   * LlmWikiUnavailableError
+   */
+  503: LlmWikiUnavailableError
+}
+
+export type LlmWikiSearchError = LlmWikiSearchErrors[keyof LlmWikiSearchErrors]
+
+export type LlmWikiSearchResponses = {
+  /**
+   * llm_wiki search results
+   */
+  200: LlmWikiSearchResponse
+}
+
+export type LlmWikiSearchResponse2 = LlmWikiSearchResponses[keyof LlmWikiSearchResponses]
+
+export type LlmWikiGraphData = {
+  body?: never
+  path: {
+    projectID: string
+  }
+  query?: {
+    directory?: string
+    workspace?: string
+    q?: string
+    nodeType?: string
+    limit?: string
+  }
+  url: "/instance/llm-wiki/projects/{projectID}/graph"
+}
+
+export type LlmWikiGraphErrors = {
+  /**
+   * Bad request
+   */
+  400: BadRequestError
+  /**
+   * LlmWikiNotFoundError
+   */
+  404: LlmWikiNotFoundError
+  /**
+   * LlmWikiUnavailableError
+   */
+  503: LlmWikiUnavailableError
+}
+
+export type LlmWikiGraphError = LlmWikiGraphErrors[keyof LlmWikiGraphErrors]
+
+export type LlmWikiGraphResponses = {
+  /**
+   * llm_wiki graph
+   */
+  200: LlmWikiGraphResponse
+}
+
+export type LlmWikiGraphResponse2 = LlmWikiGraphResponses[keyof LlmWikiGraphResponses]
+
+export type LlmWikiRescanSourcesData = {
+  body?: never
+  path: {
+    projectID: string
+  }
+  query?: {
+    directory?: string
+    workspace?: string
+  }
+  url: "/instance/llm-wiki/projects/{projectID}/sources/rescan"
+}
+
+export type LlmWikiRescanSourcesErrors = {
+  /**
+   * Bad request
+   */
+  400: BadRequestError
+  /**
+   * LlmWikiNotFoundError
+   */
+  404: LlmWikiNotFoundError
+  /**
+   * LlmWikiUnavailableError
+   */
+  503: LlmWikiUnavailableError
+}
+
+export type LlmWikiRescanSourcesError = LlmWikiRescanSourcesErrors[keyof LlmWikiRescanSourcesErrors]
+
+export type LlmWikiRescanSourcesResponses = {
+  /**
+   * llm_wiki rescan result
+   */
+  200: LlmWikiRescanResponse
+}
+
+export type LlmWikiRescanSourcesResponse = LlmWikiRescanSourcesResponses[keyof LlmWikiRescanSourcesResponses]
 
 export type McpStatusData = {
   body?: never

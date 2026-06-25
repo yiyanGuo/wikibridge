@@ -100,6 +100,25 @@ import type {
   GlobalUpgradeResponses,
   InstanceDisposeErrors,
   InstanceDisposeResponses,
+  LlmWikiFileContentErrors,
+  LlmWikiFileContentResponses,
+  LlmWikiFilesErrors,
+  LlmWikiFilesResponses,
+  LlmWikiGraphErrors,
+  LlmWikiGraphResponses,
+  LlmWikiHealthErrors,
+  LlmWikiHealthResponses,
+  LlmWikiProjectRoot1,
+  LlmWikiProjectsErrors,
+  LlmWikiProjectsResponses,
+  LlmWikiRescanSourcesErrors,
+  LlmWikiRescanSourcesResponses,
+  LlmWikiReviewsErrors,
+  LlmWikiReviewsResponses,
+  LlmWikiReviewStatus,
+  LlmWikiSearchErrors,
+  LlmWikiSearchRequest,
+  LlmWikiSearchResponses,
   LocationRef,
   LspStatusErrors,
   LspStatusResponses,
@@ -2412,6 +2431,251 @@ export class Formatter extends HeyApiClient {
     )
     return (options?.client ?? this.client).get<FormatterStatusResponses, FormatterStatusErrors, ThrowOnError>({
       url: "/formatter",
+      ...options,
+      ...params,
+    })
+  }
+}
+
+export class LlmWiki extends HeyApiClient {
+  public health<ThrowOnError extends boolean = false>(
+    parameters?: {
+      directory?: string
+      workspace?: string
+    },
+    options?: Options<never, ThrowOnError>,
+  ) {
+    const params = buildClientParams(
+      [parameters],
+      [
+        {
+          args: [
+            { in: "query", key: "directory" },
+            { in: "query", key: "workspace" },
+          ],
+        },
+      ],
+    )
+    return (options?.client ?? this.client).get<LlmWikiHealthResponses, LlmWikiHealthErrors, ThrowOnError>({
+      url: "/instance/llm-wiki/health",
+      ...options,
+      ...params,
+    })
+  }
+
+  public projects<ThrowOnError extends boolean = false>(
+    parameters?: {
+      directory?: string
+      workspace?: string
+    },
+    options?: Options<never, ThrowOnError>,
+  ) {
+    const params = buildClientParams(
+      [parameters],
+      [
+        {
+          args: [
+            { in: "query", key: "directory" },
+            { in: "query", key: "workspace" },
+          ],
+        },
+      ],
+    )
+    return (options?.client ?? this.client).get<LlmWikiProjectsResponses, LlmWikiProjectsErrors, ThrowOnError>({
+      url: "/instance/llm-wiki/projects",
+      ...options,
+      ...params,
+    })
+  }
+
+  public files<ThrowOnError extends boolean = false>(
+    parameters: {
+      projectID: string
+      directory?: string
+      workspace?: string
+      root: LlmWikiProjectRoot1
+      recursive?: "true" | "false"
+      maxFiles?: string
+    },
+    options?: Options<never, ThrowOnError>,
+  ) {
+    const params = buildClientParams(
+      [parameters],
+      [
+        {
+          args: [
+            { in: "path", key: "projectID" },
+            { in: "query", key: "directory" },
+            { in: "query", key: "workspace" },
+            { in: "query", key: "root" },
+            { in: "query", key: "recursive" },
+            { in: "query", key: "maxFiles" },
+          ],
+        },
+      ],
+    )
+    return (options?.client ?? this.client).get<LlmWikiFilesResponses, LlmWikiFilesErrors, ThrowOnError>({
+      url: "/instance/llm-wiki/projects/{projectID}/files",
+      ...options,
+      ...params,
+    })
+  }
+
+  public fileContent<ThrowOnError extends boolean = false>(
+    parameters: {
+      projectID: string
+      directory?: string
+      workspace?: string
+      path: string
+    },
+    options?: Options<never, ThrowOnError>,
+  ) {
+    const params = buildClientParams(
+      [parameters],
+      [
+        {
+          args: [
+            { in: "path", key: "projectID" },
+            { in: "query", key: "directory" },
+            { in: "query", key: "workspace" },
+            { in: "query", key: "path" },
+          ],
+        },
+      ],
+    )
+    return (options?.client ?? this.client).get<LlmWikiFileContentResponses, LlmWikiFileContentErrors, ThrowOnError>({
+      url: "/instance/llm-wiki/projects/{projectID}/files/content",
+      ...options,
+      ...params,
+    })
+  }
+
+  public reviews<ThrowOnError extends boolean = false>(
+    parameters: {
+      projectID: string
+      directory?: string
+      workspace?: string
+      status?: LlmWikiReviewStatus
+      type?: string
+      limit?: string
+    },
+    options?: Options<never, ThrowOnError>,
+  ) {
+    const params = buildClientParams(
+      [parameters],
+      [
+        {
+          args: [
+            { in: "path", key: "projectID" },
+            { in: "query", key: "directory" },
+            { in: "query", key: "workspace" },
+            { in: "query", key: "status" },
+            { in: "query", key: "type" },
+            { in: "query", key: "limit" },
+          ],
+        },
+      ],
+    )
+    return (options?.client ?? this.client).get<LlmWikiReviewsResponses, LlmWikiReviewsErrors, ThrowOnError>({
+      url: "/instance/llm-wiki/projects/{projectID}/reviews",
+      ...options,
+      ...params,
+    })
+  }
+
+  public search<ThrowOnError extends boolean = false>(
+    parameters: {
+      projectID: string
+      directory?: string
+      workspace?: string
+      llmWikiSearchRequest?: LlmWikiSearchRequest
+    },
+    options?: Options<never, ThrowOnError>,
+  ) {
+    const params = buildClientParams(
+      [parameters],
+      [
+        {
+          args: [
+            { in: "path", key: "projectID" },
+            { in: "query", key: "directory" },
+            { in: "query", key: "workspace" },
+            { key: "llmWikiSearchRequest", map: "body" },
+          ],
+        },
+      ],
+    )
+    return (options?.client ?? this.client).post<LlmWikiSearchResponses, LlmWikiSearchErrors, ThrowOnError>({
+      url: "/instance/llm-wiki/projects/{projectID}/search",
+      ...options,
+      ...params,
+      headers: {
+        "Content-Type": "application/json",
+        ...options?.headers,
+        ...params.headers,
+      },
+    })
+  }
+
+  public graph<ThrowOnError extends boolean = false>(
+    parameters: {
+      projectID: string
+      directory?: string
+      workspace?: string
+      q?: string
+      nodeType?: string
+      limit?: string
+    },
+    options?: Options<never, ThrowOnError>,
+  ) {
+    const params = buildClientParams(
+      [parameters],
+      [
+        {
+          args: [
+            { in: "path", key: "projectID" },
+            { in: "query", key: "directory" },
+            { in: "query", key: "workspace" },
+            { in: "query", key: "q" },
+            { in: "query", key: "nodeType" },
+            { in: "query", key: "limit" },
+          ],
+        },
+      ],
+    )
+    return (options?.client ?? this.client).get<LlmWikiGraphResponses, LlmWikiGraphErrors, ThrowOnError>({
+      url: "/instance/llm-wiki/projects/{projectID}/graph",
+      ...options,
+      ...params,
+    })
+  }
+
+  public rescanSources<ThrowOnError extends boolean = false>(
+    parameters: {
+      projectID: string
+      directory?: string
+      workspace?: string
+    },
+    options?: Options<never, ThrowOnError>,
+  ) {
+    const params = buildClientParams(
+      [parameters],
+      [
+        {
+          args: [
+            { in: "path", key: "projectID" },
+            { in: "query", key: "directory" },
+            { in: "query", key: "workspace" },
+          ],
+        },
+      ],
+    )
+    return (options?.client ?? this.client).post<
+      LlmWikiRescanSourcesResponses,
+      LlmWikiRescanSourcesErrors,
+      ThrowOnError
+    >({
+      url: "/instance/llm-wiki/projects/{projectID}/sources/rescan",
       ...options,
       ...params,
     })
@@ -6971,6 +7235,11 @@ export class OpencodeClient extends HeyApiClient {
   private _formatter?: Formatter
   get formatter(): Formatter {
     return (this._formatter ??= new Formatter({ client: this.client }))
+  }
+
+  private _llmWiki?: LlmWiki
+  get llmWiki(): LlmWiki {
+    return (this._llmWiki ??= new LlmWiki({ client: this.client }))
   }
 
   private _mcp?: Mcp
