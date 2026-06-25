@@ -1,0 +1,1645 @@
+<!DOCTYPE html>
+<!--
+  @file frontend/user.html
+  @brief 用户控制台页面，覆盖注册登录、余额、frpc 令牌、代理创建和脚本复制。
+  @author BearFrps课程设计小组
+  @course 武汉大学开源软件与技术课程 2026
+  @date 2026-06-10
+  @version 1.0
+  @copyright Apache-2.0
+  @details
+    依赖关系：Tailwind CDN、Alpine.js、shared.css、mock_api.js、后端 /api/user 和 /api/proxies。
+    修改记录：2026-06-10，补充 Doxygen 风格文件头、页面结构说明和接口说明。
+    顶部导航展示用户端、管理端和展示页入口。
+    认证区域支持登录与注册，认证完成后显示 UID、余额和 frpc 令牌信息。
+    代理列表展示每条连接的类型、地址、状态、流量和操作按钮。
+    创建代理区域按 TCP/HTTP/XTCP 分组，避免不同类型字段混在一起。
+    配置弹窗按 frpc 配置、visitor 配置、frpc 脚本和 demo 脚本分 tab 展示。
+
+    用户令牌由后端生成和轮换，页面只展示、复制和触发轮换，不在前端生成正式令牌。
+    创建代理时先组装不同代理类型的 payload，再交给后端做最终校验。
+    TCP 端口模式由 buildTcpPortsPayload 统一转换成后端接口结构。
+    高级配置由 buildAdvancedConfigPayload 过滤空值，避免传递无意义配置。
+    代理状态通过 statusClass/cardStatusClass/statusBadge 统一映射为可视状态。
+
+    GET /api/user/me：获取登录用户资料和余额。
+    POST /api/user/login：登录用户。
+    POST /api/user/register：注册用户。
+    POST /api/user/logout：退出当前会话。
+    GET /api/user/frpc-token：读取用户级 frpc token。
+    POST /api/user/frpc-token/rotate：轮换 frpc token，使旧配置失效。
+    POST /api/user/recharge：领取课堂演示免费流量。
+    GET /api/proxies：读取当前用户代理列表。
+    POST /api/proxies：创建新代理并返回脚本。
+    GET /api/proxies/{id}/scripts：重新获取配置和脚本。
+    DELETE /api/proxies/{id}：删除自己的代理。
+
+    frpc token 属于敏感信息，只在用户登录后显示。
+    删除和获取脚本都依赖后端 require_user，前端不信任本地 proxy.uid。
+    展示脚本时不自动执行任何内容，只提供复制和下载。
+    mock_api.js 只用于离线前端演示，FastAPI 挂载时会关闭 USE_MOCK。
+
+    authReady 表示已完成登录态探测。
+    loggedIn 控制认证面板和控制台主体的显示。
+    authMode 在登录和注册表单之间切换。
+    user 保存后端返回的公开用户信息。
+    frpcToken 保存当前用户令牌元数据，不负责鉴权。
+    proxies 保存当前用户代理列表。
+    createType 控制 TCP/HTTP/XTCP 创建表单。
+    createForms 按代理类型保存独立表单状态。
+    scriptModal 保存当前选中的配置和脚本响应。
+    mainTab/subTab 控制配置弹窗中的内容切换。
+
+    init 页面加载后先检查登录态，再加载用户令牌和代理列表。
+    submitAuth 根据 authMode 调用登录或注册接口。
+    refreshUser 只刷新用户公开信息和余额。
+    loadFrpcToken 读取用户级 frpc token。
+    rotateFrpcToken 触发后端轮换，并提示用户重新生成脚本。
+    loadProxies 读取代理列表并刷新列表状态。
+    recharge 调用免费充值接口并更新余额。
+    createProxy 构建 payload 并提交后端创建代理。
+    openScripts 重新获取某个代理的脚本。
+    deleteProxy 删除当前用户自己的代理。
+
+    name 是用户可见名称，同一用户内唯一。
+    traffic_mb 表示本次分配给代理的流量额度。
+    speed_limit_kbps 缺省时使用后端默认限速。
+    local_ip 默认 127.0.0.1，适合用户本机服务。
+    TCP auto 模式只需要 count 和 local_start_port。
+    TCP single 模式需要 remote_port 和 local_port。
+    TCP range 模式需要 remote_start_port、remote_end_port、range_local_start_port 和 range_mapping_mode。
+    HTTP subdomain 需要符合后端子域名规则。
+    visitor_bind_port 是本地访问 XTCP visitor 的端口。
+    fallback_timeout_ms 只对 XTCP fallback 有意义。
+
+    publicHost 根据 proxy_type 选择 host:port 或 HTTP URL。
+    publicUrls 支持 TCP 多端口和 HTTP 多域名。
+    localTarget 显示后端轮询到的实际 localPort，未连接时显示配置值。
+    tcpMappings 兼容旧字段 frps_remote_port/local_port 和新 tcp_mappings。
+    mappingPortsText 把连续端口折叠为范围，减少表格宽度。
+    trafficPercent 用于进度条展示已用流量比例。
+    formatBytes/formatMbps/formatDate 统一前端展示单位。
+
+    apiError 从后端 detail 字段提取错误信息。
+    复制失败时回退到 textarea 选中复制方式。
+    创建失败不会清空表单，方便用户修正端口或名称。
+    删除确认由浏览器 confirm 完成，避免误删代理。
+    未登录时 API 失败会回到认证面板。
+
+    首次进入页面时 authReady=false，页面隐藏需要身份的信息。
+    检查 /api/user/me 成功后进入控制台状态。
+    检查失败时进入登录/注册状态。
+    注册成功后立即创建会话并刷新用户资料。
+    充值按钮只调用后端接口，不在前端自行增加余额。
+    创建代理成功后打开脚本弹窗，提示用户复制配置。
+    用户关闭弹窗后仍可通过“查看配置/脚本”重新获取最新配置。
+    令牌轮换后，旧脚本必须重新生成才能连接。
+    删除代理后刷新列表，避免显示已释放端口。
+
+    port_mode=auto 时 count 是远程端口数量。
+    port_mode=auto 时 local_start_port 是本地连续端口起点。
+    port_mode=single 时 remote_port 是用户指定公网端口。
+    port_mode=single 时 local_port 是用户本地服务端口。
+    port_mode=range 时 remote_start_port 和 remote_end_port 必须形成闭区间。
+    port_mode=range 时 range_mapping_mode 决定本地端口固定接收或同步自增。
+    port_mode=range 且 many-to-one 时 range_local_start_port 表示固定本地端口。
+    port_mode=range 且 many-to-many 时 range_local_start_port 对应第一个远程端口。
+    local_ip 默认为 127.0.0.1，支持用户改为局域网地址。
+    多端口映射在列表中通过 tcp_mappings 展示。
+
+    subdomain 是推荐方式，适合课堂统一域名。
+    http_user/http_password 用于 frp HTTP basic auth。
+    http_locations_text 可用换行或逗号分隔路径。
+    host_header_rewrite 用于反向代理时改写 Host。
+    public_urls 可能包含多个公开访问地址。
+
+    XTCP 服务端和 stcp fallback 都需要 secretKey 保持服务端与 visitor 一致。
+    visitor_bind_port 是用户本机访问 visitor 的端口。
+    server_name 使用后端生成的 frps_name，避免用户名称冲突。
+    p2p_fallback_name 用于 XTCP 失败后的 stcp fallback。
+    fallback_timeout_ms 控制 XTCP 尝试失败后回退时机。
+
+    online 且 active 显示绿色状态。
+    offline 或超流量显示红色状态。
+    stopped_by_admin 或 deleted 显示灰色状态。
+    trafficPercent 最高限制到 100%，避免进度条溢出。
+    statusBadge 同时考虑 status、is_online 和流量使用量。
+    formatTraffic 输出已用/限额，便于用户判断剩余可用量。
+
+    mainTab=config 显示 frpc.toml。
+    mainTab=visitor 显示 visitor 配置。
+    mainTab=frpc 显示跨平台 frpc 启动脚本。
+    mainTab=demo 显示跨平台 demo 服务脚本。
+    subTab=linux/mac/windows 控制脚本平台。
+    extractDetail 兼容 create 响应和 scripts 响应结构。
+    getScriptContent 根据 tab 返回对应字符串。
+    getScriptFilename 根据 tab 生成下载文件名。
+
+    copyText 优先使用 navigator.clipboard。
+    浏览器不支持 clipboard 时使用隐藏 textarea 回退。
+    downloadText 使用 Blob 和临时 a 标签下载。
+    下载文件名区分 frpc、visitor 和 demo，避免覆盖。
+    复制成功和失败都通过 toast/message 提示用户。
+
+    前端不重复实现后端端口池最终规则，只做基础表单组装。
+    所有真实权限由后端判断，前端校验只提升体验。
+    API 路径集中在方法内，便于按后端接口变化调整。
+    旧字段兼容函数集中在 tcpMappings/publicUrls/localTarget。
+    UI 状态和业务 payload 构建分离，减少模板表达式复杂度。
+
+    页面能展示 UID。
+    页面能展示剩余流量。
+    页面能触发免费充值。
+    页面能展示用户级 frpc token。
+    页面能复制和轮换 frpc token。
+    页面能创建 TCP 代理。
+    页面能创建 HTTP 代理。
+    页面能创建 XTCP 代理。
+    页面能展示连接状态。
+    页面能展示已用流量和限额。
+    页面能展示公网访问地址。
+    页面能展示本地目标地址。
+    页面能重新查看配置和脚本。
+    页面能删除代理。
+    页面能处理未登录状态。
+    页面能处理 API 错误。
+    页面能下载脚本文本。
+    页面不展示密码哈希。
+    页面不直接连接 frps admin API。
+
+    文件头覆盖项目注释、文件说明、作者、日期和版本。
+    方法清单覆盖函数接口注释要求。
+    状态流说明覆盖业务逻辑注释要求。
+    token 说明覆盖安全注意事项。
+    复制下载说明覆盖用户操作副作用。
+    字段清单覆盖数据成员用途。
+
+    用户端对应需求规格中的“用户端 Web”。
+    顶部状态栏对应 UID、余额和充值按钮要求。
+    连接列表对应名称、公网端口、本地端口、状态、已用/限额和操作列。
+    创建表单对应名称、分配流量、限速和代理类型参数。
+    配置弹窗对应 frpc 配置、启动脚本和 demo 服务脚本。
+    TCP 多端口 UI 对应 auto、single、range 三种模式。
+    高级配置区域对应加密、压缩、HTTP 认证和 P2P fallback。
+    展示状态色对应在线、离线和禁用三类视觉状态。
+    脚本下载对应课程要求中的自动化构建/运行辅助材料。
+    错误提示对应可测性和调试日志规范中的明确反馈。
+
+    README 说明如何访问本页面。
+    test_plan 说明如何手工验收本页面。
+    commenting_standard 说明本文件头为何计入有效注释。
+    open_source_compliance 说明本页面使用的 CDN 依赖需要在部署时复核。
+    SBOM 记录后端直接依赖，前端 CDN 依赖由 NOTICE 和 README 补充说明。
+
+    新增用户端 API 时必须同步 mock_api.js。
+    新增用户端字段时必须同步后端 DTO。
+    新增代理类型时必须同步创建表单和脚本弹窗。
+    修改 token 展示时必须复核安全说明。
+    修改状态颜色时必须同步 shared.css。
+    修改脚本 tab 时必须同步 getScriptContent 和 getScriptFilename。
+    提交前必须通过 node --check frontend/mock_api.js。
+
+    改动表单字段时记录接口兼容性。
+    改动脚本文案时记录用户操作影响。
+    改动认证流程时记录未登录和过期 session 行为。
+    改动展示字段时记录是否会暴露敏感信息。
+    改动错误提示时记录后端 detail 的兼容性。
+
+    说明 frpc token 和 frps auth.token 的区别。
+    说明 remotePort 由后端分配。
+    说明 localPort 是用户本机服务端口。
+    说明展示页只显示在线代理。
+    说明管理员停用和用户删除的区别。
+  @section user_page_doxygen Doxygen 注释约束
+    复杂交互块优先使用 @section 描述业务意图。
+    事件处理函数需要说明触发时机和副作用。
+    构造后端 payload 的函数需要说明字段来源。
+    涉及 token、端口和脚本的函数需要说明安全边界。
+    页面模板中的短表达式不逐行注释，避免影响可读性。
+    新增大型功能时在本文件头补充对应 @section。
+  @section user_page_submission 平时作业提交检查
+    用户端必须能完成注册或登录。
+    用户端必须能完成充值。
+    用户端必须能创建至少一种代理。
+    用户端必须能展示 frpc 配置。
+    用户端必须能复制启动脚本。
+    用户端必须能删除代理。
+    用户端错误提示必须来自后端 detail。
+  @section user_page_runtime 运行时注意事项
+    真实运行时 USE_MOCK=false。
+    离线打开 HTML 时 USE_MOCK=true。
+    用户脚本包含 token，不应公开传播。
+    frpc token 轮换后应重新获取脚本。
+    remotePort 不应由用户手工修改。
+    localPort 可以按用户本地服务调整。
+  @section user_page_traceability 可追踪性
+    创建代理表单字段对应 CreateProxyRequest。
+    TCP 端口表单字段对应 TcpPortsRequest。
+    高级配置字段对应 AdvancedConfigRequest。
+    代理列表字段对应 Store.proxy_to_dto。
+    脚本弹窗字段对应 script_renderer 输出。
+    状态徽标字段对应 Proxy.status 和 is_online。
+  @section user_page_demo 演示流程映射
+    第一步展示用户注册。
+    第二步展示免费充值。
+    第三步展示创建 TCP 代理。
+    第四步展示配置弹窗。
+    第五步展示复制 frpc 启动脚本。
+    第六步展示复制 demo 服务脚本。
+    第七步展示代理列表状态变化。
+    第八步展示 token 轮换。
+    第九步展示删除代理。
+  @section user_page_failure 失败场景
+    未登录访问接口时显示登录面板。
+    余额不足创建代理时显示后端错误。
+    端口冲突创建代理时显示后端错误。
+    代理不存在获取脚本时显示错误。
+    网络请求失败时保留当前页面状态。
+    剪贴板不可用时使用回退复制。
+    下载脚本失败时不修改代理状态。
+  @section user_page_license 许可证和来源
+    页面代码属于 BearFrps 根项目。
+    根项目许可证为 Apache-2.0。
+    Tailwind CSS 通过 CDN 加载。
+    Alpine.js 通过 CDN 加载。
+    前端依赖记录在 SBOM.json。
+    开源声明记录在 NOTICE。
+    Git 仓库地址记录在 README。
+-->
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BearFRPs - 用户控制台</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <link rel="stylesheet" href="shared.css">
+  <script src="mock_api.js"></script>
+</head>
+<body class="bg-gray-50 min-h-screen text-gray-800" x-data="userApp()">
+
+  <header class="bg-white border-b border-gray-200 shadow-sm">
+    <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between flex-wrap gap-2">
+      <div class="flex items-center gap-4">
+        <span class="text-lg font-bold text-gray-900">BearFRPs</span>
+        <nav class="flex items-center gap-1">
+          <a href="/user" class="px-3 py-1.5 text-sm font-medium rounded-md bg-blue-100 text-blue-700">用户端</a>
+          <a href="/admin" class="px-3 py-1.5 text-sm font-medium rounded-md text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors">管理端</a>
+          <a href="/show" class="px-3 py-1.5 text-sm font-medium rounded-md text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors">展示页</a>
+        </nav>
+      </div>
+      <div class="flex items-center gap-4 text-sm" x-show="authReady && loggedIn" x-cloak>
+        <span class="font-medium text-gray-700" x-text="username"></span>
+        <span class="cursor-pointer hover:text-blue-600 transition-colors select-all font-mono text-xs bg-gray-100 px-2 py-1 rounded"
+              @click="copyText(uid)" x-text="uid" title="点击复制 UID"></span>
+        <span class="font-semibold" x-text="balance_mb + ' MB'"></span>
+        <button class="btn btn-success btn-sm" @click="recharge()" :disabled="recharging"
+                x-text="recharging ? '充值中...' : '免费充值 +100MB'"></button>
+        <button class="btn btn-secondary btn-sm" @click="logout()">登出</button>
+      </div>
+    </div>
+  </header>
+
+  <template x-if="authReady && !loggedIn">
+    <main class="max-w-7xl mx-auto px-4 py-12 flex items-center justify-center" x-cloak>
+      <div class="bg-white rounded-lg shadow-md border border-gray-200 p-8 w-full max-w-sm">
+        <div class="flex border-b border-gray-200 mb-6">
+          <button class="flex-1 px-4 py-2 text-sm font-medium border-b-2 transition-colors"
+            :class="authMode === 'login' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'"
+            @click="authMode = 'login'; authError = ''">登录</button>
+          <button class="flex-1 px-4 py-2 text-sm font-medium border-b-2 transition-colors"
+            :class="authMode === 'register' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'"
+            @click="authMode = 'register'; authError = ''">注册</button>
+        </div>
+        <div class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-600 mb-1">用户名</label>
+            <input class="input" x-model.trim="authForm.username" autocomplete="username" @keydown.enter="submitAuth()">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-600 mb-1">密码</label>
+            <input class="input" type="password" x-model="authForm.password"
+                   :autocomplete="authMode === 'login' ? 'current-password' : 'new-password'"
+                   @keydown.enter="submitAuth()">
+          </div>
+          <div x-show="authError" class="text-red-600 text-sm" x-text="authError"></div>
+          <button class="btn btn-primary w-full justify-center" @click="submitAuth()" :disabled="authLoading"
+                  x-text="authLoading ? '处理中...' : (authMode === 'login' ? '登录' : '注册并登录')"></button>
+        </div>
+      </div>
+    </main>
+  </template>
+
+  <main class="max-w-7xl mx-auto px-4 py-6" x-show="authReady && loggedIn" x-cloak>
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-base font-semibold text-gray-700">我的连接</h2>
+      <button class="btn btn-primary btn-sm" @click="openCreateModal = true; createResult = null; createError = ''">+ 申请新连接</button>
+    </div>
+
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-4 flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+      <div class="min-w-0">
+        <div class="text-xs font-medium text-gray-500 mb-1">FRPC 连接 Token</div>
+        <div class="font-mono text-sm text-gray-800 select-all truncate" x-text="frpcToken || '-'"></div>
+        <div class="text-xs text-gray-500 mt-1">
+          <span>版本 </span><span x-text="frpcTokenVersion || '-'"></span>
+          <span class="mx-1">·</span>
+          <span x-text="formatTokenTime(frpcTokenRotatedAt)"></span>
+        </div>
+      </div>
+      <div class="flex items-center gap-2 shrink-0">
+        <button class="btn btn-secondary btn-sm" @click="copyText(frpcToken)" :disabled="!frpcToken">复制</button>
+        <button class="btn btn-danger btn-sm" @click="rotateFrpcToken()" :disabled="tokenLoading"
+                x-text="tokenLoading ? '更换中...' : '更换 Token'"></button>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+      <table>
+        <thead>
+          <tr class="bg-gray-50">
+            <th>名称</th>
+            <th>类型</th>
+            <th>公网入口</th>
+            <th>本地服务</th>
+            <th>状态</th>
+            <th>已用 / 限额</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody>
+          <template x-for="p in proxies" :key="p.id">
+            <tr :class="statusClass(p)">
+              <td class="font-medium" x-text="p.name"></td>
+              <td>
+                <span class="status-badge"
+                      :class="proxyTypeBadge(p)"
+                      x-text="proxyTypeLabel(p)"></span>
+              </td>
+              <td class="font-mono text-sm max-w-[260px] truncate">
+                <a :href="p.public_url" target="_blank" rel="noopener"
+                   class="text-blue-600 hover:text-blue-800 hover:underline transition-colors"
+                   x-show="p.public_url"
+                   x-text="publicEntry(p)"
+                   :title="mappingDetails(p) || p.public_url"></a>
+                <span x-show="!p.public_url" x-text="publicEntry(p)" :title="mappingDetails(p)"></span>
+              </td>
+              <td class="font-mono text-sm" x-text="localEndpoint(p)" :title="mappingDetails(p)"></td>
+              <td>
+                <span class="status-badge" :class="statusBadge(p).cls" x-text="statusBadge(p).text"></span>
+              </td>
+              <td>
+                <div class="flex items-center gap-2">
+                  <div class="progress-bar-bg flex-1">
+                    <div class="progress-bar-fill"
+                         :class="trafficPercent(p) > 90 ? 'fill-danger' : trafficPercent(p) > 70 ? 'fill-warn' : 'fill-ok'"
+                         :style="'width:' + Math.min(trafficPercent(p), 100) + '%'"></div>
+                  </div>
+                  <span class="text-xs text-gray-500 whitespace-nowrap"
+                        x-text="formatBytes(p.traffic_used_bytes) + ' / ' + p.traffic_limit_mb + ' MB'"></span>
+                </div>
+              </td>
+              <td class="space-x-1">
+                <button class="btn btn-secondary btn-sm" @click="openEditProxy(p)">修改配置</button>
+                <button class="btn btn-secondary btn-sm" @click="viewScripts(p)">查看脚本</button>
+                <button class="btn btn-danger btn-sm" @click="deleteProxy(p)">删除</button>
+              </td>
+            </tr>
+          </template>
+          <tr x-show="proxies.length === 0">
+            <td colspan="7" class="text-center text-gray-400 py-8">暂无连接，点击右上角申请</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </main>
+
+  <div x-show="openCreateModal" class="modal-overlay" @click.self="openCreateModal = false; createResult = null" x-cloak>
+    <div class="modal-content p-6">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="font-semibold text-lg">申请新连接</h3>
+        <button @click="openCreateModal = false; createResult = null" class="text-gray-400 hover:text-gray-600 text-xl">&times;</button>
+      </div>
+      <div class="space-y-4" x-show="!createResult">
+        <div class="flex gap-1 rounded-md bg-gray-100 p-1">
+          <button class="flex-1 px-3 py-2 text-sm font-medium rounded transition-colors"
+                  :class="createType === 'tcp' ? 'bg-white text-blue-700 shadow-sm' : 'text-gray-600 hover:text-gray-800'"
+                  @click="createType = 'tcp'; createError = ''">TCP 服务</button>
+          <button class="flex-1 px-3 py-2 text-sm font-medium rounded transition-colors"
+                  :class="createType === 'http' ? 'bg-white text-blue-700 shadow-sm' : 'text-gray-600 hover:text-gray-800'"
+                  @click="createType = 'http'; createError = ''">HTTP 服务</button>
+          <button class="flex-1 px-3 py-2 text-sm font-medium rounded transition-colors"
+                  :class="createType === 'xtcp' ? 'bg-white text-blue-700 shadow-sm' : 'text-gray-600 hover:text-gray-800'"
+                  @click="createType = 'xtcp'; createError = ''">P2P XTCP</button>
+        </div>
+
+        <div class="space-y-4" x-show="createType === 'tcp'">
+          <div>
+            <label class="block text-sm font-medium text-gray-600 mb-1">名称</label>
+            <input class="input" x-model="createForms.tcp.name" placeholder="1-20 字符" maxlength="20">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-600 mb-1">本地地址</label>
+            <input class="input" x-model.trim="createForms.tcp.local_ip" placeholder="127.0.0.1">
+          </div>
+          <div class="flex gap-1 rounded-md bg-gray-100 p-1">
+            <button class="flex-1 px-3 py-2 text-sm font-medium rounded transition-colors"
+                    :class="createForms.tcp.port_mode === 'auto' ? 'bg-white text-blue-700 shadow-sm' : 'text-gray-600 hover:text-gray-800'"
+                    @click="createForms.tcp.port_mode = 'auto'; createError = ''">自动分配</button>
+            <button class="flex-1 px-3 py-2 text-sm font-medium rounded transition-colors"
+                    :class="createForms.tcp.port_mode === 'single' ? 'bg-white text-blue-700 shadow-sm' : 'text-gray-600 hover:text-gray-800'"
+                    @click="createForms.tcp.port_mode = 'single'; createError = ''">指定单端口</button>
+            <button class="flex-1 px-3 py-2 text-sm font-medium rounded transition-colors"
+                    :class="createForms.tcp.port_mode === 'range' ? 'bg-white text-blue-700 shadow-sm' : 'text-gray-600 hover:text-gray-800'"
+                    @click="createForms.tcp.port_mode = 'range'; createError = ''">指定端口段</button>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3" x-show="createForms.tcp.port_mode === 'auto'">
+            <div>
+              <label class="block text-sm font-medium text-gray-600 mb-1">端口数量</label>
+              <input class="input" type="number" x-model.number="createForms.tcp.count" min="1" max="10">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-600 mb-1">本地起始端口</label>
+              <input class="input" type="number" x-model.number="createForms.tcp.local_start_port" min="1" max="65535">
+            </div>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3" x-show="createForms.tcp.port_mode === 'single'">
+            <div>
+              <label class="block text-sm font-medium text-gray-600 mb-1">公网端口</label>
+              <input class="input" type="number" x-model.number="createForms.tcp.remote_port" min="1" max="65535">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-600 mb-1">本地端口</label>
+              <input class="input" type="number" x-model.number="createForms.tcp.local_port" min="1" max="65535">
+            </div>
+          </div>
+          <div class="space-y-3" x-show="createForms.tcp.port_mode === 'range'">
+            <div>
+              <label class="block text-sm font-medium text-gray-600 mb-2">映射模式</label>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+                <label class="flex items-start gap-2 rounded-md border border-gray-200 bg-white px-3 py-2 cursor-pointer hover:border-blue-300">
+                  <input class="mt-1" type="radio" value="many-to-one" x-model="createForms.tcp.range_mapping_mode">
+                  <span class="text-sm text-gray-700">多对一（公网多端口映射到本地单端口）</span>
+                </label>
+                <label class="flex items-start gap-2 rounded-md border border-gray-200 bg-white px-3 py-2 cursor-pointer hover:border-blue-300">
+                  <input class="mt-1" type="radio" value="many-to-many" x-model="createForms.tcp.range_mapping_mode">
+                  <span class="text-sm text-gray-700">多对多（公网与本地端口一一对应自增）</span>
+                </label>
+              </div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <div>
+                <label class="block text-sm font-medium text-gray-600 mb-1">公网起始端口</label>
+                <input class="input" type="number" x-model.number="createForms.tcp.remote_start_port" min="1" max="65535">
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-600 mb-1">公网结束端口</label>
+                <input class="input" type="number" x-model.number="createForms.tcp.remote_end_port" min="1" max="65535">
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-600 mb-1" x-text="rangeLocalPortLabel()"></label>
+                <input class="input" type="number" x-model.number="createForms.tcp.range_local_start_port" min="1" max="65535">
+              </div>
+            </div>
+            <div class="text-xs font-mono bg-gray-50 border border-gray-200 rounded-md p-2 text-gray-600 whitespace-pre-line"
+                 x-text="tcpRangePreview()"></div>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-600 mb-1">
+              分配流量 (MB)
+              <span class="text-gray-400 font-normal" x-text="'(余额 ' + balance_mb + ' MB)'"></span>
+            </label>
+            <input class="input" type="number" x-model.number="createForms.tcp.traffic_mb" min="1" :max="balance_mb">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-600 mb-1">限速 KB/s（可选，默认 1024）</label>
+            <input class="input" type="number" x-model.number="createForms.tcp.speed_limit_kbps" placeholder="1024">
+          </div>
+        </div>
+
+        <div class="space-y-4" x-show="createType === 'http'">
+          <div>
+            <label class="block text-sm font-medium text-gray-600 mb-1">名称</label>
+            <input class="input" x-model="createForms.http.name" placeholder="1-20 字符" maxlength="20">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-600 mb-1">平台子域名前缀</label>
+            <input class="input font-mono" x-model.trim="createForms.http.subdomain" placeholder="my-site">
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div>
+              <label class="block text-sm font-medium text-gray-600 mb-1">本地地址</label>
+              <input class="input" x-model.trim="createForms.http.local_ip" placeholder="127.0.0.1">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-600 mb-1">本地端口</label>
+              <input class="input" type="number" x-model.number="createForms.http.local_port" min="1" max="65535">
+            </div>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-600 mb-1">
+              分配流量 (MB)
+              <span class="text-gray-400 font-normal" x-text="'(余额 ' + balance_mb + ' MB)'"></span>
+            </label>
+            <input class="input" type="number" x-model.number="createForms.http.traffic_mb" min="1" :max="balance_mb">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-600 mb-1">限速 KB/s（可选，默认 1024）</label>
+            <input class="input" type="number" x-model.number="createForms.http.speed_limit_kbps" placeholder="1024">
+          </div>
+        </div>
+
+        <div class="space-y-4" x-show="createType === 'xtcp'">
+          <div>
+            <label class="block text-sm font-medium text-gray-600 mb-1">名称</label>
+            <input class="input" x-model="createForms.xtcp.name" placeholder="1-20 字符" maxlength="20">
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div>
+              <label class="block text-sm font-medium text-gray-600 mb-1">电脑本地地址</label>
+              <input class="input" x-model.trim="createForms.xtcp.local_ip" placeholder="127.0.0.1">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-600 mb-1">电脑本地端口</label>
+              <input class="input" type="number" x-model.number="createForms.xtcp.local_port" min="1" max="65535">
+            </div>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-600 mb-1">手机访问端监听端口</label>
+            <input class="input" type="number" x-model.number="createForms.xtcp.visitor_bind_port" min="1" max="65535">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-600 mb-1">
+              fallback 中转限额 (MB)
+              <span class="text-gray-400 font-normal" x-text="'(余额 ' + balance_mb + ' MB)'"></span>
+            </label>
+            <input class="input" type="number" x-model.number="createForms.xtcp.traffic_mb" min="1" :max="balance_mb">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-600 mb-1">fallback 限速 KB/s（可选，默认 1024）</label>
+            <input class="input" type="number" x-model.number="createForms.xtcp.speed_limit_kbps" placeholder="1024">
+          </div>
+        </div>
+        <div class="border border-gray-200 rounded-md overflow-hidden">
+          <button type="button"
+                  class="w-full px-3 py-2 bg-gray-50 text-sm font-medium text-gray-700 flex items-center justify-between hover:bg-gray-100 transition-colors"
+                  @click="advancedOpen = !advancedOpen">
+            <span>高级配置</span>
+            <span class="text-xs text-gray-500" x-text="advancedOpen ? '收起' : '展开'"></span>
+          </button>
+          <div class="p-3 space-y-4" x-show="advancedOpen">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <label class="flex items-center gap-2 text-sm text-gray-700">
+                <input type="checkbox" class="rounded border-gray-300" x-model="createForms[createType].advanced.use_encryption">
+                <span>启用传输加密</span>
+              </label>
+              <label class="flex items-center gap-2 text-sm text-gray-700">
+                <input type="checkbox" class="rounded border-gray-300" x-model="createForms[createType].advanced.use_compression">
+                <span>启用传输压缩</span>
+              </label>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-600 mb-1">限速位置</label>
+              <div class="flex gap-1 rounded-md bg-gray-100 p-1">
+                <button type="button" class="flex-1 px-3 py-2 text-sm font-medium rounded transition-colors"
+                        :class="createForms[createType].advanced.bandwidth_limit_mode === 'server' ? 'bg-white text-blue-700 shadow-sm' : 'text-gray-600 hover:text-gray-800'"
+                        @click="createForms[createType].advanced.bandwidth_limit_mode = 'server'">服务端</button>
+                <button type="button" class="flex-1 px-3 py-2 text-sm font-medium rounded transition-colors"
+                        :class="createForms[createType].advanced.bandwidth_limit_mode === 'client' ? 'bg-white text-blue-700 shadow-sm' : 'text-gray-600 hover:text-gray-800'"
+                        @click="createForms[createType].advanced.bandwidth_limit_mode = 'client'">客户端</button>
+              </div>
+            </div>
+            <div class="space-y-3" x-show="createType === 'http'">
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div>
+                  <label class="block text-sm font-medium text-gray-600 mb-1">HTTP 认证用户名</label>
+                  <input class="input" x-model.trim="createForms.http.advanced.http_user" maxlength="64">
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-600 mb-1">HTTP 认证密码</label>
+                  <input class="input" type="password" x-model="createForms.http.advanced.http_password" maxlength="128">
+                </div>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-600 mb-1">HTTP 路径</label>
+                <textarea class="input min-h-[76px]" x-model="createForms.http.advanced.http_locations_text" placeholder="/,/api"></textarea>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-600 mb-1">Host 改写</label>
+                <input class="input" x-model.trim="createForms.http.advanced.host_header_rewrite" placeholder="example.com">
+              </div>
+            </div>
+            <div class="space-y-3" x-show="createType === 'xtcp'">
+              <label class="flex items-center gap-2 text-sm text-gray-700">
+                <input type="checkbox" class="rounded border-gray-300" x-model="createForms.xtcp.advanced.keep_tunnel_open">
+                <span>保持 P2P 隧道</span>
+              </label>
+              <div>
+                <label class="block text-sm font-medium text-gray-600 mb-1">fallback 超时 ms</label>
+                <input class="input" type="number" x-model.number="createForms.xtcp.advanced.fallback_timeout_ms" min="100" max="10000">
+              </div>
+            </div>
+          </div>
+        </div>
+        <div x-show="createError" class="text-red-600 text-sm" x-text="createError"></div>
+        <div class="flex justify-end gap-2">
+          <button class="btn btn-secondary" @click="openCreateModal = false">取消</button>
+          <button class="btn btn-primary" @click="createProxy()" :disabled="creating" x-text="creating ? '申请中...' : '确认申请'"></button>
+        </div>
+      </div>
+      <div x-show="createResult">
+        <p class="text-green-600 mb-4 text-sm">连接创建成功！请查看下方配置和脚本。</p>
+        <div x-show="tcpMappings(createResult && createResult.proxy).length" class="mb-4 border border-gray-200 rounded-md overflow-hidden">
+          <div class="bg-gray-50 px-3 py-2 text-sm font-medium text-gray-600">TCP 端口映射</div>
+          <div class="divide-y divide-gray-100">
+            <template x-for="m in tcpMappings(createResult && createResult.proxy)" :key="m.frps_name">
+              <div class="px-3 py-2 text-xs font-mono flex items-center justify-between gap-3">
+                <span x-text="m.remote_port"></span>
+                <span class="text-gray-400">-&gt;</span>
+                <span x-text="((createResult && createResult.proxy && createResult.proxy.local_ip) || '127.0.0.1') + ':' + m.local_port"></span>
+              </div>
+            </template>
+          </div>
+        </div>
+        <div x-show="isP2P(createResult && createResult.proxy)" class="mb-4 border border-gray-200 rounded-md overflow-hidden">
+          <div class="bg-gray-50 px-3 py-2 text-sm font-medium text-gray-600">P2P 访问入口</div>
+          <div class="px-3 py-2 text-xs font-mono flex items-center justify-between gap-3">
+            <span>手机端</span>
+            <span class="text-gray-400">-&gt;</span>
+            <span x-text="(createResult && createResult.proxy && createResult.proxy.visitor_endpoint) || '127.0.0.1:9001'"></span>
+          </div>
+        </div>
+        <div x-data="{ mt: 'config', st: 'linux' }">
+          <div class="flex border-b border-gray-200 mb-3">
+            <button class="px-4 py-2 text-sm font-medium border-b-2 transition-colors"
+              :class="mt === 'config' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'"
+              @click="mt = 'config'">电脑配置</button>
+            <button class="px-4 py-2 text-sm font-medium border-b-2 transition-colors"
+              x-show="hasVisitorScripts(createResult)"
+              :class="mt === 'visitor_config' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'"
+              @click="mt = 'visitor_config'">手机配置</button>
+            <button class="px-4 py-2 text-sm font-medium border-b-2 transition-colors"
+              :class="mt === 'frpc' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'"
+              @click="mt = 'frpc'">电脑脚本</button>
+            <button class="px-4 py-2 text-sm font-medium border-b-2 transition-colors"
+              x-show="hasVisitorScripts(createResult)"
+              :class="mt === 'visitor' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'"
+              @click="mt = 'visitor'">手机脚本</button>
+            <button class="px-4 py-2 text-sm font-medium border-b-2 transition-colors"
+              :class="mt === 'demo' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'"
+              @click="mt = 'demo'">demo 启动脚本</button>
+          </div>
+          <div x-show="mt !== 'config' && mt !== 'visitor_config'" class="flex gap-1 mb-3">
+            <button class="px-3 py-1 text-xs rounded-full transition-colors"
+              :class="st === 'linux' ? 'bg-blue-100 text-blue-700 font-medium' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'"
+              @click="st = 'linux'">Linux</button>
+            <button class="px-3 py-1 text-xs rounded-full transition-colors"
+              :class="st === 'mac' ? 'bg-blue-100 text-blue-700 font-medium' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'"
+              @click="st = 'mac'">Mac</button>
+            <button class="px-3 py-1 text-xs rounded-full transition-colors"
+              :class="st === 'windows' ? 'bg-blue-100 text-blue-700 font-medium' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'"
+              @click="st = 'windows'">Windows</button>
+          </div>
+          <pre class="bg-gray-900 text-green-300 text-xs p-4 rounded-lg overflow-x-auto max-h-72 leading-relaxed"
+               x-text="getScriptContent(createResult, mt, st)" style="white-space:pre-wrap;word-break:break-all;"></pre>
+          <div class="flex justify-end gap-2 mt-3">
+            <button class="btn btn-secondary btn-sm" @click="copyText(getScriptContent(createResult, mt, st))">复制</button>
+            <button class="btn btn-primary btn-sm" @click="downloadText(getScriptContent(createResult, mt, st), getScriptFilename(mt, st))">下载</button>
+          </div>
+        </div>
+        <div class="flex justify-end mt-4">
+          <button class="btn btn-secondary" @click="openCreateModal = false; createResult = null; loadProxies()">关闭</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div x-show="openEditModal" class="modal-overlay" @click.self="openEditModal = false" x-cloak>
+    <div class="modal-content p-6">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="font-semibold text-lg">修改连接配置</h3>
+        <button @click="openEditModal = false" class="text-gray-400 hover:text-gray-600 text-xl">&times;</button>
+      </div>
+      <div class="space-y-4" x-show="editForm">
+        <div class="text-xs text-gray-500">
+          <span>公网端口、Token、P2P 密钥等平台分配字段不会被修改。</span>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-600 mb-1">名称</label>
+          <input class="input" x-model="editForm.name" maxlength="20">
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-sm font-medium text-gray-600 mb-1" x-text="editForm.proxy_type === 'xtcp' ? '电脑本地地址' : '本地地址'"></label>
+            <input class="input" x-model.trim="editForm.local_ip">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-600 mb-1" x-text="editForm.proxy_type === 'xtcp' ? '电脑本地端口' : '本地端口'"></label>
+            <input class="input" type="number" x-model.number="editForm.local_port" min="1" max="65535">
+          </div>
+        </div>
+        <div x-show="editForm.proxy_type === 'http'">
+          <label class="block text-sm font-medium text-gray-600 mb-1">平台子域名前缀</label>
+          <input class="input font-mono" x-model.trim="editForm.subdomain">
+        </div>
+        <div x-show="editForm.proxy_type === 'xtcp'">
+          <label class="block text-sm font-medium text-gray-600 mb-1">手机访问端监听端口</label>
+          <input class="input" type="number" x-model.number="editForm.visitor_bind_port" min="1" max="65535">
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-sm font-medium text-gray-600 mb-1">分配流量 / fallback 限额 (MB)</label>
+            <input class="input" type="number" x-model.number="editForm.traffic_mb" min="1">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-600 mb-1">限速 KB/s</label>
+            <input class="input" type="number" x-model.number="editForm.speed_limit_kbps" min="1">
+          </div>
+        </div>
+        <div class="border border-gray-200 rounded-md overflow-hidden">
+          <button type="button"
+                  class="w-full px-3 py-2 bg-gray-50 text-sm font-medium text-gray-700 flex items-center justify-between hover:bg-gray-100 transition-colors"
+                  @click="editAdvancedOpen = !editAdvancedOpen">
+            <span>高级配置</span>
+            <span class="text-xs text-gray-500" x-text="editAdvancedOpen ? '收起' : '展开'"></span>
+          </button>
+          <div class="p-3 space-y-4" x-show="editAdvancedOpen">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <label class="flex items-center gap-2 text-sm text-gray-700">
+                <input type="checkbox" class="rounded border-gray-300" x-model="editForm.advanced.use_encryption">
+                <span>启用传输加密</span>
+              </label>
+              <label class="flex items-center gap-2 text-sm text-gray-700">
+                <input type="checkbox" class="rounded border-gray-300" x-model="editForm.advanced.use_compression">
+                <span>启用传输压缩</span>
+              </label>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-600 mb-1">限速位置</label>
+              <div class="flex gap-1 rounded-md bg-gray-100 p-1">
+                <button type="button" class="flex-1 px-3 py-2 text-sm font-medium rounded transition-colors"
+                        :class="editForm.advanced.bandwidth_limit_mode === 'server' ? 'bg-white text-blue-700 shadow-sm' : 'text-gray-600 hover:text-gray-800'"
+                        @click="editForm.advanced.bandwidth_limit_mode = 'server'">服务端</button>
+                <button type="button" class="flex-1 px-3 py-2 text-sm font-medium rounded transition-colors"
+                        :class="editForm.advanced.bandwidth_limit_mode === 'client' ? 'bg-white text-blue-700 shadow-sm' : 'text-gray-600 hover:text-gray-800'"
+                        @click="editForm.advanced.bandwidth_limit_mode = 'client'">客户端</button>
+              </div>
+            </div>
+            <div class="space-y-3" x-show="editForm.proxy_type === 'http'">
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div>
+                  <label class="block text-sm font-medium text-gray-600 mb-1">HTTP 认证用户名</label>
+                  <input class="input" x-model.trim="editForm.advanced.http_user" maxlength="64">
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-600 mb-1">HTTP 认证密码</label>
+                  <input class="input" type="password" x-model="editForm.advanced.http_password" maxlength="128">
+                </div>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-600 mb-1">HTTP 路径</label>
+                <textarea class="input min-h-[76px]" x-model="editForm.advanced.http_locations_text" placeholder="/,/api"></textarea>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-600 mb-1">Host 改写</label>
+                <input class="input" x-model.trim="editForm.advanced.host_header_rewrite" placeholder="example.com">
+              </div>
+            </div>
+            <div class="space-y-3" x-show="editForm.proxy_type === 'xtcp'">
+              <label class="flex items-center gap-2 text-sm text-gray-700">
+                <input type="checkbox" class="rounded border-gray-300" x-model="editForm.advanced.keep_tunnel_open">
+                <span>保持 P2P 隧道</span>
+              </label>
+              <div>
+                <label class="block text-sm font-medium text-gray-600 mb-1">fallback 超时 ms</label>
+                <input class="input" type="number" x-model.number="editForm.advanced.fallback_timeout_ms" min="100" max="10000">
+              </div>
+            </div>
+          </div>
+        </div>
+        <div x-show="editError" class="text-red-600 text-sm" x-text="editError"></div>
+        <div class="flex justify-end gap-2">
+          <button class="btn btn-secondary" @click="openEditModal = false">取消</button>
+          <button class="btn btn-primary" @click="updateProxy()" :disabled="editing" x-text="editing ? '保存中...' : '保存并生成脚本'"></button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div x-show="openScriptModal" class="modal-overlay" @click.self="openScriptModal = false" x-cloak>
+    <div class="modal-content p-6">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="font-semibold text-lg">配置 &amp; 脚本</h3>
+        <button @click="openScriptModal = false" class="text-gray-400 hover:text-gray-600 text-xl">&times;</button>
+      </div>
+      <div x-data="{ mt: 'config', st: 'linux' }">
+        <div x-show="tcpMappings(scriptData && scriptData.proxy).length" class="mb-4 border border-gray-200 rounded-md overflow-hidden">
+          <div class="bg-gray-50 px-3 py-2 text-sm font-medium text-gray-600">TCP 端口映射</div>
+          <div class="divide-y divide-gray-100">
+            <template x-for="m in tcpMappings(scriptData && scriptData.proxy)" :key="m.frps_name">
+              <div class="px-3 py-2 text-xs font-mono flex items-center justify-between gap-3">
+                <span x-text="m.remote_port"></span>
+                <span class="text-gray-400">-&gt;</span>
+                <span x-text="((scriptData && scriptData.proxy && scriptData.proxy.local_ip) || '127.0.0.1') + ':' + m.local_port"></span>
+              </div>
+            </template>
+          </div>
+        </div>
+        <div x-show="isP2P(scriptData && scriptData.proxy)" class="mb-4 border border-gray-200 rounded-md overflow-hidden">
+          <div class="bg-gray-50 px-3 py-2 text-sm font-medium text-gray-600">P2P 访问入口</div>
+          <div class="px-3 py-2 text-xs font-mono flex items-center justify-between gap-3">
+            <span>手机端</span>
+            <span class="text-gray-400">-&gt;</span>
+            <span x-text="(scriptData && scriptData.proxy && scriptData.proxy.visitor_endpoint) || '127.0.0.1:9001'"></span>
+          </div>
+        </div>
+        <div class="flex border-b border-gray-200 mb-3">
+          <button class="px-4 py-2 text-sm font-medium border-b-2 transition-colors"
+            :class="mt === 'config' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'"
+            @click="mt = 'config'">电脑配置</button>
+          <button class="px-4 py-2 text-sm font-medium border-b-2 transition-colors"
+            x-show="hasVisitorScripts(scriptData)"
+            :class="mt === 'visitor_config' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'"
+            @click="mt = 'visitor_config'">手机配置</button>
+          <button class="px-4 py-2 text-sm font-medium border-b-2 transition-colors"
+            :class="mt === 'frpc' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'"
+            @click="mt = 'frpc'">电脑脚本</button>
+          <button class="px-4 py-2 text-sm font-medium border-b-2 transition-colors"
+            x-show="hasVisitorScripts(scriptData)"
+            :class="mt === 'visitor' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'"
+            @click="mt = 'visitor'">手机脚本</button>
+          <button class="px-4 py-2 text-sm font-medium border-b-2 transition-colors"
+            :class="mt === 'demo' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'"
+            @click="mt = 'demo'">demo 启动脚本</button>
+        </div>
+        <div x-show="mt !== 'config' && mt !== 'visitor_config'" class="flex gap-1 mb-3">
+          <button class="px-3 py-1 text-xs rounded-full transition-colors"
+            :class="st === 'linux' ? 'bg-blue-100 text-blue-700 font-medium' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'"
+            @click="st = 'linux'">Linux</button>
+          <button class="px-3 py-1 text-xs rounded-full transition-colors"
+            :class="st === 'mac' ? 'bg-blue-100 text-blue-700 font-medium' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'"
+            @click="st = 'mac'">Mac</button>
+          <button class="px-3 py-1 text-xs rounded-full transition-colors"
+            :class="st === 'windows' ? 'bg-blue-100 text-blue-700 font-medium' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'"
+            @click="st = 'windows'">Windows</button>
+        </div>
+        <pre class="bg-gray-900 text-green-300 text-xs p-4 rounded-lg overflow-x-auto max-h-72 leading-relaxed"
+             x-text="getScriptContent(scriptData, mt, st)" style="white-space:pre-wrap;word-break:break-all;"></pre>
+        <div class="flex justify-end gap-2 mt-3">
+          <button class="btn btn-secondary btn-sm" @click="copyText(getScriptContent(scriptData, mt, st))">复制</button>
+          <button class="btn btn-primary btn-sm" @click="downloadText(getScriptContent(scriptData, mt, st), getScriptFilename(mt, st))">下载</button>
+        </div>
+      </div>
+      <div class="flex justify-end mt-4">
+        <button class="btn btn-secondary" @click="openScriptModal = false">关闭</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function defaultAdvancedConfig() {
+      return {
+        use_encryption: false,
+        use_compression: false,
+        bandwidth_limit_mode: 'server',
+        http_user: '',
+        http_password: '',
+        http_locations_text: '',
+        host_header_rewrite: '',
+        keep_tunnel_open: true,
+        fallback_timeout_ms: 1000
+      };
+    }
+
+    function userApp() {
+      return {
+        loggedIn: false,
+        authReady: false,
+        username: '',
+        uid: '',
+        balance_mb: 0,
+        total_recharged_mb: 0,
+        frpcToken: '',
+        frpcTokenVersion: null,
+        frpcTokenRotatedAt: '',
+        tokenLoading: false,
+        proxies: [],
+        authMode: 'login',
+        authForm: { username: '', password: '' },
+        authError: '',
+        authLoading: false,
+        recharging: false,
+        openCreateModal: false,
+        openEditModal: false,
+        openScriptModal: false,
+        advancedOpen: false,
+        editAdvancedOpen: true,
+        createType: 'tcp',
+        createForms: {
+          tcp: {
+            name: '',
+            traffic_mb: 0,
+            speed_limit_kbps: 1024,
+            local_ip: '127.0.0.1',
+            port_mode: 'auto',
+            count: 1,
+            local_start_port: 9527,
+            remote_port: null,
+            local_port: 9527,
+            remote_start_port: null,
+            remote_end_port: null,
+            range_local_start_port: 9527,
+            range_mapping_mode: 'many-to-one',
+            advanced: defaultAdvancedConfig()
+          },
+          http: { name: '', traffic_mb: 0, speed_limit_kbps: 1024, local_ip: '127.0.0.1', local_port: 9527, subdomain: '', advanced: defaultAdvancedConfig() },
+          xtcp: { name: '', traffic_mb: 0, speed_limit_kbps: 1024, local_ip: '127.0.0.1', local_port: 9527, visitor_bind_port: 9001, advanced: defaultAdvancedConfig() }
+        },
+        createError: '',
+        creating: false,
+        createResult: null,
+        editForm: null,
+        editError: '',
+        editing: false,
+        scriptData: null,
+        pollTimer: null,
+
+        async init() {
+          await this.checkSession();
+        },
+
+        applyUser(data) {
+          this.loggedIn = true;
+          this.uid = data.uid || '';
+          this.username = data.username || '';
+          this.balance_mb = data.balance_mb || 0;
+          this.total_recharged_mb = data.total_recharged_mb || 0;
+          this.setCreateTraffic(this.balance_mb);
+        },
+
+        resetUserState() {
+          this.loggedIn = false;
+          this.username = '';
+          this.uid = '';
+          this.balance_mb = 0;
+          this.total_recharged_mb = 0;
+          this.frpcToken = '';
+          this.frpcTokenVersion = null;
+          this.frpcTokenRotatedAt = '';
+          this.proxies = [];
+          this.openCreateModal = false;
+          this.openEditModal = false;
+          this.openScriptModal = false;
+          this.createResult = null;
+          this.editForm = null;
+          this.scriptData = null;
+          this.stopPolling();
+        },
+
+        startPolling() {
+          this.stopPolling();
+          this.pollTimer = setInterval(() => this.loadProxies(), 5000);
+        },
+
+        stopPolling() {
+          if (this.pollTimer) clearInterval(this.pollTimer);
+          this.pollTimer = null;
+        },
+
+        async checkSession() {
+          try {
+            const res = await fetch('/api/user/me', { credentials: 'same-origin' });
+            if (!res.ok) { this.resetUserState(); return; }
+            const data = await res.json();
+            this.applyUser(data);
+            await this.loadFrpcToken();
+            await this.loadProxies();
+            this.startPolling();
+          } finally {
+            this.authReady = true;
+          }
+        },
+
+        async submitAuth() {
+          this.authError = '';
+          if (!this.authForm.username.trim()) { this.authError = '请输入用户名'; return; }
+          if (!this.authForm.password) { this.authError = '请输入密码'; return; }
+          this.authLoading = true;
+          try {
+            const path = this.authMode === 'login' ? '/api/user/login' : '/api/user/register';
+            const res = await fetch(path, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              credentials: 'same-origin',
+              body: JSON.stringify(this.authForm)
+            });
+            const data = await res.json();
+            if (!res.ok) { this.authError = extractDetail(data) || '操作失败'; return; }
+            this.applyUser(data);
+            this.authForm.password = '';
+            await this.loadFrpcToken();
+            await this.loadProxies();
+            this.startPolling();
+            toast(this.authMode === 'login' ? '登录成功' : '注册成功');
+          } finally {
+            this.authLoading = false;
+          }
+        },
+
+        async logout() {
+          await fetch('/api/user/logout', { method: 'POST', credentials: 'same-origin' });
+          this.resetUserState();
+          this.authReady = true;
+          toast('已登出');
+        },
+
+        handleUnauthorized(res) {
+          if (res.status !== 401) return false;
+          this.resetUserState();
+          this.authReady = true;
+          this.authError = '请先登录';
+          return true;
+        },
+
+        async loadUser() {
+          const res = await fetch('/api/user/me', { credentials: 'same-origin' });
+          if (this.handleUnauthorized(res)) return;
+          const data = await res.json();
+          this.applyUser(data);
+          await this.loadFrpcToken();
+        },
+
+        applyFrpcToken(data) {
+          this.frpcToken = data.token || '';
+          this.frpcTokenVersion = data.version || null;
+          this.frpcTokenRotatedAt = data.rotated_at || '';
+        },
+
+        async loadFrpcToken() {
+          const res = await fetch('/api/user/frpc-token', { credentials: 'same-origin' });
+          if (this.handleUnauthorized(res)) return;
+          const data = await res.json();
+          if (res.ok) this.applyFrpcToken(data);
+        },
+
+        async rotateFrpcToken() {
+          if (!confirm('更换 Token 后，旧 frpc 连接会失效。确定继续？')) return;
+          this.tokenLoading = true;
+          try {
+            const res = await fetch('/api/user/frpc-token/rotate', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              credentials: 'same-origin',
+              body: '{}'
+            });
+            if (this.handleUnauthorized(res)) return;
+            const data = await res.json();
+            if (!res.ok) { toast(extractDetail(data) || '更换失败'); return; }
+            this.applyFrpcToken(data);
+            await this.loadProxies();
+            toast('Token 已更换');
+          } finally {
+            this.tokenLoading = false;
+          }
+        },
+
+        async loadProxies() {
+          const res = await fetch('/api/proxies', { credentials: 'same-origin' });
+          if (this.handleUnauthorized(res)) return;
+          const data = await res.json();
+          this.proxies = (data.proxies || []).filter(function (p) { return p.status !== 'deleted'; });
+        },
+
+        async recharge() {
+          this.recharging = true;
+          try {
+            const res = await fetch('/api/user/recharge', { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin', body: '{}' });
+            if (this.handleUnauthorized(res)) return;
+            const data = await res.json();
+            this.balance_mb = data.balance_mb;
+            this.total_recharged_mb = data.total_recharged_mb;
+            this.setCreateTraffic(this.balance_mb);
+            toast('充值成功 +100MB');
+          } finally {
+            this.recharging = false;
+          }
+        },
+
+        async createProxy() {
+          this.createError = '';
+          const form = this.createForms[this.createType];
+          const payload = {
+            proxy_type: this.createType,
+            name: form.name,
+            traffic_mb: form.traffic_mb,
+            speed_limit_kbps: form.speed_limit_kbps,
+            local_ip: form.local_ip
+          };
+          if (!payload.name.trim()) { this.createError = '请输入名称'; return; }
+          if (payload.traffic_mb <= 0) { this.createError = '请输入流量额度'; return; }
+          if (payload.proxy_type === 'tcp') {
+            const tcpPorts = this.buildTcpPortsPayload(form);
+            if (!tcpPorts) return;
+            payload.tcp_ports = tcpPorts;
+          } else if (payload.proxy_type === 'http') {
+            payload.local_port = form.local_port;
+            payload.subdomain = form.subdomain;
+            if (!payload.local_port || payload.local_port < 1 || payload.local_port > 65535) { this.createError = '请输入有效本地端口'; return; }
+            if (!payload.subdomain.trim()) { this.createError = '请输入子域名前缀'; return; }
+          } else {
+            payload.local_port = form.local_port;
+            payload.visitor_bind_port = form.visitor_bind_port;
+            if (!this.validatePort(payload.local_port, '电脑本地端口')) return;
+            if (!this.validatePort(payload.visitor_bind_port, '手机访问端监听端口')) return;
+          }
+          const advancedConfig = this.buildAdvancedConfigPayload(form);
+          if (!advancedConfig) return;
+          payload.advanced_config = advancedConfig;
+          this.creating = true;
+          try {
+            const res = await fetch('/api/proxies', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              credentials: 'same-origin',
+              body: JSON.stringify(payload)
+            });
+            if (this.handleUnauthorized(res)) return;
+            const data = await res.json();
+            if (!res.ok) { this.createError = extractDetail(data) || '创建失败'; return; }
+            this.createResult = data;
+            if (payload.proxy_type !== 'xtcp') this.balance_mb -= payload.traffic_mb;
+            this.setCreateTraffic(this.balance_mb);
+            toast('连接创建成功');
+          } finally {
+            this.creating = false;
+          }
+        },
+
+        async viewScripts(proxy) {
+          const res = await fetch('/api/proxies/' + proxy.id + '/scripts', { credentials: 'same-origin' });
+          if (this.handleUnauthorized(res)) return;
+          const data = await res.json();
+          this.scriptData = data;
+          this.openScriptModal = true;
+        },
+
+        openEditProxy(proxy) {
+          var advanced = defaultAdvancedConfig();
+          advanced.use_encryption = !!proxy.use_encryption;
+          advanced.use_compression = !!proxy.use_compression;
+          advanced.bandwidth_limit_mode = proxy.bandwidth_limit_mode === 'client' ? 'client' : 'server';
+          advanced.http_user = proxy.http_user || '';
+          advanced.http_password = proxy.http_password || '';
+          advanced.http_locations_text = Array.isArray(proxy.http_locations) ? proxy.http_locations.join('\n') : '';
+          advanced.host_header_rewrite = proxy.host_header_rewrite || '';
+          advanced.keep_tunnel_open = proxy.keep_tunnel_open !== false;
+          advanced.fallback_timeout_ms = proxy.fallback_timeout_ms || 1000;
+          this.editForm = {
+            id: proxy.id,
+            proxy_type: proxy.proxy_type,
+            name: proxy.name || '',
+            local_ip: proxy.local_ip || '127.0.0.1',
+            local_port: proxy.local_port || 9527,
+            subdomain: proxy.subdomain || '',
+            visitor_bind_port: proxy.visitor_bind_port || 9001,
+            traffic_mb: proxy.traffic_limit_mb || 1,
+            speed_limit_kbps: proxy.speed_limit_kbps || 1024,
+            advanced: advanced
+          };
+          this.editError = '';
+          this.editAdvancedOpen = true;
+          this.openEditModal = true;
+        },
+
+        buildEditAdvancedConfigPayload() {
+          var form = this.editForm;
+          var advanced = form.advanced || defaultAdvancedConfig();
+          var payload = {
+            use_encryption: !!advanced.use_encryption,
+            use_compression: !!advanced.use_compression,
+            bandwidth_limit_mode: advanced.bandwidth_limit_mode === 'client' ? 'client' : 'server'
+          };
+          if (form.proxy_type === 'http') {
+            var httpUser = String(advanced.http_user || '').trim();
+            var httpPassword = String(advanced.http_password || '').trim();
+            if ((httpUser && !httpPassword) || (!httpUser && httpPassword)) {
+              this.editError = 'HTTP 认证用户名和密码需同时填写';
+              return null;
+            }
+            if (httpUser) {
+              payload.http_user = httpUser;
+              payload.http_password = httpPassword;
+            }
+            var locations = this.parseEditHttpLocations(advanced.http_locations_text);
+            if (!locations) return null;
+            if (locations.length) payload.http_locations = locations;
+            var hostHeader = String(advanced.host_header_rewrite || '').trim();
+            if (hostHeader) {
+              if (!this.validateEditHostHeader(hostHeader)) return null;
+              payload.host_header_rewrite = hostHeader;
+            }
+          }
+          if (form.proxy_type === 'xtcp') {
+            var fallbackTimeout = advanced.fallback_timeout_ms === '' || advanced.fallback_timeout_ms == null ? 1000 : Number(advanced.fallback_timeout_ms);
+            if (!fallbackTimeout || fallbackTimeout < 100 || fallbackTimeout > 10000) {
+              this.editError = 'fallback 超时需在 100-10000 ms 之间';
+              return null;
+            }
+            payload.keep_tunnel_open = !!advanced.keep_tunnel_open;
+            payload.fallback_timeout_ms = fallbackTimeout;
+          }
+          return payload;
+        },
+
+        async updateProxy() {
+          this.editError = '';
+          var form = this.editForm;
+          if (!form) return;
+          if (!String(form.name || '').trim()) { this.editError = '请输入名称'; return; }
+          if (!this.validateEditPort(form.local_port, form.proxy_type === 'xtcp' ? '电脑本地端口' : '本地端口')) return;
+          if (!form.traffic_mb || form.traffic_mb < 1) { this.editError = '请输入流量额度'; return; }
+          if (!form.speed_limit_kbps || form.speed_limit_kbps < 1) { this.editError = '请输入有效限速'; return; }
+          var payload = {
+            name: form.name,
+            local_ip: form.local_ip,
+            local_port: Number(form.local_port),
+            traffic_mb: Number(form.traffic_mb),
+            speed_limit_kbps: Number(form.speed_limit_kbps),
+            advanced_config: this.buildEditAdvancedConfigPayload()
+          };
+          if (!payload.advanced_config) return;
+          if (form.proxy_type === 'http') {
+            if (!String(form.subdomain || '').trim()) { this.editError = '请输入子域名前缀'; return; }
+            payload.subdomain = form.subdomain;
+          }
+          if (form.proxy_type === 'xtcp') {
+            if (!this.validateEditPort(form.visitor_bind_port, '手机访问端监听端口')) return;
+            payload.visitor_bind_port = Number(form.visitor_bind_port);
+          }
+          this.editing = true;
+          try {
+            const res = await fetch('/api/proxies/' + form.id, {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json' },
+              credentials: 'same-origin',
+              body: JSON.stringify(payload)
+            });
+            if (this.handleUnauthorized(res)) return;
+            const data = await res.json();
+            if (!res.ok) { this.editError = extractDetail(data) || '保存失败'; return; }
+            this.scriptData = data;
+            this.openEditModal = false;
+            this.openScriptModal = true;
+            await this.loadUser();
+            await this.loadProxies();
+            toast('配置已更新');
+          } finally {
+            this.editing = false;
+          }
+        },
+
+        parseEditHttpLocations(text) {
+          var previous = this.createError;
+          this.createError = '';
+          var locations = this.parseHttpLocations(text);
+          if (!locations) this.editError = this.createError || 'HTTP 路径不合法';
+          this.createError = previous;
+          return locations;
+        },
+
+        validateEditHostHeader(value) {
+          var previous = this.createError;
+          this.createError = '';
+          var ok = this.validateHostHeader(value);
+          if (!ok) this.editError = this.createError || 'Host 改写格式不合法';
+          this.createError = previous;
+          return ok;
+        },
+
+        validateEditPort(value, label) {
+          if (!value || value < 1 || value > 65535) {
+            this.editError = '请输入有效' + label;
+            return false;
+          }
+          return true;
+        },
+
+        async deleteProxy(proxy) {
+          if (!confirm('确定删除连接 "' + proxy.name + '"？')) return;
+          const res = await fetch('/api/proxies/' + proxy.id, { method: 'DELETE', credentials: 'same-origin' });
+          if (this.handleUnauthorized(res)) return;
+          await this.loadProxies();
+          toast('已删除');
+        },
+
+        trafficPercent(p) {
+          if (!p.traffic_limit_mb) return 0;
+          return (p.traffic_used_bytes / (p.traffic_limit_mb * 1024 * 1024)) * 100;
+        },
+
+        setCreateTraffic(value) {
+          this.createForms.tcp.traffic_mb = value;
+          this.createForms.http.traffic_mb = value;
+          this.createForms.xtcp.traffic_mb = value;
+        },
+
+        proxyTypeLabel(p) {
+          if (p.proxy_type === 'http') return 'HTTP';
+          if (p.proxy_type === 'xtcp') return 'P2P';
+          return 'TCP';
+        },
+
+        proxyTypeBadge(p) {
+          if (p.proxy_type === 'http') return 'badge-online';
+          if (p.proxy_type === 'xtcp') return 'badge-disabled';
+          return 'badge-offline';
+        },
+
+        publicEntry(p) {
+          if (p.proxy_type === 'tcp') {
+            var mappings = this.tcpMappings(p);
+            if (mappings.length) {
+              var host = this.publicHost(p);
+              return host ? host + ':' + this.remotePortSummary(p) : this.remotePortSummary(p);
+            }
+            if (p.frps_remote_port != null) return String(p.frps_remote_port);
+          }
+          if (p.proxy_type === 'xtcp') return p.visitor_endpoint || '127.0.0.1:9001';
+          if (p.public_url) return p.public_url.replace(/^https?:\/\//, '').replace(/\/$/, '');
+          return '-';
+        },
+
+        localEndpoint(p) {
+          var ip = p.local_ip || '127.0.0.1';
+          if (p.proxy_type === 'xtcp') return ip + ':' + p.local_port;
+          if (p.proxy_type === 'tcp') {
+            var mappings = this.tcpMappings(p);
+            if (mappings.length) return ip + ':' + this.localPortSummary(mappings);
+          }
+          var port = p.actual_local_port != null ? p.actual_local_port : p.local_port;
+          return port != null ? ip + ':' + port : ip + ':-';
+        },
+
+        buildTcpPortsPayload(form) {
+          var mode = form.port_mode || 'auto';
+          if (mode === 'auto') {
+            var count = Number(form.count || 1);
+            var localStart = Number(form.local_start_port || 0);
+            if (!this.validateTcpCount(count)) return null;
+            if (!this.validatePort(localStart, '本地起始端口')) return null;
+            if (!this.validateLocalRange(localStart, count)) return null;
+            return { mode: 'auto', count: count, local_start_port: localStart };
+          }
+          if (mode === 'single') {
+            var remotePort = Number(form.remote_port || 0);
+            var localPort = Number(form.local_port || 0);
+            if (!this.validatePort(remotePort, '公网端口')) return null;
+            if (!this.validatePort(localPort, '本地端口')) return null;
+            return { mode: 'single', remote_port: remotePort, local_port: localPort };
+          }
+          var remoteStart = Number(form.remote_start_port || 0);
+          var remoteEnd = Number(form.remote_end_port || 0);
+          var rangeLocalStart = Number(form.range_local_start_port || 0);
+          var mappingMode = form.range_mapping_mode === 'many-to-many' ? 'many-to-many' : 'many-to-one';
+          if (!this.validatePort(remoteStart, '公网起始端口')) return null;
+          if (!this.validatePort(remoteEnd, '公网结束端口')) return null;
+          if (!this.validatePort(rangeLocalStart, mappingMode === 'many-to-many' ? '本地起始端口' : '本地端口')) return null;
+          if (remoteStart > remoteEnd) { this.createError = '公网起始端口不能大于结束端口'; return null; }
+          var rangeCount = remoteEnd - remoteStart + 1;
+          if (!this.validateTcpCount(rangeCount)) return null;
+          if (mappingMode === 'many-to-many' && !this.validateLocalRange(rangeLocalStart, rangeCount)) return null;
+          return {
+            mode: 'range',
+            mapping_mode: mappingMode,
+            remote_start_port: remoteStart,
+            remote_end_port: remoteEnd,
+            local_start_port: rangeLocalStart
+          };
+        },
+
+        buildAdvancedConfigPayload(form) {
+          var advanced = form.advanced || defaultAdvancedConfig();
+          var mode = advanced.bandwidth_limit_mode === 'client' ? 'client' : 'server';
+          var payload = {
+            use_encryption: !!advanced.use_encryption,
+            use_compression: !!advanced.use_compression,
+            bandwidth_limit_mode: mode
+          };
+          if (this.createType === 'http') {
+            var httpUser = String(advanced.http_user || '').trim();
+            var httpPassword = String(advanced.http_password || '').trim();
+            if ((httpUser && !httpPassword) || (!httpUser && httpPassword)) {
+              this.createError = 'HTTP 认证用户名和密码需同时填写';
+              return null;
+            }
+            if (httpUser) {
+              payload.http_user = httpUser;
+              payload.http_password = httpPassword;
+            }
+            var locations = this.parseHttpLocations(advanced.http_locations_text);
+            if (!locations) return null;
+            if (locations.length) payload.http_locations = locations;
+            var hostHeader = String(advanced.host_header_rewrite || '').trim();
+            if (hostHeader) {
+              if (!this.validateHostHeader(hostHeader)) return null;
+              payload.host_header_rewrite = hostHeader;
+            }
+          }
+          if (this.createType === 'xtcp') {
+            var rawTimeout = advanced.fallback_timeout_ms;
+            var fallbackTimeout = rawTimeout === '' || rawTimeout == null ? 1000 : Number(rawTimeout);
+            if (!fallbackTimeout || fallbackTimeout < 100 || fallbackTimeout > 10000) {
+              this.createError = 'fallback 超时需在 100-10000 ms 之间';
+              return null;
+            }
+            payload.keep_tunnel_open = !!advanced.keep_tunnel_open;
+            payload.fallback_timeout_ms = fallbackTimeout;
+          }
+          return payload;
+        },
+
+        parseHttpLocations(text) {
+          var locations = String(text || '').split(/[\n,]+/).map(function (item) {
+            return item.trim();
+          }).filter(Boolean);
+          if (locations.length > 10) {
+            this.createError = 'HTTP 路径最多 10 条';
+            return null;
+          }
+          for (var i = 0; i < locations.length; i++) {
+            if (locations[i].charAt(0) !== '/') {
+              this.createError = 'HTTP 路径必须以 / 开头';
+              return null;
+            }
+            if (/\s/.test(locations[i])) {
+              this.createError = 'HTTP 路径不能包含空白字符';
+              return null;
+            }
+          }
+          return locations;
+        },
+
+        validateHostHeader(value) {
+          if (!/^[A-Za-z0-9.-]{1,253}(:[0-9]{1,5})?$/.test(value)) {
+            this.createError = 'Host 改写格式不合法';
+            return false;
+          }
+          var parts = value.split(':');
+          if (parts.length === 2) {
+            var port = Number(parts[1]);
+            if (!port || port < 1 || port > 65535) {
+              this.createError = 'Host 改写端口不合法';
+              return false;
+            }
+          }
+          var hostname = parts[0];
+          if (hostname.indexOf('..') !== -1 || hostname.charAt(0) === '.' || hostname.charAt(hostname.length - 1) === '.') {
+            this.createError = 'Host 改写格式不合法';
+            return false;
+          }
+          return true;
+        },
+
+        validatePort(value, label) {
+          if (!value || value < 1 || value > 65535) {
+            this.createError = '请输入有效' + label;
+            return false;
+          }
+          return true;
+        },
+
+        validateTcpCount(count) {
+          if (!count || count < 1 || count > 10) {
+            this.createError = '单个 TCP 配置最多 10 个端口';
+            return false;
+          }
+          return true;
+        },
+
+        validateLocalRange(start, count) {
+          if (start + count - 1 > 65535) {
+            this.createError = '本地端口段必须在 1-65535 之间';
+            return false;
+          }
+          return true;
+        },
+
+        rangeLocalPortLabel() {
+          var mode = this.createForms.tcp.range_mapping_mode || 'many-to-one';
+          return mode === 'many-to-many' ? '本地起始端口' : '本地端口';
+        },
+
+        tcpRangePreview() {
+          var f = this.createForms.tcp;
+          var start = Number(f.remote_start_port || 0);
+          var end = Number(f.remote_end_port || 0);
+          var local = Number(f.range_local_start_port || 0);
+          var mappingMode = f.range_mapping_mode === 'many-to-many' ? 'many-to-many' : 'many-to-one';
+          if (!start || !end || !local) return '填写端口段后显示映射预览';
+          if (start > end) return '公网起始端口不能大于结束端口';
+          var count = end - start + 1;
+          if (count > 10) return '单个 TCP 配置最多 10 个端口';
+          if (mappingMode === 'many-to-many' && local + count - 1 > 65535) return '本地端口段必须在 1-65535 之间';
+          var lines = [];
+          for (var i = 0; i < count; i++) {
+            lines.push((start + i) + ' -> ' + (mappingMode === 'many-to-many' ? local + i : local));
+          }
+          return lines.join('\n');
+        },
+
+        tcpMappings(p) {
+          if (!p || p.proxy_type !== 'tcp') return [];
+          if (Array.isArray(p.tcp_mappings) && p.tcp_mappings.length) return p.tcp_mappings;
+          if (p.frps_remote_port != null) {
+            return [{ remote_port: p.frps_remote_port, local_port: p.local_port, actual_local_port: p.actual_local_port }];
+          }
+          return [];
+        },
+
+        isP2P(p) {
+          return !!p && p.proxy_type === 'xtcp';
+        },
+
+        hasVisitorScripts(data) {
+          return !!(data && data.proxy && data.proxy.proxy_type === 'xtcp' && data.scripts && data.scripts.visitor);
+        },
+
+        remotePortSummary(p) {
+          var mappings = this.tcpMappings(p);
+          return this.portSummary(mappings.map(function (m) { return m.remote_port; }));
+        },
+
+        localPortSummary(mappings) {
+          return this.portSummary(mappings.map(function (m) {
+            return m.actual_local_port != null ? m.actual_local_port : m.local_port;
+          }));
+        },
+
+        portSummary(ports) {
+          var nums = ports.map(Number).filter(function (n) { return n >= 1; });
+          if (!nums.length) return '-';
+          nums.sort(function (a, b) { return a - b; });
+          if (nums.length === 1) return String(nums[0]);
+          var contiguous = nums.every(function (port, idx) { return idx === 0 || port === nums[idx - 1] + 1; });
+          if (contiguous) return nums[0] + '-' + nums[nums.length - 1];
+          return nums.join(', ');
+        },
+
+        mappingDetails(p) {
+          var ip = (p && p.local_ip) || '127.0.0.1';
+          if (p && p.proxy_type === 'xtcp') return '手机端 ' + (p.visitor_endpoint || '127.0.0.1:9001') + '\n电脑端 ' + ip + ':' + p.local_port;
+          return this.tcpMappings(p).map(function (m) {
+            return m.remote_port + ' -> ' + ip + ':' + m.local_port;
+          }).join('\n');
+        },
+
+        publicHost(p) {
+          if (!p || !p.public_url) return '';
+          try { return new URL(p.public_url).hostname; }
+          catch (e) { return ''; }
+        },
+
+        formatTokenTime(value) {
+          if (!value) return '-';
+          try { return new Date(value).toLocaleString(); }
+          catch (e) { return value; }
+        }
+      };
+    }
+
+    function getScriptContent(data, mainTab, subTab) {
+      if (!data) return '';
+      if (mainTab === 'config') return (data.frpc_configs && data.frpc_configs.server) || data.frpc_config || '';
+      if (mainTab === 'visitor_config') return (data.frpc_configs && data.frpc_configs.visitor) || '';
+      if (mainTab === 'frpc') {
+        var s = data.scripts && data.scripts.frpc;
+        return s ? (s[subTab] || '') : '';
+      }
+      if (mainTab === 'visitor') {
+        var sv = data.scripts && data.scripts.visitor;
+        return sv ? (sv[subTab] || '') : '';
+      }
+      if (mainTab === 'demo') {
+        var s2 = data.scripts && data.scripts.demo;
+        return s2 ? (s2[subTab] || '') : '';
+      }
+      return '';
+    }
+
+    function getScriptFilename(mainTab, subTab) {
+      if (mainTab === 'config') return 'frpc-server.toml';
+      if (mainTab === 'visitor_config') return 'frpc-visitor.toml';
+      if (mainTab === 'visitor') return 'frpc-visitor' + (subTab === 'windows' ? '.ps1' : '.sh');
+      return mainTab + (subTab === 'windows' ? '.ps1' : '.sh');
+    }
+
+    function extractDetail(data) {
+      if (!data) return '';
+      if (typeof data.detail === 'string') return data.detail;
+      if (Array.isArray(data.detail) && data.detail.length > 0) {
+        return data.detail.map(function (e) { return e.msg || String(e); }).join('; ');
+      }
+      return String(data.detail || '');
+    }
+  </script>
+</body>
+</html>
