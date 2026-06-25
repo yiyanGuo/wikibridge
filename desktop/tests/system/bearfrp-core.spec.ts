@@ -33,7 +33,7 @@ test('logs in and manages a published Chat connection', async ({ page }) => {
   await expect(page.getByText('alice')).toBeVisible();
   await page.getByLabel('选择知识库项目').selectOption({ label: '示例知识库' });
   await page.getByRole('button', { name: '发布 Chat' }).click();
-  await expect(page.getByText('OpenCode Chat 发布连接已创建')).toBeVisible();
+  await expect(page.getByText('消费端 Chat 发布连接已创建')).toBeVisible();
   await expect(page.getByRole('heading', { name: '示例知识库' })).toBeVisible();
 
   await page.getByRole('button', { name: '开启访问' }).click();

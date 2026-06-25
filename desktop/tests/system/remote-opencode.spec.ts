@@ -4,8 +4,8 @@ import { prepareSystemTestPage, setConfirmResult } from './test-utils';
 test('adds and opens a remote OpenCode knowledge base', async ({ page }) => {
   await prepareSystemTestPage(page);
 
-  await page.getByRole('button', { name: /OpenCode/ }).click();
-  await expect(page.getByText('添加 OpenCode 公网地址后可在 App 内查看。')).toBeVisible();
+  await page.getByRole('button', { name: /消费端/ }).click();
+  await expect(page.getByText('添加消费端公网地址后可在 App 内查看。')).toBeVisible();
 
   await page.getByLabel('名称').fill('团队知识库');
   await page.getByLabel('分享链接').fill('https://wiki.example.test/share/');
@@ -30,7 +30,7 @@ test('normalizes duplicate remote OpenCode links and updates the existing card',
     ]
   });
 
-  await page.getByRole('button', { name: /OpenCode/ }).click();
+  await page.getByRole('button', { name: /消费端/ }).click();
   await page.getByLabel('名称').fill('新名称');
   await page.getByLabel('分享链接').fill('https://wiki.example.test/share/');
   await page.getByRole('button', { name: '添加' }).click();
@@ -54,7 +54,7 @@ test('reports remote check failure without removing the saved item', async ({ pa
     ]
   });
 
-  await page.getByRole('button', { name: /OpenCode/ }).click();
+  await page.getByRole('button', { name: /消费端/ }).click();
   await page.getByRole('button', { name: '检测' }).click();
 
   await expect(page.getByText('远程知识库不可达')).toBeVisible();
@@ -75,7 +75,7 @@ test('requires confirmation before removing a remote knowledge base', async ({ p
     ]
   });
 
-  await page.getByRole('button', { name: /OpenCode/ }).click();
+  await page.getByRole('button', { name: /消费端/ }).click();
   await expect(page.getByText('团队知识库')).toBeVisible();
 
   await setConfirmResult(page, false);
