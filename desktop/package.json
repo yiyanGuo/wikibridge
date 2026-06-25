@@ -17,6 +17,7 @@
     "test:system:report": "playwright show-report",
     "test:system:server": "vite --mode system-test --host 127.0.0.1 --port 1421",
     "sidecars": "node scripts/prepare-sidecars.mjs all",
+    "sidecars:frpc": "node scripts/download-frpc.mjs",
     "sidecars:llm-wiki": "node scripts/prepare-sidecars.mjs llm-wiki",
     "sidecars:opencode": "node scripts/prepare-sidecars.mjs opencode",
     "sidecars:check": "node scripts/check-sidecars.mjs",
