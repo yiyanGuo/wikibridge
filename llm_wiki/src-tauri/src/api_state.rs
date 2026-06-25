@@ -90,9 +90,10 @@ pub(crate) struct HeadlessApiState {
 
 impl HeadlessApiState {
     pub(crate) fn new(config: HeadlessConfig) -> Self {
+        let bind_addr = config.bind_addr();
         Self {
             data_dir: config.data_dir,
-            bind_addr: config.bind_addr(),
+            bind_addr,
             token: config.token,
         }
     }
@@ -168,7 +169,10 @@ fn discover_projects_in_dir(dir: &Path) -> Vec<(String, String)> {
     let entries = match std::fs::read_dir(dir) {
         Ok(entries) => entries,
         Err(err) => {
-            eprintln!("[API Server] failed to read data dir '{}': {err}", dir.display());
+            eprintln!(
+                "[API Server] failed to read data dir '{}': {err}",
+                dir.display()
+            );
             return projects;
         }
     };
