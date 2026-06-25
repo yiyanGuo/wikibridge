@@ -350,7 +350,7 @@ async fn response_error(response: Response) -> String {
 
 fn network_error(error: reqwest::Error) -> String {
     if error.is_connect() {
-        "无法连接 BearFrps 后端".to_string()
+        "无法连接发布端后端".to_string()
     } else {
         format!("网络请求失败: {error}")
     }

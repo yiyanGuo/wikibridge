@@ -82,7 +82,7 @@ export default function App() {
     try {
       await invoke('set_bearfrp_backend_url', { url: backendDraft });
       await refreshServices();
-      setNotice('BearFRP backend 已保存');
+      setNotice('发布端后端已保存');
     } catch (err) {
       setError(friendlyError(err));
     } finally {
@@ -176,11 +176,11 @@ export default function App() {
         <nav className="entry-nav" aria-label="入口">
           <button className={activeEntry === 'bearfrp' ? 'active' : ''} onClick={() => setActiveEntry('bearfrp')}>
             <Server size={17} />
-            BearFRP
+            发布端
           </button>
           <button className={activeEntry === 'opencode' ? 'active' : ''} onClick={() => setActiveEntry('opencode')}>
             <TerminalSquare size={17} />
-            OpenCode
+            消费端
           </button>
         </nav>
 
@@ -210,7 +210,7 @@ export default function App() {
         <section className="entry-pane">
           <form className="backend-strip" onSubmit={saveBackendUrl}>
             <label>
-              BearFRP backend
+              发布端后端
               <input
                 value={backendDraft}
                 onChange={(event) => setBackendDraft(event.target.value)}
@@ -223,7 +223,7 @@ export default function App() {
             </button>
           </form>
           {!services?.bearfrpBackendUrl && (
-            <div className="inline-alert desktop-inline-alert">请先配置远端 BearFRP backend URL。</div>
+            <div className="inline-alert desktop-inline-alert">请先配置远端发布端后端 URL。</div>
           )}
           <BearFrpApp />
         </section>
@@ -235,7 +235,7 @@ export default function App() {
                 <div className="section-heading compact">
                   <div>
                     <h2>添加远程知识库</h2>
-                    <p>粘贴别人分享的 OpenCode 公网地址。</p>
+                    <p>粘贴别人分享的消费端公网地址。</p>
                   </div>
                 </div>
                 <form className="remote-form" onSubmit={addRemoteKnowledgeBase}>
@@ -310,7 +310,7 @@ export default function App() {
                     ))}
                   </div>
                 ) : (
-                  <div className="empty-state compact">添加 OpenCode 公网地址后可在 App 内查看。</div>
+                  <div className="empty-state compact">添加消费端公网地址后可在 App 内查看。</div>
                 )}
               </section>
             </aside>
@@ -319,7 +319,7 @@ export default function App() {
               <div className="viewer-toolbar">
                 <div>
                   <strong>{viewerTitle}</strong>
-                  <span>{viewerUrl || '请选择或添加别人分享的 OpenCode 公网地址'}</span>
+                  <span>{viewerUrl || '请选择或添加别人分享的消费端公网地址'}</span>
                 </div>
                 <div className="card-actions">
                   {viewerUrl && (
@@ -342,7 +342,7 @@ export default function App() {
                 <div className="remote-empty-panel">
                   <Globe2 size={32} aria-hidden="true" />
                   <h1>远程知识库</h1>
-                  <p>添加别人分享的 OpenCode 公网地址后，就可以在这里向对方的知识库提问。</p>
+                  <p>添加别人分享的消费端公网地址后，就可以在这里向对方的知识库提问。</p>
                 </div>
               )}
             </div>
@@ -378,7 +378,7 @@ function remoteStatusLabel(status: string) {
     llm_wiki_unavailable: '知识库异常',
     auth_required: '需登录',
     unreachable: '不可达',
-    not_opencode: '非 OpenCode'
+    not_opencode: '非消费端'
   };
   return labels[status] || status;
 }
@@ -386,7 +386,7 @@ function remoteStatusLabel(status: string) {
 function friendlyError(error: unknown) {
   const text = error instanceof Error ? error.message : typeof error === 'string' ? error : '操作失败';
   if (text.includes('二进制') || text.includes('启动') || text.includes('端口')) return text;
-  if (text.includes('后端地址') || text.includes('backend')) return text;
-  if (text.includes('OpenCode') || text.includes('分享链接') || text.includes('远程知识库')) return text;
+  if (text.includes('后端地址') || text.includes('backend') || text.includes('发布端后端')) return text;
+  if (text.includes('OpenCode') || text.includes('消费端') || text.includes('分享链接') || text.includes('远程知识库')) return text;
   return '操作未完成，请稍后重试';
 }

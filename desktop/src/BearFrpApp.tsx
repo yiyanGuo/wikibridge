@@ -485,7 +485,7 @@ export default function App() {
     try {
       const stack = await invoke<ProjectChatStack>('start_project_chat', { projectId: project.project_id });
       setChatStack(stack);
-      setNotice(`OpenCode Chat 已启动：${stack.opencodeUrl}`);
+      setNotice(`消费端 Chat 已启动：${stack.opencodeUrl}`);
       window.open(stack.opencodeUrl, '_blank');
     } catch (err) {
       setError(friendlyError(err));
@@ -500,7 +500,7 @@ export default function App() {
     try {
       await invoke('stop_project_chat', { projectId: project.project_id });
       setChatStack((current) => (current?.projectId === project.project_id ? null : current));
-      setNotice('OpenCode Chat 已停止');
+      setNotice('消费端 Chat 已停止');
     } catch (err) {
       setError(friendlyError(err));
     } finally {
@@ -614,7 +614,7 @@ export default function App() {
       });
       setConnections((current) => upsertConnection(current, created));
       setConnectionProjectId('');
-      setNotice('OpenCode Chat 发布连接已创建');
+      setNotice('消费端 Chat 发布连接已创建');
       await refreshWorkspace();
     } catch (err) {
       setError(friendlyError(err));
@@ -720,7 +720,7 @@ export default function App() {
         <div className="brand">
           <Server size={22} aria-hidden="true" />
           <div>
-            <strong>BearFrps</strong>
+            <strong>发布端</strong>
             <span>知识库访问</span>
           </div>
         </div>
@@ -1064,7 +1064,7 @@ export default function App() {
             <div className="section-heading">
               <div>
                 <h1>访问连接</h1>
-                <p>选择一个知识库项目发布 OpenCode Chat。</p>
+                <p>选择一个知识库项目发布消费端 Chat。</p>
               </div>
               <span className="count-pill">{connections.length} 个连接</span>
             </div>
@@ -1283,8 +1283,8 @@ function statusLabel(value: string) {
 
 function connectionStatusText(connection: ProjectConnection) {
   if (connection.traffic_limit_mb > 0 && usagePercent(connection) >= 100) return '额度已用完，请创建新的访问连接。';
-  if (connection.running) return '访问已开启，可以通过访问地址使用 OpenCode Chat。';
-  if (connection.status === 'service_not_ready') return '本地 OpenCode Chat 服务正在准备中。';
+  if (connection.running) return '访问已开启，可以通过访问地址使用消费端 Chat。';
+  if (connection.status === 'service_not_ready') return '本地消费端 Chat 服务正在准备中。';
   return '访问已关闭，需要时可以重新开启。';
 }
 
@@ -1312,8 +1312,8 @@ function friendlyError(error: unknown) {
   if (text.includes('Wiki') || text.includes('source') || text.includes('Graph') || text.includes('ingest queue')) return text;
   if (text.includes('文档') || text.includes('Markdown')) return text;
   if (text.includes('可用额度') || text.includes('余额不足') || text.includes('流量额度')) return text;
-  if (text.includes('BearFRP backend')) return text;
-  if (text.includes('OpenCode') || text.includes('sidecar') || text.includes('二进制') || text.includes('端口')) return text;
+  if (text.includes('BearFRP backend') || text.includes('发布端后端')) return text;
+  if (text.includes('OpenCode') || text.includes('消费端') || text.includes('sidecar') || text.includes('二进制') || text.includes('端口')) return text;
   if (text.includes('无法连接') || text.includes('network') || text.includes('后端')) {
     return '服务暂时不可用，请稍后重试';
   }

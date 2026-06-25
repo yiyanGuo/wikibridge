@@ -1090,55 +1090,57 @@ fn build_headless_generation_prompt(
     };
 
     vec![
-        "You are LLM Wiki's headless ingest worker.".to_string(),
-        "Read the source and generate concise, factual Markdown wiki pages.".to_string(),
-        "Output only FILE blocks. Do not use code fences around FILE blocks. Do not add a preamble."
+        "你是 LLM Wiki 的 headless ingest worker。".to_string(),
+        "阅读 source，并生成简洁、事实准确的中文 Markdown Wiki 页面。".to_string(),
+        "必须使用简体中文产出 title、标题、正文、摘要和概念/实体说明；原文专有名词、代码标识符、文件名、URL 可以保留原文。"
+            .to_string(),
+        "只输出 FILE blocks。不要在 FILE blocks 外包裹代码围栏，不要添加前言。"
             .to_string(),
         String::new(),
-        "Required FILE block format:".to_string(),
+        "必需 FILE block 格式：".to_string(),
         "---FILE: wiki/path/file-name.md---".to_string(),
         "---".to_string(),
         "type: concept".to_string(),
-        "title: Page Title".to_string(),
+        "title: 中文页面标题".to_string(),
         format!("created: {today}"),
         format!("updated: {today}"),
         "tags: [generated]".to_string(),
         "related: []".to_string(),
         format!("sources: [\"{source_name}\"]"),
         "---".to_string(),
-        "# Page Title".to_string(),
-        "Body with [[wikilinks]] to related generated pages.".to_string(),
+        "# 中文页面标题".to_string(),
+        "正文使用中文，并用 [[wikilinks]] 连接相关生成页面。".to_string(),
         "---END FILE---".to_string(),
         String::new(),
-        "Generate at least two pages:".to_string(),
-        format!("1. A source summary at exactly {source_summary_path}."),
-        "2. One or more entity/concept pages under wiki/entities/ or wiki/concepts/ for the important subjects."
+        "至少生成两个页面：".to_string(),
+        format!("1. 一个 source summary，路径必须精确为 {source_summary_path}。"),
+        "2. 一个或多个重要主题的实体/概念页面，放在 wiki/entities/ 或 wiki/concepts/ 下。"
             .to_string(),
         String::new(),
-        "Rules:".to_string(),
-        "- Every path must be under wiki/ and use kebab-case filenames where practical.".to_string(),
-        "- Use [[wikilinks]] in body text to connect related pages.".to_string(),
-        "- Preserve concrete facts, relationships, dates, and named entities from the source.".to_string(),
-        "- Keep pages short but non-empty. Do not invent facts not present in the source.".to_string(),
-        "- Never write outside wiki/.".to_string(),
+        "规则：".to_string(),
+        "- 每个路径必须位于 wiki/ 下，文件名尽量使用 kebab-case。".to_string(),
+        "- 正文必须用中文书写，并使用 [[wikilinks]] 连接相关页面。".to_string(),
+        "- 保留 source 中的具体事实、关系、日期和命名实体。".to_string(),
+        "- 页面保持简洁但不能为空；不要编造 source 中不存在的信息。".to_string(),
+        "- 不要写入 wiki/ 之外的路径。".to_string(),
         String::new(),
-        "Project purpose:".to_string(),
+        "项目目标：".to_string(),
         purpose,
         String::new(),
-        "Project schema:".to_string(),
+        "项目 schema：".to_string(),
         schema,
         String::new(),
-        "Existing index:".to_string(),
+        "现有索引：".to_string(),
         index,
         String::new(),
-        "Existing overview:".to_string(),
+        "现有概览：".to_string(),
         overview,
         String::new(),
-        "Source metadata:".to_string(),
-        format!("File: {source_name}"),
-        format!("Folder context: {folder_context}"),
+        "Source 元数据：".to_string(),
+        format!("文件：{source_name}"),
+        format!("文件夹上下文：{folder_context}"),
         String::new(),
-        "Source content:".to_string(),
+        "Source 内容：".to_string(),
         source_content.to_string(),
     ]
     .join("\n")
@@ -1158,7 +1160,7 @@ async fn call_deepseek_chat(
         "messages": [
             {
                 "role": "system",
-                "content": "You generate LLM Wiki FILE blocks from source material. Output only the requested blocks."
+                "content": "你根据 source material 生成 LLM Wiki FILE blocks。除文件路径、frontmatter key、原文专名、代码标识符和 URL 外，生成的 Wiki 内容必须使用简体中文。只输出请求的 blocks。"
             },
             { "role": "user", "content": prompt }
         ],
@@ -1417,7 +1419,7 @@ fn write_fallback_source_summary(
     let excerpt = truncate_chars(source_content, 2_400);
     let title = source_name.trim_end_matches(".md").trim_end_matches(".txt");
     let content = format!(
-        "---\ntype: source\ntitle: \"Source: {source_name}\"\ntags: [source]\nrelated: []\nsources: [\"{source_name}\"]\n---\n\n# Source: {title}\n\nImported from `{source_rel}`.\n\n## Extract\n\n{excerpt}\n"
+        "---\ntype: source\ntitle: \"来源：{source_name}\"\ntags: [source]\nrelated: []\nsources: [\"{source_name}\"]\n---\n\n# 来源：{title}\n\n导入自 `{source_rel}`。\n\n## 原文摘录\n\n{excerpt}\n"
     );
     fs::write(&target, content)
         .map_err(|error| format!("无法写入 source summary {}: {error}", safe_path.display()))

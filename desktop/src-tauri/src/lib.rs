@@ -776,7 +776,7 @@ async fn probe_remote_knowledge_base_url(url: &str) -> Result<RemoteKnowledgeBas
                 url: normalized,
                 ok: false,
                 status: "unreachable".to_string(),
-                message: format!("无法连接远程 OpenCode: {error}"),
+                message: format!("无法连接远程消费端: {error}"),
                 opencode_healthy: false,
                 llm_wiki_healthy: false,
                 kb_mode: None,
@@ -791,7 +791,7 @@ async fn probe_remote_knowledge_base_url(url: &str) -> Result<RemoteKnowledgeBas
             url: normalized,
             ok: true,
             status: "auth_required".to_string(),
-            message: "远程 OpenCode 需要登录，打开后由 OpenCode 页面处理认证".to_string(),
+            message: "远程消费端需要登录，打开后由消费端页面处理认证".to_string(),
             opencode_healthy: false,
             llm_wiki_healthy: false,
             kb_mode: None,
@@ -803,7 +803,7 @@ async fn probe_remote_knowledge_base_url(url: &str) -> Result<RemoteKnowledgeBas
             url: normalized,
             ok: false,
             status: "not_opencode".to_string(),
-            message: "该地址没有返回 OpenCode 健康检查，请确认分享的是 OpenCode Web 地址"
+            message: "该地址没有返回消费端健康检查，请确认分享的是消费端 Web 地址"
                 .to_string(),
             opencode_healthy: false,
             llm_wiki_healthy: false,
@@ -825,12 +825,12 @@ async fn probe_remote_knowledge_base_url(url: &str) -> Result<RemoteKnowledgeBas
     let (status, message) = if llm_wiki_healthy {
         (
             "ready".to_string(),
-            "远程 OpenCode 和知识库服务可用".to_string(),
+            "远程消费端和知识库服务可用".to_string(),
         )
     } else {
         (
             "llm_wiki_unavailable".to_string(),
-            "远程 OpenCode 可用，但它暂时无法连接知识库服务".to_string(),
+            "远程消费端可用，但它暂时无法连接知识库服务".to_string(),
         )
     };
 
@@ -858,7 +858,7 @@ async fn fetch_text(
 fn normalize_remote_opencode_url(value: &str) -> Result<String, String> {
     let trimmed = value.trim().trim_end_matches('/');
     if trimmed.is_empty() {
-        return Err("请输入远程 OpenCode 分享链接".to_string());
+        return Err("请输入远程消费端分享链接".to_string());
     }
     let mut parsed =
         Url::parse(trimmed).map_err(|_| "分享链接必须是完整的 http(s) URL".to_string())?;
@@ -1518,7 +1518,7 @@ fn client_from_runtime(runtime: &State<'_, SharedRuntime>) -> Result<ApiClient, 
 
 fn client_from_persisted(persisted: &PersistedState) -> Result<ApiClient, String> {
     if persisted.base_url.trim().is_empty() {
-        return Err("请先配置 BearFRP backend URL".to_string());
+        return Err("请先配置发布端后端 URL".to_string());
     }
     Ok(ApiClient::from_state(persisted))
 }
