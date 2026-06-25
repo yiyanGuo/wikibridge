@@ -49,3 +49,8 @@ npm run tauri:dev
 
 The OpenCode entry requires `opencode` and `llm-wiki-server` binaries to be
 present under `src-tauri/binaries` for the current platform.
+
+## Packaging
+
+See [PACKAGING.md](./PACKAGING.md) for the full desktop packaging workflow,
+including sidecar preparation, platform output paths, and release checks.
