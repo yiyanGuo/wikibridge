@@ -17,6 +17,7 @@ import {
   Link2,
   LogIn,
   LogOut,
+  MessageSquare,
   Play,
   Plus,
   Power,
@@ -121,6 +122,16 @@ type ProjectConnection = {
   status: 'running' | 'stopped' | 'service_not_ready' | string;
 };
 
+type ProjectChatStack = {
+  opencodeUrl: string;
+  llmWikiUrl: string;
+  opencodePort: number;
+  llmWikiPort: number;
+  opencodeLogPath?: string | null;
+  llmWikiLogPath?: string | null;
+  projectId?: string | null;
+};
+
 type ProjectDocumentContent = {
   document_id: string;
   title: string;
@@ -156,6 +167,7 @@ export default function App() {
   const [readerContent, setReaderContent] = useState<ProjectDocumentContent | null>(null);
   const [wikiProjectState, setWikiProjectState] = useState<WikiProjectState | null>(null);
   const [wikiGraph, setWikiGraph] = useState<WikiGraphResult | null>(null);
+  const [chatStack, setChatStack] = useState<ProjectChatStack | null>(null);
   const [readerError, setReaderError] = useState('');
   const [busy, setBusy] = useState('');
   const [error, setError] = useState('');
@@ -394,6 +406,35 @@ export default function App() {
     }
   }
 
+  async function startProjectChat(project: KnowledgeProject) {
+    setBusy(`chat-${project.project_id}`);
+    setError('');
+    try {
+      const stack = await invoke<ProjectChatStack>('start_project_chat', { projectId: project.project_id });
+      setChatStack(stack);
+      setNotice(`OpenCode Chat 已启动：${stack.opencodeUrl}`);
+      window.open(stack.opencodeUrl, '_blank');
+    } catch (err) {
+      setError(friendlyError(err));
+    } finally {
+      setBusy('');
+    }
+  }
+
+  async function stopProjectChat(project: KnowledgeProject) {
+    setBusy(`stop-chat-${project.project_id}`);
+    setError('');
+    try {
+      await invoke('stop_project_chat', { projectId: project.project_id });
+      setChatStack((current) => (current?.projectId === project.project_id ? null : current));
+      setNotice('OpenCode Chat 已停止');
+    } catch (err) {
+      setError(friendlyError(err));
+    } finally {
+      setBusy('');
+    }
+  }
+
   async function openReader(project: KnowledgeProject) {
     setBusy(`reader-${project.project_id}`);
     setError('');
@@ -500,7 +541,7 @@ export default function App() {
       });
       setConnections((current) => upsertConnection(current, created));
       setConnectionProjectId('');
-      setNotice('访问连接已创建');
+      setNotice('OpenCode Chat 发布连接已创建');
       await refreshWorkspace();
     } catch (err) {
       setError(friendlyError(err));
@@ -538,13 +579,13 @@ export default function App() {
   }
 
   async function deleteConnection(connection: ProjectConnection) {
-    if (!window.confirm(`删除 ${connection.project_name} 的访问连接？`)) return;
+    if (!window.confirm(`删除 ${connection.project_name} 的 Chat 发布连接？`)) return;
     setBusy(`delete-connection-${connection.connection_id}`);
     setError('');
     try {
       await invoke('delete_connection', { connectionId: connection.connection_id });
       setConnections((current) => current.filter((item) => item.connection_id !== connection.connection_id));
-      setNotice('访问连接已删除');
+      setNotice('Chat 发布连接已删除');
       await refreshWorkspace();
     } catch (err) {
       setError(friendlyError(err));
@@ -691,6 +732,31 @@ export default function App() {
                   <Link2 size={17} />
                   Link
                 </button>
+                {chatStack?.projectId === readerProject.project_id ? (
+                  <>
+                    <button className="secondary" onClick={() => window.open(chatStack.opencodeUrl, '_blank')}>
+                      <ExternalLink size={17} />
+                      打开 Chat
+                    </button>
+                    <button
+                      className="secondary"
+                      onClick={() => stopProjectChat(readerProject)}
+                      disabled={busy === `stop-chat-${readerProject.project_id}`}
+                    >
+                      <Power size={17} />
+                      停止 Chat
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    className="primary"
+                    onClick={() => startProjectChat(readerProject)}
+                    disabled={busy === `chat-${readerProject.project_id}`}
+                  >
+                    <MessageSquare size={17} />
+                    启动 Chat
+                  </button>
+                )}
                 <button
                   className="secondary"
                   onClick={() => refreshReaderProject(readerProject)}
@@ -844,6 +910,10 @@ export default function App() {
                         <BookOpen size={17} />
                         进入项目
                       </button>
+                      <button className="secondary" onClick={() => startProjectChat(project)} disabled={busy === `chat-${project.project_id}`}>
+                        <MessageSquare size={17} />
+                        Chat
+                      </button>
                     </div>
                   </article>
                 ))
@@ -855,7 +925,7 @@ export default function App() {
             <div className="section-heading">
               <div>
                 <h1>访问连接</h1>
-                <p>选择一个知识库项目创建访问连接。</p>
+                <p>选择一个知识库项目发布 OpenCode Chat。</p>
               </div>
               <span className="count-pill">{connections.length} 个连接</span>
             </div>
@@ -887,13 +957,13 @@ export default function App() {
               </div>
               <button className="primary" disabled={busy === 'create-connection' || !connectionProjectId}>
                 <Plus size={17} />
-                创建连接
+                发布 Chat
               </button>
             </form>
 
             <div className="connection-list">
               {connections.length === 0 ? (
-                <div className="empty-state">暂无访问连接</div>
+                <div className="empty-state">暂无 Chat 发布连接</div>
               ) : (
                 connections.map((connection) => (
                   <article className="connection-card" key={connection.connection_id}>
@@ -1074,8 +1144,8 @@ function statusLabel(value: string) {
 
 function connectionStatusText(connection: ProjectConnection) {
   if (connection.traffic_limit_mb > 0 && usagePercent(connection) >= 100) return '额度已用完，请创建新的访问连接。';
-  if (connection.running) return '访问已开启，可以通过访问地址查看知识库 mask。';
-  if (connection.status === 'service_not_ready') return '本地知识库服务正在准备中。';
+  if (connection.running) return '访问已开启，可以通过访问地址使用 OpenCode Chat。';
+  if (connection.status === 'service_not_ready') return '本地 OpenCode Chat 服务正在准备中。';
   return '访问已关闭，需要时可以重新开启。';
 }
 
@@ -1104,6 +1174,7 @@ function friendlyError(error: unknown) {
   if (text.includes('文档') || text.includes('Markdown')) return text;
   if (text.includes('可用额度') || text.includes('余额不足') || text.includes('流量额度')) return text;
   if (text.includes('BearFRP backend')) return text;
+  if (text.includes('OpenCode') || text.includes('sidecar') || text.includes('二进制') || text.includes('端口')) return text;
   if (text.includes('无法连接') || text.includes('network') || text.includes('后端')) {
     return '服务暂时不可用，请稍后重试';
   }

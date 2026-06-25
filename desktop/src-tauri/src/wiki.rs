@@ -10,20 +10,31 @@ use serde_json::{json, Value};
 use tauri::{AppHandle, State};
 
 use crate::{
-    sidecar, unix_millis, unix_timestamp, write_project_manifest, DesktopRuntime,
-    SharedRuntime,
+    sidecar, unix_millis, unix_timestamp, write_project_manifest, DesktopRuntime, SharedRuntime,
 };
 
 const MAX_SOURCE_BYTES: u64 = 100 * 1024 * 1024;
 const INGEST_QUEUE_FILE: &str = ".llm-wiki/ingest-queue.json";
 
 const INCLUDE_EXTENSIONS: &[&str] = &[
-    "md", "mdx", "txt", "pdf", "doc", "docx", "pptx", "xls", "xlsx", "odt", "odp",
-    "ods", "rtf", "html", "htm", "csv",
+    "md", "mdx", "txt", "pdf", "doc", "docx", "pptx", "xls", "xlsx", "odt", "odp", "ods", "rtf",
+    "html", "htm", "csv",
 ];
 const EXCLUDE_EXTENSIONS: &[&str] = &[
-    "tmp", "temp", "bak", "swp", "part", "partial", "crdownload", "exe", "dll", "so",
-    "dylib", "bin", "iso", "dmg",
+    "tmp",
+    "temp",
+    "bak",
+    "swp",
+    "part",
+    "partial",
+    "crdownload",
+    "exe",
+    "dll",
+    "so",
+    "dylib",
+    "bin",
+    "iso",
+    "dmg",
 ];
 const EXCLUDE_DIRS: &[&str] = &[
     ".git",
@@ -199,11 +210,7 @@ pub fn import_wiki_sources(
                     continue;
                 }
                 let target = unique_target_path(
-                    &dest_root.join(
-                        rel_inside_folder
-                            .parent()
-                            .unwrap_or_else(|| Path::new("")),
-                    ),
+                    &dest_root.join(rel_inside_folder.parent().unwrap_or_else(|| Path::new(""))),
                     rel_inside_folder
                         .file_name()
                         .and_then(|value| value.to_str())
@@ -214,7 +221,11 @@ pub fn import_wiki_sources(
                         .map_err(|error| format!("无法创建导入目录: {error}"))?;
                 }
                 fs::copy(&file, &target).map_err(|error| format!("无法复制 source: {error}"))?;
-                imported.push(relative_path(&root, &target)?.to_string_lossy().replace('\\', "/"));
+                imported.push(
+                    relative_path(&root, &target)?
+                        .to_string_lossy()
+                        .replace('\\', "/"),
+                );
             }
         } else {
             skipped.push(selected);
@@ -272,7 +283,11 @@ pub async fn refresh_wiki_graph(
     };
 
     if let Some(base_url) = server_url {
-        let url = format!("{}/projects/{}/graph", base_url.trim_end_matches('/'), project.id);
+        let url = format!(
+            "{}/projects/{}/graph",
+            base_url.trim_end_matches('/'),
+            project.id
+        );
         if let Ok(response) = Client::new().get(url).send().await {
             if response.status().is_success() {
                 if let Ok(body) = response.json::<ServerGraphResponse>().await {
@@ -325,7 +340,10 @@ pub(crate) fn ensure_wiki_layout(root: &Path) -> Result<(), String> {
     )?;
     write_if_missing(
         &root.join("wiki").join("log.md"),
-        &format!("# Research Log\n\n## {}\n\n- Project initialized\n", unix_timestamp()),
+        &format!(
+            "# Research Log\n\n## {}\n\n- Project initialized\n",
+            unix_timestamp()
+        ),
     )?;
     write_if_missing(
         &root.join("wiki").join("overview.md"),
@@ -377,14 +395,18 @@ fn ensure_project_identity(root: &Path, fallback_id: &str) -> Result<String, Str
     }
     let id = fallback_id.to_string();
     let body = json!({ "id": id, "createdAt": unix_millis() });
-    fs::write(&identity_path, serde_json::to_string_pretty(&body).unwrap_or_else(|_| body.to_string()))
-        .map_err(|error| format!("无法写入 .llm-wiki/project.json: {error}"))?;
+    fs::write(
+        &identity_path,
+        serde_json::to_string_pretty(&body).unwrap_or_else(|_| body.to_string()),
+    )
+    .map_err(|error| format!("无法写入 .llm-wiki/project.json: {error}"))?;
     Ok(id)
 }
 
 fn register_llm_wiki_project(app_data_dir: &Path, project: &WikiProjectDto) -> Result<(), String> {
     let data_dir = app_data_dir.join("llm-wiki");
-    fs::create_dir_all(&data_dir).map_err(|error| format!("无法创建 LLM Wiki 数据目录: {error}"))?;
+    fs::create_dir_all(&data_dir)
+        .map_err(|error| format!("无法创建 LLM Wiki 数据目录: {error}"))?;
     let state_path = data_dir.join("app-state.json");
     let mut state = fs::read_to_string(&state_path)
         .ok()
@@ -430,7 +452,8 @@ fn register_llm_wiki_project(app_data_dir: &Path, project: &WikiProjectDto) -> R
         .entry("recentProjects".to_string())
         .or_insert_with(|| json!([]));
     let mut recent_projects = recent.as_array().cloned().unwrap_or_default();
-    recent_projects.retain(|item| item.get("id").and_then(Value::as_str) != Some(project.id.as_str()));
+    recent_projects
+        .retain(|item| item.get("id").and_then(Value::as_str) != Some(project.id.as_str()));
     recent_projects.insert(
         0,
         json!({ "id": project.id, "name": project.name, "path": project.path }),
@@ -443,7 +466,11 @@ fn register_llm_wiki_project(app_data_dir: &Path, project: &WikiProjectDto) -> R
     fs::write(state_path, text).map_err(|error| format!("无法写入 LLM Wiki app-state: {error}"))
 }
 
-fn import_source_file(root: &Path, source: &Path, sources_root: &Path) -> Result<Option<String>, String> {
+fn import_source_file(
+    root: &Path,
+    source: &Path,
+    sources_root: &Path,
+) -> Result<Option<String>, String> {
     let file_name = source
         .file_name()
         .and_then(|value| value.to_str())
@@ -454,7 +481,11 @@ fn import_source_file(root: &Path, source: &Path, sources_root: &Path) -> Result
     }
     let target = unique_target_path(sources_root, file_name);
     fs::copy(source, &target).map_err(|error| format!("无法复制 source: {error}"))?;
-    Ok(Some(relative_path(root, &target)?.to_string_lossy().replace('\\', "/")))
+    Ok(Some(
+        relative_path(root, &target)?
+            .to_string_lossy()
+            .replace('\\', "/"),
+    ))
 }
 
 fn reject_project_scoped_import(project_root: &Path, selected_folder: &Path) -> Result<(), String> {
@@ -504,7 +535,11 @@ fn count_markdown_files(root: &Path) -> Result<usize, String> {
         .count())
 }
 
-fn enqueue_ingest_tasks(root: &Path, project_id: &str, source_paths: &[String]) -> Result<usize, String> {
+fn enqueue_ingest_tasks(
+    root: &Path,
+    project_id: &str,
+    source_paths: &[String],
+) -> Result<usize, String> {
     fs::create_dir_all(root.join(".llm-wiki"))
         .map_err(|error| format!("无法创建 ingest queue 目录: {error}"))?;
     let queue_path = root.join(INGEST_QUEUE_FILE);
@@ -562,7 +597,8 @@ fn read_ingest_queue(path: &Path) -> Result<Vec<IngestTask>, String> {
     if !path.exists() {
         return Ok(Vec::new());
     }
-    let raw = fs::read_to_string(path).map_err(|error| format!("无法读取 ingest queue: {error}"))?;
+    let raw =
+        fs::read_to_string(path).map_err(|error| format!("无法读取 ingest queue: {error}"))?;
     serde_json::from_str::<Vec<IngestTask>>(&raw)
         .map_err(|error| format!("ingest queue 格式错误: {error}"))
 }
@@ -573,7 +609,9 @@ fn write_ingest_queue(path: &Path, tasks: &[IngestTask]) -> Result<(), String> {
     fs::write(path, text).map_err(|error| format!("无法写入 ingest queue: {error}"))
 }
 
-fn build_graph_from_wiki(root: &Path) -> Result<(Vec<WikiGraphNodeDto>, Vec<WikiGraphEdgeDto>), String> {
+fn build_graph_from_wiki(
+    root: &Path,
+) -> Result<(Vec<WikiGraphNodeDto>, Vec<WikiGraphEdgeDto>), String> {
     let wiki_root = root.join("wiki");
     if !wiki_root.exists() {
         return Ok((Vec::new(), Vec::new()));
@@ -595,13 +633,18 @@ fn build_graph_from_wiki(root: &Path) -> Result<(Vec<WikiGraphNodeDto>, Vec<Wiki
         if id.is_empty() {
             continue;
         }
-        let file_name = path.file_name().and_then(|value| value.to_str()).unwrap_or("page.md");
+        let file_name = path
+            .file_name()
+            .and_then(|value| value.to_str())
+            .unwrap_or("page.md");
         raw.insert(
             id,
             (
                 extract_title(&content, file_name),
                 extract_type(&content),
-                relative_path(root, &path)?.to_string_lossy().replace('\\', "/"),
+                relative_path(root, &path)?
+                    .to_string_lossy()
+                    .replace('\\', "/"),
                 extract_wikilinks(&content),
             ),
         );
@@ -610,7 +653,10 @@ fn build_graph_from_wiki(root: &Path) -> Result<(Vec<WikiGraphNodeDto>, Vec<Wiki
     let hidden_types = BTreeSet::from(["query".to_string()]);
     raw.retain(|_, (_, node_type, _, _)| !hidden_types.contains(node_type));
     let ids = raw.keys().cloned().collect::<BTreeSet<_>>();
-    let mut link_count = raw.keys().map(|id| (id.clone(), 0_usize)).collect::<BTreeMap<_, _>>();
+    let mut link_count = raw
+        .keys()
+        .map(|id| (id.clone(), 0_usize))
+        .collect::<BTreeMap<_, _>>();
     let mut seen = BTreeSet::new();
     let mut edges = Vec::new();
 
@@ -662,7 +708,11 @@ fn extract_title(content: &str, file_name: &str) -> String {
         }
         if in_frontmatter {
             if let Some(value) = trimmed.strip_prefix("title:") {
-                return value.trim().trim_matches('"').trim_matches('\'').to_string();
+                return value
+                    .trim()
+                    .trim_matches('"')
+                    .trim_matches('\'')
+                    .to_string();
             }
         }
         if let Some(value) = trimmed.strip_prefix("# ") {
@@ -675,7 +725,11 @@ fn extract_title(content: &str, file_name: &str) -> String {
 fn extract_type(content: &str) -> String {
     for line in content.lines() {
         if let Some(value) = line.trim().strip_prefix("type:") {
-            return value.trim().trim_matches('"').trim_matches('\'').to_lowercase();
+            return value
+                .trim()
+                .trim_matches('"')
+                .trim_matches('\'')
+                .to_lowercase();
         }
     }
     "other".to_string()
@@ -737,7 +791,10 @@ fn is_ingestable_source_path(path: &str) -> bool {
     if name.is_empty() || name == "thumbs.db" || name == "desktop.ini" {
         return false;
     }
-    if EXCLUDE_GLOBS.iter().any(|pattern| wildcard_match(pattern, name)) {
+    if EXCLUDE_GLOBS
+        .iter()
+        .any(|pattern| wildcard_match(pattern, name))
+    {
         return false;
     }
     let ext = name.rsplit_once('.').map(|(_, ext)| ext).unwrap_or("");
@@ -819,9 +876,11 @@ fn list_files_recursive(root: &Path) -> Result<Vec<PathBuf>, String> {
     }
     let entries = fs::read_dir(root).map_err(|error| format!("无法读取目录: {error}"))?;
     for entry in entries {
-        let path = entry.map_err(|error| format!("无法读取目录项: {error}"))?.path();
-        let metadata = fs::symlink_metadata(&path)
-            .map_err(|error| format!("无法读取文件元数据: {error}"))?;
+        let path = entry
+            .map_err(|error| format!("无法读取目录项: {error}"))?
+            .path();
+        let metadata =
+            fs::symlink_metadata(&path).map_err(|error| format!("无法读取文件元数据: {error}"))?;
         if metadata.file_type().is_symlink() {
             continue;
         }

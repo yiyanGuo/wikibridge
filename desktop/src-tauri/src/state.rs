@@ -23,6 +23,8 @@ pub struct PersistedState {
     pub projects: BTreeMap<String, KnowledgeProject>,
     #[serde(default)]
     pub connections: BTreeMap<String, ProjectConnection>,
+    #[serde(default)]
+    pub remote_knowledge_bases: BTreeMap<String, RemoteKnowledgeBase>,
 }
 
 impl Default for PersistedState {
@@ -35,6 +37,7 @@ impl Default for PersistedState {
             last_configs: BTreeMap::new(),
             projects: BTreeMap::new(),
             connections: BTreeMap::new(),
+            remote_knowledge_bases: BTreeMap::new(),
         }
     }
 }
@@ -87,6 +90,17 @@ pub struct ProjectConnection {
     pub local_host: String,
     pub local_port: u16,
     pub created_at: u64,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct RemoteKnowledgeBase {
+    pub remote_id: String,
+    pub name: String,
+    pub url: String,
+    pub status: String,
+    pub added_at: u64,
+    pub last_opened_at: Option<u64>,
 }
 
 #[derive(Debug, Clone, Serialize)]

@@ -9,6 +9,7 @@ use std::{
 
 use serde::Serialize;
 use tauri::{AppHandle, Manager, State};
+use url::Url;
 
 mod api;
 mod frpc;
@@ -23,7 +24,7 @@ use api::{
 use frpc::ProcessStateDto;
 use state::{
     AppSnapshot, BuildStatus, DesktopRuntime, KnowledgeProject, LinkStatus, PersistedState,
-    ProjectConnection, ProjectMaterial,
+    ProjectConnection, ProjectMaterial, RemoteKnowledgeBase,
 };
 
 type SharedRuntime = Mutex<DesktopRuntime>;
@@ -47,6 +48,13 @@ pub struct AddMaterialsInput {
 pub struct CreateConnectionInput {
     pub project_id: String,
     pub traffic_mb: i64,
+}
+
+#[derive(Debug, Clone, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct AddRemoteKnowledgeBaseInput {
+    pub name: Option<String>,
+    pub url: String,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -75,6 +83,18 @@ pub struct ProjectDocumentContentDto {
 pub struct ProjectAssetDto {
     pub mime_type: String,
     pub bytes: Vec<u8>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct RemoteKnowledgeBaseCheckDto {
+    pub url: String,
+    pub ok: bool,
+    pub status: String,
+    pub message: String,
+    pub opencode_healthy: bool,
+    pub llm_wiki_healthy: bool,
+    pub kb_mode: Option<bool>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -147,6 +167,139 @@ fn stop_opencode_stack(runtime: State<'_, SharedRuntime>) -> Result<(), String> 
     let mut runtime = runtime.lock().map_err(lock_error)?;
     sidecar::stop_opencode_stack(&mut runtime);
     Ok(())
+}
+
+#[tauri::command]
+fn start_project_chat(
+    app: AppHandle,
+    runtime: State<'_, SharedRuntime>,
+    project_id: String,
+) -> Result<sidecar::OpenCodeStackDto, String> {
+    let mut runtime = runtime.lock().map_err(lock_error)?;
+    let project = runtime
+        .persisted
+        .projects
+        .get(&project_id)
+        .cloned()
+        .ok_or_else(|| "项目不存在".to_string())?;
+    let wiki_project = wiki::ensure_wiki_project(&mut runtime, &project_id)?;
+    sidecar::start_project_chat(&app, &mut runtime, &project, &wiki_project.id, None)
+}
+
+#[tauri::command]
+fn stop_project_chat(runtime: State<'_, SharedRuntime>, project_id: String) -> Result<(), String> {
+    let mut runtime = runtime.lock().map_err(lock_error)?;
+    sidecar::stop_project_chat(&mut runtime, &project_id);
+    Ok(())
+}
+
+#[tauri::command]
+fn list_remote_knowledge_bases(
+    runtime: State<'_, SharedRuntime>,
+) -> Result<Vec<RemoteKnowledgeBase>, String> {
+    let runtime = runtime.lock().map_err(lock_error)?;
+    Ok(runtime
+        .persisted
+        .remote_knowledge_bases
+        .values()
+        .cloned()
+        .collect())
+}
+
+#[tauri::command]
+async fn add_remote_knowledge_base(
+    runtime: State<'_, SharedRuntime>,
+    input: AddRemoteKnowledgeBaseInput,
+) -> Result<RemoteKnowledgeBase, String> {
+    let check = probe_remote_knowledge_base_url(&input.url).await?;
+    if !check.ok {
+        return Err(check.message);
+    }
+    let name = normalize_remote_name(input.name.as_deref(), &check.url)?;
+    let mut runtime = runtime.lock().map_err(lock_error)?;
+    if let Some(remote_id) = runtime
+        .persisted
+        .remote_knowledge_bases
+        .values()
+        .find(|item| item.url == check.url)
+        .map(|item| item.remote_id.clone())
+    {
+        let remote = runtime
+            .persisted
+            .remote_knowledge_bases
+            .get_mut(&remote_id)
+            .ok_or_else(|| "远程知识库不存在".to_string())?;
+        remote.name = name;
+        remote.status = check.status;
+        remote.last_opened_at = Some(unix_timestamp());
+        let updated = remote.clone();
+        runtime.save()?;
+        return Ok(updated);
+    }
+    let remote = RemoteKnowledgeBase {
+        remote_id: new_id("remote"),
+        name,
+        url: check.url,
+        status: check.status,
+        added_at: unix_timestamp(),
+        last_opened_at: Some(unix_timestamp()),
+    };
+    runtime
+        .persisted
+        .remote_knowledge_bases
+        .insert(remote.remote_id.clone(), remote.clone());
+    runtime.save()?;
+    Ok(remote)
+}
+
+#[tauri::command]
+fn remove_remote_knowledge_base(
+    runtime: State<'_, SharedRuntime>,
+    remote_id: String,
+) -> Result<(), String> {
+    let mut runtime = runtime.lock().map_err(lock_error)?;
+    runtime.persisted.remote_knowledge_bases.remove(&remote_id);
+    runtime.save()
+}
+
+#[tauri::command]
+fn touch_remote_knowledge_base(
+    runtime: State<'_, SharedRuntime>,
+    remote_id: String,
+) -> Result<RemoteKnowledgeBase, String> {
+    let mut runtime = runtime.lock().map_err(lock_error)?;
+    let remote = runtime
+        .persisted
+        .remote_knowledge_bases
+        .get_mut(&remote_id)
+        .ok_or_else(|| "远程知识库不存在".to_string())?;
+    remote.last_opened_at = Some(unix_timestamp());
+    let updated = remote.clone();
+    runtime.save()?;
+    Ok(updated)
+}
+
+#[tauri::command]
+async fn check_remote_knowledge_base(
+    runtime: State<'_, SharedRuntime>,
+    url: String,
+) -> Result<RemoteKnowledgeBaseCheckDto, String> {
+    let check = probe_remote_knowledge_base_url(&url).await?;
+    let mut runtime = runtime.lock().map_err(lock_error)?;
+    if let Some(remote_id) = runtime
+        .persisted
+        .remote_knowledge_bases
+        .values()
+        .find(|item| item.url == check.url || item.url == url)
+        .map(|item| item.remote_id.clone())
+    {
+        if let Some(remote) = runtime.persisted.remote_knowledge_bases.get_mut(&remote_id) {
+            remote.url = check.url.clone();
+            remote.status = check.status.clone();
+        }
+        runtime.save()?;
+    }
+    Ok(check)
 }
 
 #[tauri::command]
@@ -476,7 +629,7 @@ async fn create_connection(
         local_port,
         created_at: unix_timestamp(),
     };
-    ensure_mask_service(&runtime, &draft_connection, &project)?;
+    ensure_project_chat_service(&app, &runtime, &project, Some(local_port))?;
     let proxy = match create_connection_proxy(
         &client,
         &user,
@@ -488,7 +641,8 @@ async fn create_connection(
     {
         Ok(proxy) => proxy,
         Err(error) => {
-            stop_mask_service(&runtime, &connection_id)?;
+            let mut runtime = runtime.lock().map_err(lock_error)?;
+            sidecar::stop_project_chat(&mut runtime, &input.project_id);
             return Err(error);
         }
     };
@@ -521,7 +675,7 @@ async fn start_connection(
     let client = client_from_runtime(&runtime)?;
     let connection = get_connection(&runtime, &connection_id)?;
     let project = get_project(&runtime, &connection.project_id)?;
-    ensure_mask_service(&runtime, &connection, &project)?;
+    ensure_project_chat_service(&app, &runtime, &project, Some(connection.local_port))?;
     let scripts = client.get_proxy_scripts(connection.proxy_id).await?;
     {
         let mut runtime = runtime.lock().map_err(lock_error)?;
@@ -545,6 +699,7 @@ async fn stop_connection(
     {
         let mut runtime = runtime.lock().map_err(lock_error)?;
         frpc::stop_frpc(&mut runtime, connection.proxy_id, true)?;
+        sidecar::stop_project_chat(&mut runtime, &connection.project_id);
     }
     connection_dto(&runtime, &client, &connection).await
 }
@@ -602,6 +757,163 @@ fn check_local_port(host: String, port: u16) -> Result<bool, String> {
         }
     }
     Ok(false)
+}
+
+async fn probe_remote_knowledge_base_url(url: &str) -> Result<RemoteKnowledgeBaseCheckDto, String> {
+    let normalized = normalize_remote_opencode_url(url)?;
+    let client = reqwest::Client::builder()
+        .timeout(Duration::from_secs(4))
+        .redirect(reqwest::redirect::Policy::limited(5))
+        .build()
+        .map_err(|error| format!("无法创建远程探测客户端: {error}"))?;
+
+    let health = fetch_text(&client, &format!("{normalized}/global/health")).await;
+    let (health_status, health_body) = match health {
+        Ok(value) => value,
+        Err(error) => {
+            return Ok(RemoteKnowledgeBaseCheckDto {
+                url: normalized,
+                ok: false,
+                status: "unreachable".to_string(),
+                message: format!("无法连接远程 OpenCode: {error}"),
+                opencode_healthy: false,
+                llm_wiki_healthy: false,
+                kb_mode: None,
+            });
+        }
+    };
+
+    if health_status == reqwest::StatusCode::UNAUTHORIZED
+        || health_status == reqwest::StatusCode::FORBIDDEN
+    {
+        return Ok(RemoteKnowledgeBaseCheckDto {
+            url: normalized,
+            ok: true,
+            status: "auth_required".to_string(),
+            message: "远程 OpenCode 需要登录，打开后由 OpenCode 页面处理认证".to_string(),
+            opencode_healthy: false,
+            llm_wiki_healthy: false,
+            kb_mode: None,
+        });
+    }
+
+    if !health_status.is_success() || !health_body.contains("\"healthy\":true") {
+        return Ok(RemoteKnowledgeBaseCheckDto {
+            url: normalized,
+            ok: false,
+            status: "not_opencode".to_string(),
+            message: "该地址没有返回 OpenCode 健康检查，请确认分享的是 OpenCode Web 地址"
+                .to_string(),
+            opencode_healthy: false,
+            llm_wiki_healthy: false,
+            kb_mode: None,
+        });
+    }
+
+    let llm_wiki_healthy = fetch_text(&client, &format!("{normalized}/instance/llm-wiki/health"))
+        .await
+        .map(|(status, _)| status.is_success())
+        .unwrap_or(false);
+
+    let kb_mode = fetch_text(&client, &normalized)
+        .await
+        .ok()
+        .and_then(|(status, body)| status.is_success().then(|| parse_kb_mode_meta(&body)))
+        .flatten();
+
+    let (status, message) = if llm_wiki_healthy {
+        (
+            "ready".to_string(),
+            "远程 OpenCode 和知识库服务可用".to_string(),
+        )
+    } else {
+        (
+            "llm_wiki_unavailable".to_string(),
+            "远程 OpenCode 可用，但它暂时无法连接知识库服务".to_string(),
+        )
+    };
+
+    Ok(RemoteKnowledgeBaseCheckDto {
+        url: normalized,
+        ok: true,
+        status,
+        message,
+        opencode_healthy: true,
+        llm_wiki_healthy,
+        kb_mode,
+    })
+}
+
+async fn fetch_text(
+    client: &reqwest::Client,
+    url: &str,
+) -> Result<(reqwest::StatusCode, String), reqwest::Error> {
+    let response = client.get(url).send().await?;
+    let status = response.status();
+    let body = response.text().await.unwrap_or_default();
+    Ok((status, body))
+}
+
+fn normalize_remote_opencode_url(value: &str) -> Result<String, String> {
+    let trimmed = value.trim().trim_end_matches('/');
+    if trimmed.is_empty() {
+        return Err("请输入远程 OpenCode 分享链接".to_string());
+    }
+    let mut parsed =
+        Url::parse(trimmed).map_err(|_| "分享链接必须是完整的 http(s) URL".to_string())?;
+    if parsed.scheme() != "http" && parsed.scheme() != "https" {
+        return Err("分享链接只支持 http 或 https".to_string());
+    }
+    if parsed.host_str().is_none() {
+        return Err("分享链接必须包含主机名".to_string());
+    }
+    parsed.set_query(None);
+    parsed.set_fragment(None);
+    Ok(parsed.as_str().trim_end_matches('/').to_string())
+}
+
+fn normalize_remote_name(value: Option<&str>, url: &str) -> Result<String, String> {
+    let name = value.unwrap_or_default().trim();
+    let name = if name.is_empty() {
+        remote_name_from_url(url)
+    } else {
+        name.to_string()
+    };
+    if name.chars().count() > 50 {
+        return Err("远程知识库名称不能超过 50 个字".to_string());
+    }
+    Ok(name)
+}
+
+fn remote_name_from_url(url: &str) -> String {
+    Url::parse(url)
+        .ok()
+        .and_then(|parsed| parsed.host_str().map(str::to_string))
+        .filter(|host| !host.trim().is_empty())
+        .unwrap_or_else(|| "远程知识库".to_string())
+}
+
+fn parse_kb_mode_meta(html: &str) -> Option<bool> {
+    let lower = html.to_ascii_lowercase();
+    if !lower.contains("opencode-kb-mode") {
+        return None;
+    }
+    if lower.contains("opencode-kb-mode")
+        && (lower.contains("content=\"true\"")
+            || lower.contains("content='true'")
+            || lower.contains("content=\"1\"")
+            || lower.contains("content='1'"))
+    {
+        return Some(true);
+    }
+    if lower.contains("content=\"false\"")
+        || lower.contains("content='false'")
+        || lower.contains("content=\"0\"")
+        || lower.contains("content='0'")
+    {
+        return Some(false);
+    }
+    None
 }
 
 fn update_project_status(
@@ -723,44 +1035,21 @@ async fn delete_connection_internal(
     let mut runtime = runtime.lock().map_err(lock_error)?;
     let _ = frpc::stop_frpc(&mut runtime, connection.proxy_id, true);
     stop_mask_service_locked(&mut runtime, connection_id);
+    sidecar::stop_project_chat(&mut runtime, &connection.project_id);
     runtime.remove_proxy_files(connection.proxy_id);
     runtime.persisted.connections.remove(connection_id);
     runtime.save()
 }
 
-fn ensure_mask_service(
+fn ensure_project_chat_service(
+    app: &AppHandle,
     runtime: &State<'_, SharedRuntime>,
-    connection: &ProjectConnection,
     project: &KnowledgeProject,
-) -> Result<(), String> {
-    write_project_manifest(project)?;
+    preferred_port: Option<u16>,
+) -> Result<sidecar::OpenCodeStackDto, String> {
     let mut runtime = runtime.lock().map_err(lock_error)?;
-    let manifest_path = project_manifest_path(project);
-    let mut process = runtime.service_processes.remove(&connection.connection_id);
-    let ready = local_service::ensure_knowledge_mask_running(
-        &mut process,
-        connection.local_port,
-        manifest_path,
-    )?;
-    if let Some(process) = process {
-        runtime
-            .service_processes
-            .insert(connection.connection_id.clone(), process);
-    }
-    if ready {
-        Ok(())
-    } else {
-        Err("知识库服务启动失败".to_string())
-    }
-}
-
-fn stop_mask_service(
-    runtime: &State<'_, SharedRuntime>,
-    connection_id: &str,
-) -> Result<(), String> {
-    let mut runtime = runtime.lock().map_err(lock_error)?;
-    stop_mask_service_locked(&mut runtime, connection_id);
-    Ok(())
+    let wiki_project = wiki::ensure_wiki_project(&mut runtime, &project.project_id)?;
+    sidecar::start_project_chat(app, &mut runtime, project, &wiki_project.id, preferred_port)
 }
 
 fn stop_mask_service_locked(runtime: &mut DesktopRuntime, connection_id: &str) {
@@ -1170,6 +1459,13 @@ pub fn run() {
             set_bearfrp_backend_url,
             ensure_opencode_stack_running,
             stop_opencode_stack,
+            start_project_chat,
+            stop_project_chat,
+            list_remote_knowledge_bases,
+            add_remote_knowledge_base,
+            remove_remote_knowledge_base,
+            touch_remote_knowledge_base,
+            check_remote_knowledge_base,
             register_user,
             login_user,
             logout_user,
@@ -1241,5 +1537,32 @@ mod tests {
     fn project_name_rejects_path_separators() {
         assert!(normalize_project_name("foo/bar").is_err());
         assert!(normalize_project_name("foo\\bar").is_err());
+    }
+
+    #[test]
+    fn remote_opencode_url_strips_query_fragment_and_trailing_slash() {
+        let url = normalize_remote_opencode_url("https://example.com/opencode/?x=1#top").unwrap();
+        assert_eq!(url, "https://example.com/opencode");
+    }
+
+    #[test]
+    fn kb_mode_meta_detects_true_false_and_missing() {
+        assert_eq!(
+            parse_kb_mode_meta(r#"<meta name="opencode-kb-mode" content="true">"#),
+            Some(true)
+        );
+        assert_eq!(
+            parse_kb_mode_meta(r#"<meta name="opencode-kb-mode" content="1">"#),
+            Some(true)
+        );
+        assert_eq!(
+            parse_kb_mode_meta(r#"<meta name="opencode-kb-mode" content="false">"#),
+            Some(false)
+        );
+        assert_eq!(
+            parse_kb_mode_meta(r#"<meta name="opencode-kb-mode" content="0">"#),
+            Some(false)
+        );
+        assert_eq!(parse_kb_mode_meta("<html></html>"), None);
     }
 }

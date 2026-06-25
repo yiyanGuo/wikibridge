@@ -27,6 +27,7 @@ import { Provider } from "@/provider/provider"
 
 import { WebSearchTool } from "./websearch"
 import { LspTool } from "./lsp"
+import { LlmWikiGraphTool, LlmWikiReadFileTool, LlmWikiSearchTool } from "./llm-wiki"
 import * as Truncate from "./truncate"
 import { ApplyPatchTool } from "./apply_patch"
 import { Glob } from "@opencode-ai/core/util/glob"
@@ -51,6 +52,8 @@ import { Permission } from "@/permission"
 import { Kb } from "@/kb/guard"
 import { BackgroundJob } from "@/background/job"
 import { RuntimeFlags } from "@/effect/runtime-flags"
+import { LlmWikiConfig } from "@/llm-wiki/config"
+import { LlmWikiService } from "@/llm-wiki/service"
 import { ProviderV2 } from "@opencode-ai/core/provider"
 import { ModelV2 } from "@opencode-ai/core/model"
 
@@ -89,6 +92,7 @@ export const layer = Layer.effect(
     const agents = yield* Agent.Service
     const truncate = yield* Truncate.Service
     const flags = yield* RuntimeFlags.Service
+    const llmWiki = yield* LlmWikiService.Service
 
     const invalid = yield* InvalidTool
     const task = yield* TaskTool
@@ -106,6 +110,9 @@ export const layer = Layer.effect(
     const greptool = yield* GrepTool
     const patchtool = yield* ApplyPatchTool
     const skilltool = yield* SkillTool
+    const llmWikiSearch = yield* LlmWikiSearchTool
+    const llmWikiReadFile = yield* LlmWikiReadFileTool
+    const llmWikiGraph = yield* LlmWikiGraphTool
     const agent = yield* Agent.Service
 
     const state = yield* InstanceState.make<State>(
@@ -213,7 +220,15 @@ export const layer = Layer.effect(
           question: Tool.init(question),
           lsp: Tool.init(lsptool),
           plan: Tool.init(plan),
+          llmWikiSearch: Tool.init(llmWikiSearch),
+          llmWikiReadFile: Tool.init(llmWikiReadFile),
+          llmWikiGraph: Tool.init(llmWikiGraph),
         })
+        const llmWikiEnabled = Kb.enabled()
+          ? yield* llmWiki
+              .health()
+              .pipe(Effect.as(true), Effect.catch(() => Effect.succeed(false)))
+          : false
 
         return {
           custom,
@@ -232,6 +247,7 @@ export const layer = Layer.effect(
             tool.search,
             tool.skill,
             tool.patch,
+            ...(llmWikiEnabled ? [tool.llmWikiSearch, tool.llmWikiReadFile, tool.llmWikiGraph] : []),
             ...(flags.experimentalLspTool ? [tool.lsp] : []),
             ...(flags.experimentalPlanMode && flags.client === "cli" ? [tool.plan] : []),
           ],
@@ -334,6 +350,8 @@ export const defaultLayer = Layer.suspend(() =>
       Layer.provide(LSP.defaultLayer),
       Layer.provide(Instruction.defaultLayer),
       Layer.provide(FSUtil.defaultLayer),
+      Layer.provide(LlmWikiService.defaultLayer),
+      Layer.provide(LlmWikiConfig.defaultLayer),
       Layer.provide(EventV2Bridge.defaultLayer),
       Layer.provide(FetchHttpClient.layer),
       Layer.provide(Format.defaultLayer),
@@ -419,26 +437,34 @@ function isJsonSchemaObject(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value)
 }
 
-export const node = LayerNode.make(layer.pipe(Layer.provide(Ripgrep.defaultLayer)), [
-  Config.node,
-  Plugin.node,
-  Question.node,
-  Todo.node,
-  Agent.node,
-  Skill.node,
-  Session.node,
-  BackgroundJob.node,
-  Provider.node,
-  LSP.node,
-  Instruction.node,
-  FSUtil.node,
-  EventV2Bridge.node,
-  httpClient,
-  CrossSpawnSpawner.node,
-  Format.node,
-  Truncate.node,
-  RuntimeFlags.node,
-  Database.node,
-])
+export const node = LayerNode.make(
+  layer.pipe(
+    Layer.provide(Ripgrep.defaultLayer),
+    Layer.provide(LlmWikiService.defaultLayer),
+    Layer.provide(LlmWikiConfig.defaultLayer),
+  ),
+  [
+    Config.node,
+    Plugin.node,
+    Question.node,
+    Todo.node,
+    Agent.node,
+    Skill.node,
+    Session.node,
+    BackgroundJob.node,
+    Provider.node,
+    LSP.node,
+    Instruction.node,
+    FSUtil.node,
+    LlmWikiConfig.node,
+    EventV2Bridge.node,
+    httpClient,
+    CrossSpawnSpawner.node,
+    Format.node,
+    Truncate.node,
+    RuntimeFlags.node,
+    Database.node,
+  ],
+)
 
 export * as ToolRegistry from "./registry"

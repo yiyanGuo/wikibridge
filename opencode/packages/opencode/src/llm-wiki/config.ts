@@ -14,6 +14,11 @@ export class Service extends ConfigService.Service<Service>()("@opencode/LlmWiki
     Config.map(normalizeBaseUrl),
   ),
   token: Config.string("LLM_WIKI_TOKEN").pipe(Config.option, Config.map(Option.filter((value) => value.trim().length > 0))),
+  projectId: Config.string("LLM_WIKI_PROJECT_ID").pipe(
+    Config.option,
+    Config.map(Option.map((value) => value.trim())),
+    Config.map(Option.filter((value) => value.length > 0)),
+  ),
 }) {}
 
 export const defaultLayer = Service.defaultLayer.pipe(Layer.orDie)

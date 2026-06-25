@@ -21,6 +21,7 @@ import { Location } from "@opencode-ai/core/location"
 import { LocationServiceMap } from "@opencode-ai/core/location-layer"
 import { PluginBoot } from "@opencode-ai/core/plugin/boot"
 import { Reference } from "@opencode-ai/core/reference"
+import { Kb } from "@/kb/guard"
 
 export function provider(model: Provider.Model) {
   if (model.api.id.includes("gpt-4") || model.api.id.includes("o1") || model.api.id.includes("o3"))
@@ -70,6 +71,15 @@ export const layer = Layer.effect(
             `  Today's date: ${new Date().toDateString()}`,
             `</env>`,
           ].join("\n"),
+          Kb.enabled()
+            ? [
+                "Knowledge base chat mode is enabled.",
+                "For questions about the shared knowledge base, first use llm_wiki_search and then llm_wiki_read_file when a result looks relevant.",
+                "Use llm_wiki_graph when entity or wikilink relationships matter.",
+                "Base answers on retrieved knowledge-base evidence. If the tools return no relevant support, say that the knowledge base did not contain supporting material.",
+                "Do not modify the public wiki or attempt local shell/terminal actions.",
+              ].join("\n")
+            : undefined,
           references.length === 0
             ? undefined
             : [

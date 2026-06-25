@@ -158,6 +158,34 @@ button {
   padding: 16px 20px 20px;
 }
 
+.opencode-workspace {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 340px minmax(0, 1fr);
+  gap: 16px;
+}
+
+.opencode-sidebar,
+.opencode-viewer {
+  min-height: 0;
+}
+
+.opencode-sidebar {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 12px;
+  overflow: auto;
+}
+
+.opencode-section {
+  min-width: 0;
+  padding: 14px;
+  border: 1px solid #d8e0e8;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
 .opencode-toolbar {
   min-height: 50px;
   display: flex;
@@ -172,16 +200,150 @@ button {
   margin-top: 0;
 }
 
+.remote-form {
+  display: grid;
+  gap: 10px;
+}
+
+.remote-list {
+  display: grid;
+  gap: 10px;
+}
+
+.remote-section {
+  min-height: 0;
+  overflow: auto;
+}
+
+.remote-card {
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid #d8e0e8;
+  border-radius: 8px;
+  background: #f8fafc;
+}
+
+.remote-card.active {
+  border-color: #93c5fd;
+  background: #eff6ff;
+}
+
+.remote-card-heading {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 10px;
+}
+
+.remote-card-heading strong,
+.remote-card-heading span {
+  display: block;
+  min-width: 0;
+}
+
+.remote-card-heading strong {
+  margin-bottom: 4px;
+  color: #17202a;
+}
+
+.remote-card-heading span:not(.remote-status) {
+  overflow: hidden;
+  color: #64748b;
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.remote-status {
+  padding: 4px 7px;
+  border-radius: 999px;
+  color: #475569;
+  background: #e8edf4;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.remote-status[data-status='ready'] {
+  color: #047857;
+  background: #dcfce7;
+}
+
+.remote-status[data-status='auth_required'] {
+  color: #075985;
+  background: #e0f2fe;
+}
+
+.remote-status[data-status='llm_wiki_unavailable'],
+.remote-status[data-status='unreachable'],
+.remote-status[data-status='not_opencode'] {
+  color: #991b1b;
+  background: #fee2e2;
+}
+
+.service-log-list {
+  display: grid;
+  gap: 5px;
+  margin-top: 10px;
+  color: #64748b;
+  font-size: 12px;
+}
+
+.service-log-list span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.opencode-viewer {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+}
+
+.viewer-toolbar {
+  min-height: 54px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+  padding: 0 0 12px;
+}
+
+.viewer-toolbar strong,
+.viewer-toolbar span {
+  display: block;
+  min-width: 0;
+}
+
+.viewer-toolbar strong {
+  color: #17202a;
+}
+
+.viewer-toolbar span {
+  margin-top: 4px;
+  overflow: hidden;
+  color: #64748b;
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.viewer-toolbar .card-actions {
+  margin-top: 0;
+}
+
 .opencode-frame {
   flex: 1;
   min-height: 520px;
+  height: 100%;
   width: 100%;
   border: 1px solid #cbd5e1;
   border-radius: 8px;
   background: #ffffff;
 }
 
-.opencode-start-panel {
+.remote-empty-panel {
   flex: 1;
   min-height: 420px;
   display: grid;
@@ -194,9 +356,33 @@ button {
   background: #f8fafc;
 }
 
-.opencode-start-panel h1 {
+.remote-empty-panel h1 {
   margin: 0;
   font-size: 24px;
+}
+
+.remote-empty-panel p {
+  max-width: 360px;
+  margin: 0;
+  color: #64748b;
+  line-height: 1.5;
+  text-align: center;
+}
+
+.section-heading.compact {
+  margin-bottom: 12px;
+}
+
+.section-heading.compact h2 {
+  margin: 0 0 5px;
+  font-size: 16px;
+}
+
+.section-heading.compact p {
+  margin: 0;
+  color: #64748b;
+  font-size: 13px;
+  line-height: 1.4;
 }
 
 .app-shell {
@@ -647,6 +833,12 @@ button:disabled {
   border: 1px dashed #cbd5e1;
   border-radius: 8px;
   background: #f8fafc;
+}
+
+.empty-state.compact {
+  min-height: 96px;
+  padding: 12px;
+  text-align: center;
 }
 
 .reader-panel {

@@ -18,6 +18,7 @@ export function injectKbMeta(html: string) {
   if (!Kb.enabled()) return html
   const tags =
     `<meta name="opencode-kb-mode" content="1">` +
+    `<meta name="opencode-kb-project-id" content="${escapeAttr(process.env["LLM_WIKI_PROJECT_ID"]?.trim() ?? "")}">` +
     `<meta name="opencode-kb-user" content="${escapeAttr(Kb.userId())}">` +
     `<meta name="opencode-kb-private" content="${escapeAttr(Kb.privateRelative())}">` +
     `<meta name="opencode-kb-wiki" content="${escapeAttr(Kb.wikiRelative())}">`

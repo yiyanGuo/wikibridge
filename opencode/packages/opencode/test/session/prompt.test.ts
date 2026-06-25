@@ -56,6 +56,8 @@ import { reply, TestLLMServer } from "../lib/llm-server"
 import { RuntimeFlags } from "@/effect/runtime-flags"
 import { ProviderV2 } from "@opencode-ai/core/provider"
 import { ModelV2 } from "@opencode-ai/core/model"
+import { LlmWikiConfig } from "@/llm-wiki/config"
+import { LlmWikiService } from "@/llm-wiki/service"
 
 const summary = Layer.succeed(
   SessionSummary.Service,
@@ -187,6 +189,8 @@ function makePrompt(input?: { processor?: "blocking" }) {
   const todo = Todo.layer.pipe(Layer.provideMerge(deps))
   const registry = ToolRegistry.layer.pipe(
     Layer.provide(Skill.defaultLayer),
+    Layer.provide(LlmWikiService.defaultLayer),
+    Layer.provide(LlmWikiConfig.defaultLayer),
     Layer.provide(FetchHttpClient.layer),
     Layer.provide(CrossSpawnSpawner.defaultLayer),
     Layer.provide(Git.defaultLayer),
