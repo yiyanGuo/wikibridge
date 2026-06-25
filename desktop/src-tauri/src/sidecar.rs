@@ -661,3 +661,52 @@ fn ensure_executable(path: &PathBuf) {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::net::TcpListener;
+
+    #[test]
+    fn platform_key_uses_supported_packaging_names() {
+        assert!(matches!(
+            platform_key(),
+            "darwin-arm64"
+                | "darwin-amd64"
+                | "linux-arm64"
+                | "linux-amd64"
+                | "windows-amd64"
+        ));
+    }
+
+    #[test]
+    fn executable_name_adds_windows_suffix_only_on_windows() {
+        if cfg!(windows) {
+            assert_eq!(executable_name("opencode"), "opencode.exe");
+        } else {
+            assert_eq!(executable_name("opencode"), "opencode");
+        }
+    }
+
+    #[test]
+    fn http_get_ok_checks_status_and_expected_body() {
+        let listener = TcpListener::bind((HOST, 0)).unwrap();
+        let port = listener.local_addr().unwrap().port();
+        thread::spawn(move || {
+            let (mut stream, _) = listener.accept().unwrap();
+            let mut request = [0_u8; 512];
+            let _ = stream.read(&mut request);
+            let _ = stream.write_all(
+                b"HTTP/1.1 200 OK\r\nContent-Length: 16\r\nConnection: close\r\n\r\n{\"healthy\":true}",
+            );
+        });
+        assert!(http_get_ok(port, "/global/health", Some("\"healthy\":true")));
+    }
+
+    #[test]
+    fn allocate_port_skips_ports_that_are_already_bound() {
+        let first = TcpListener::bind((HOST, 0)).unwrap();
+        let occupied = first.local_addr().unwrap().port();
+        assert!(allocate_port(occupied, occupied).is_err());
+    }
+}

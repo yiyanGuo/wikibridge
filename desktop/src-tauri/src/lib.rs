@@ -1540,6 +1540,29 @@ mod tests {
     }
 
     #[test]
+    fn project_name_rejects_empty_dot_and_overlong_names() {
+        assert!(normalize_project_name("   ").is_err());
+        assert!(normalize_project_name(".").is_err());
+        assert!(normalize_project_name("..").is_err());
+        assert!(normalize_project_name("a".repeat(31).as_str()).is_err());
+    }
+
+    #[test]
+    fn project_root_rejects_parent_components() {
+        let err = project_root_for_create(Path::new("/tmp/wiki"), "../escape").unwrap_err();
+        assert!(err.contains("上级路径"));
+    }
+
+    #[test]
+    fn traffic_limit_accepts_only_supported_steps() {
+        for value in [10, 50, 100, 500] {
+            assert_eq!(normalize_traffic_mb(value).unwrap(), value);
+        }
+        assert!(normalize_traffic_mb(0).is_err());
+        assert!(normalize_traffic_mb(101).is_err());
+    }
+
+    #[test]
     fn remote_opencode_url_strips_query_fragment_and_trailing_slash() {
         let url = normalize_remote_opencode_url("https://example.com/opencode/?x=1#top").unwrap();
         assert_eq!(url, "https://example.com/opencode");
