@@ -1,13 +1,16 @@
 # WikiBridge Desktop 源码构建
 
-本版本只准备 `frpc` 和 `llm-wiki-server`。
+本版本准备 `frpc`、`opencode` 和 `llm-wiki-server`。
+
+`npm ci` 会安装项目内的 `bun` 和 `protoc` devDependency，sidecar 构建脚本会优先
+使用 `desktop/node_modules/.bin/` 下的本地工具。
 
 ## Windows
 
 ```powershell
 cd desktop
 npm ci
-npm run sidecars:llm-wiki
+npm run sidecars
 ```
 
 把 `frpc.exe` 放到：
@@ -33,7 +36,7 @@ npm run tauri:build
 ```bash
 cd desktop
 npm ci
-npm run sidecars:llm-wiki
+npm run sidecars
 ```
 
 把 `frpc` 放到对应平台目录：
@@ -61,12 +64,22 @@ npm run tauri:dev
 npm run tauri:build
 ```
 
+Linux 本机打包默认生成 `deb` 和 `rpm`，不默认生成 AppImage。
+
+如果 `tauri build` 在启动阶段提示 `Too many open files`，但普通文件描述符上限
+足够，通常是当前用户的 inotify 实例耗尽。可以关闭占用 watcher 的应用，或由
+用户自行临时提高上限：
+
+```bash
+sudo sysctl fs.inotify.max_user_instances=1024
+```
+
 ## macOS
 
 ```bash
 cd desktop
 npm ci
-npm run sidecars:llm-wiki
+npm run sidecars
 ```
 
 把 `frpc` 放到对应平台目录：
