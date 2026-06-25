@@ -50,6 +50,32 @@ npm run tauri:dev
 The OpenCode entry requires `opencode` and `llm-wiki-server` binaries to be
 present under `src-tauri/binaries` for the current platform.
 
+## Manual CI
+
+Run the minimal desktop check before handoff or packaging:
+
+```bash
+npm run ci:check
+```
+
+The current check runs the frontend build, validates required sidecar binaries
+for the host platform, and runs the Tauri Rust tests. To check sidecars for a
+specific packaging target:
+
+```bash
+npm run ci:check -- --platform linux-amd64
+```
+
+Run browser-level desktop system tests separately:
+
+```bash
+npm run test:system:install
+npm run test:system
+```
+
+These tests use a mocked Tauri backend and are intended to capture correct
+behavior even when the current app still has known bugs.
+
 ## Packaging
 
 See [PACKAGING.md](./PACKAGING.md) for the full desktop packaging workflow,

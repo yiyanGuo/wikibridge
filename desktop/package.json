@@ -6,6 +6,12 @@
   "scripts": {
     "dev": "vite --host 127.0.0.1 --port 1420",
     "build": "tsc --noEmit && vite build",
+    "ci:check": "node scripts/manual-ci.mjs",
+    "test:system": "playwright test",
+    "test:system:install": "playwright install chromium",
+    "test:system:ui": "playwright test --ui",
+    "test:system:report": "playwright show-report",
+    "test:system:server": "vite --mode system-test --host 127.0.0.1 --port 1421",
     "sidecars": "node scripts/prepare-sidecars.mjs all",
     "sidecars:llm-wiki": "node scripts/prepare-sidecars.mjs llm-wiki",
     "sidecars:opencode": "node scripts/prepare-sidecars.mjs opencode",
@@ -26,6 +32,7 @@
     "remark-math": "^6.0.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.61.1",
     "@tauri-apps/cli": "^2.9.5",
     "@types/babel__generator": "^7.27.0",
     "@types/babel__template": "^7.4.4",
