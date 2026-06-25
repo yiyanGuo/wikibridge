@@ -64,9 +64,15 @@ Run the minimal desktop check before handoff or packaging:
 npm run ci:check
 ```
 
-The current check runs the frontend build, validates required sidecar binaries
-for the host platform, and runs the Tauri Rust contract tests. To check
-sidecars for a specific packaging target:
+The current check runs BearFRP backend pytest, the frontend build, validates
+required sidecar binaries for the host platform, and runs the Tauri Rust
+contract tests. To run only the BearFRP backend tests:
+
+```bash
+npm run test:backend
+```
+
+To check sidecars for a specific packaging target:
 
 ```bash
 npm run ci:check -- --platform linux-amd64
@@ -99,10 +105,10 @@ Run the full local suite:
 npm run test:all
 ```
 
-`test:all` includes real integration tests, so it requires `bearfrp_test` and
-current-platform sidecars. Known product bugs should be tracked in
-`tests/system/known-bugs.ts` and marked with Playwright `test.fail()` until the
-bug is fixed.
+`test:all` includes backend pytest and real integration tests, so it requires
+`bearfrp_test` and current-platform sidecars. Known product bugs should be
+tracked in `tests/system/known-bugs.ts` and marked with Playwright
+`test.fail()` until the bug is fixed.
 
 GitHub Actions runs the desktop suite on Linux, macOS, and Windows. Failed runs
 upload Playwright reports and integration logs as workflow artifacts.

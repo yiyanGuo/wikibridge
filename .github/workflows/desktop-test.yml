@@ -62,6 +62,10 @@ jobs:
           conda run -n bearfrp_test python -m pip install --upgrade pip
           conda run -n bearfrp_test python -m pip install -r bearfrp/requirements.txt
 
+      - name: Run BearFRP backend tests
+        working-directory: bearfrp
+        run: conda run -n bearfrp_test python -m pytest -q
+
       - name: Install desktop dependencies
         working-directory: desktop
         run: npm ci
