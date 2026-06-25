@@ -9,6 +9,9 @@ export type SystemTestState = {
   projects?: Array<Record<string, unknown>>;
   connections?: Array<Record<string, unknown>>;
   remoteKnowledgeBases?: Array<Record<string, unknown>>;
+  wikiProjects?: Record<string, Record<string, unknown>>;
+  projectTrees?: Record<string, Record<string, unknown>>;
+  projectDocuments?: Record<string, Record<string, unknown>>;
   commandFailures?: Record<string, string>;
 };
 
@@ -54,10 +57,16 @@ export async function getClipboardText(page: Page) {
   return page.evaluate(() => window.__wikibridgeSystemTestClipboardText);
 }
 
+export async function getOpenCalls(page: Page) {
+  return page.evaluate(() => window.__wikibridgeSystemTestOpenCalls);
+}
+
 declare global {
   interface Window {
     __wikibridgeSystemTest?: {
       getInvocations: () => Array<{ command: string; args?: unknown }>;
+      failCommand: (command: string, message: string) => void;
+      clearCommandFailure: (command: string) => void;
     };
     __wikibridgeSystemTestInitialState?: SystemTestState;
     __wikibridgeSystemTestDialog?: {

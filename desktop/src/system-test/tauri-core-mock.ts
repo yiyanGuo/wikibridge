@@ -268,6 +268,13 @@ function createState(overrides: Partial<SystemTestState> = {}): SystemTestState 
 function addRemoteKnowledgeBase(args: unknown): RemoteKnowledgeBase {
   const input = readInput(args);
   const url = String(input.url || '').trim().replace(/\/+$/, '');
+  const existing = state.remoteKnowledgeBases.find((item) => item.url === url);
+  if (existing) {
+    existing.name = String(input.name || '') || new URL(url).host;
+    existing.status = 'ready';
+    existing.lastOpenedAt = Date.now();
+    return clone(existing);
+  }
   const remote: RemoteKnowledgeBase = {
     remoteId: `remote-${state.nextId++}`,
     name: String(input.name || '') || new URL(url).host,

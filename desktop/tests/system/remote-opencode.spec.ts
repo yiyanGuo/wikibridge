@@ -16,6 +16,30 @@ test('adds and opens a remote OpenCode knowledge base', async ({ page }) => {
   await expect(page.locator('iframe.opencode-frame')).toHaveAttribute('src', 'https://wiki.example.test/share');
 });
 
+test('normalizes duplicate remote OpenCode links and updates the existing card', async ({ page }) => {
+  await prepareSystemTestPage(page, {
+    remoteKnowledgeBases: [
+      {
+        remoteId: 'remote-1',
+        name: '旧名称',
+        url: 'https://wiki.example.test/share',
+        status: 'ready',
+        addedAt: 1,
+        lastOpenedAt: 1
+      }
+    ]
+  });
+
+  await page.getByRole('button', { name: /OpenCode/ }).click();
+  await page.getByLabel('名称').fill('新名称');
+  await page.getByLabel('分享链接').fill('https://wiki.example.test/share/');
+  await page.getByRole('button', { name: '添加' }).click();
+
+  await expect(page.locator('.remote-card')).toHaveCount(1);
+  await expect(page.locator('.remote-card').filter({ hasText: '新名称' })).toBeVisible();
+  await expect(page.locator('.remote-card')).toContainText('https://wiki.example.test/share');
+});
+
 test('reports remote check failure without removing the saved item', async ({ page }) => {
   await prepareSystemTestPage(page, {
     remoteKnowledgeBases: [
