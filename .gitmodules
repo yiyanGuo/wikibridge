@@ -1,6 +1,7 @@
 [submodule "opencode"]
 	path = opencode
 	url = https://github.com/fQwQf/opencode.git
+	branch = dev
 [submodule "llm_wiki"]
 	path = llm_wiki
 	url = https://github.com/fQwQf/llm_wiki.git
