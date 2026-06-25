@@ -1,0 +1,50 @@
+## @file scripts/demo.linux.sh.tmpl
+#  @brief Linux demo 留言板启动脚本模板，由后端渲染后交给用户复制运行。
+#  @author BearFrps课程设计小组
+#  @course 武汉大学开源软件与技术课程 2026
+#  @date 2026-06-10
+#  @version 1.0
+#  @copyright Apache-2.0
+#  @details
+#   依赖关系：bash、python3 或预编译 demo-server、curl。
+#   修改记录：2026-06-10，补充 Doxygen 风格文件头和脚本行为说明。
+#   读取本地端口、昵称和初始留言。
+#   优先下载并运行 Python 版 demo_server.py。
+#   如果没有 python3，则按 Linux 架构下载预编译 Go 兜底二进制。
+#   本脚本只启动用户本地服务，不直接修改 frpc 配置。
+set -e
+
+echo "=== Demo 留言板服务启动脚本 ==="
+printf "本地端口 [默认 {{DEFAULT_LOCAL_PORT}}]: "
+read PORT
+PORT=${PORT:-{{DEFAULT_LOCAL_PORT}}}
+printf "昵称 [默认 留言板]: "
+read NICKNAME
+NICKNAME=${NICKNAME:-留言板}
+printf "留言 [默认 这是一个临时留言板]: "
+read MESSAGE
+MESSAGE=${MESSAGE:-这是一个临时留言板}
+
+if command -v python3 >/dev/null 2>&1; then
+  echo "使用 Python 版"
+  if [ ! -f demo_server.py ]; then
+    curl -fsSL -o demo_server.py "{{DEMO_BIN_BASE_URL}}/demo_server.py"
+  fi
+  python3 demo_server.py --port "$PORT" --nickname "$NICKNAME" --message "$MESSAGE"
+  exit $?
+fi
+
+echo "未找到 Python3，使用预编译 Go 兜底版"
+ARCH=$(uname -m)
+case "$ARCH" in
+  x86_64) ARCH=amd64 ;;
+  aarch64|arm64) ARCH=arm64 ;;
+  *) echo "当前架构 $ARCH 没有提供 Linux 兜底二进制，请安装 python3 后重试。"; exit 1 ;;
+esac
+
+if [ ! -f demo-server ]; then
+  curl -fsSL -o demo-server "{{DEMO_BIN_BASE_URL}}/demo-server-linux-${ARCH}"
+  chmod +x demo-server
+fi
+
+  ./demo-server --port "$PORT" --nickname "$NICKNAME" --message "$MESSAGE"

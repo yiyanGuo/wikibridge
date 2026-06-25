@@ -1,0 +1,54 @@
+\documentclass[tikz,border=4pt]{standalone}
+\usepackage{ctex}
+\usepackage{xcolor}
+\usetikzlibrary{arrows.meta,positioning,shapes.geometric,calc,fit}
+
+\definecolor{whu}{RGB}{30,55,113}
+\definecolor{softblue}{RGB}{232,239,250}
+\definecolor{softorange}{RGB}{255,244,226}
+
+\begin{document}
+\begin{tikzpicture}[
+    font=\sffamily\small,
+    actor/.style={draw=whu, fill=softblue, thick, ellipse, align=center, minimum width=2.6cm, minimum height=0.9cm},
+    usecase/.style={draw=whu, fill=white, thick, ellipse, align=center, minimum width=3.4cm, minimum height=0.9cm},
+    system/.style={draw=whu, rounded corners=4pt, thick, fill=softblue!45},
+    note/.style={draw=orange!80!black, fill=softorange, rounded corners=3pt, align=left, inner sep=5pt},
+    link/.style={draw=whu, thick},
+    include/.style={draw=whu, thick, dashed, -{Stealth[length=2mm]}}
+]
+
+\node[actor] (creator) at (-6.5,2.8) {知识库创建者\\普通用户};
+\node[actor] (visitor) at (-6.5,-2.8) {外部访问者\\用户的用户};
+\node[actor] (admin) at (6.8,0) {平台管理员\\服务器维护者};
+
+\node[system, minimum width=9.2cm, minimum height=6.6cm] (box) at (0,0) {};
+\node[anchor=north west, text=whu, font=\sffamily\bfseries] at (box.north west) {本地知识库一键部署与发布平台};
+
+\node[usecase] (create) at (-2.7,2.1) {创建/配置知识库};
+\node[usecase] (launch) at (1.9,2.1) {启动本地服务};
+\node[usecase] (publish) at (-2.7,0.45) {一键发布到外网};
+\node[usecase] (monitor) at (1.9,0.45) {查看状态与日志};
+\node[usecase] (ask) at (-2.7,-1.25) {检索与智能问答};
+\node[usecase] (share) at (1.9,-1.25) {分享访问入口};
+\node[usecase] (ports) at (1.9,-2.85) {端口/用户权限管理};
+
+\draw[link] (creator) -- (create);
+\draw[link] (creator) -- (launch);
+\draw[link] (creator) -- (publish);
+\draw[link] (creator) -- (monitor);
+\draw[link] (creator) -- (share);
+\draw[link] (visitor) -- (ask);
+\draw[link] (visitor) -- (share);
+\draw[link] (admin) -- (ports);
+\draw[link] (admin) -- (monitor);
+
+\draw[include] (publish) -- node[above, sloped, font=\scriptsize] {include} (launch);
+\draw[include] (publish) -- node[below, sloped, font=\scriptsize] {include} (ports);
+\draw[include] (share) -- node[right, font=\scriptsize] {include} (publish);
+\draw[include] (ask) -- node[below, sloped, font=\scriptsize] {include} (share);
+
+\node[note] at (0,-4.2) {非功能需求：图形化低门槛操作；发布链路稳定；认证与端口权限可控；知识库模块与 frp 管理模块解耦。};
+
+\end{tikzpicture}
+\end{document}

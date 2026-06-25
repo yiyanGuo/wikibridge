@@ -1,0 +1,29 @@
+bindAddr = "0.0.0.0"
+bindPort = 7000
+vhostHTTPPort = 8080
+subdomainHost = "localhost"
+
+webServer.addr = "127.0.0.1"
+webServer.port = 7500
+webServer.user = "admin"
+webServer.password = "changeme"
+
+auth.method = "token"
+auth.token = "bearfrps-internal"
+
+transport.heartbeatTimeout = 15
+maxPortsPerClient = 10
+natholeAnalysisDataReserveHours = 168
+allowPorts = [
+  { start = 1, end = 65535 }
+]
+
+log.to = "console"
+log.level = "info"
+detailedErrorsToClient = true
+
+[[httpPlugins]]
+name = "bearfrps-manager"
+addr = "127.0.0.1:8000"
+path = "/frps-plugin"
+ops = ["Login", "NewProxy", "CloseProxy", "Ping"]

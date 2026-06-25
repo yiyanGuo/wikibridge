@@ -1,0 +1,45 @@
+## @file scripts/demo.win.ps1.tmpl
+#  @brief Windows PowerShell demo 留言板启动脚本模板。
+#  @author BearFrps课程设计小组
+#  @course 武汉大学开源软件与技术课程 2026
+#  @date 2026-06-10
+#  @version 1.0
+#  @copyright Apache-2.0
+#  @details
+#   依赖关系：PowerShell、python/py 或预编译 demo-server.exe。
+#   修改记录：2026-06-10，补充 Doxygen 风格文件头和脚本行为说明。
+#   读取本地端口、昵称和初始留言。
+#   优先用 Python 运行 demo_server.py。
+#   如果系统没有 Python，则下载 Windows amd64 兜底二进制。
+#   该脚本只服务课程演示，不写入注册表或修改系统服务。
+Write-Host "=== Demo 留言板服务启动脚本 ==="
+$portInput = Read-Host "本地端口 [默认 {{DEFAULT_LOCAL_PORT}}]"
+if ([string]::IsNullOrWhiteSpace($portInput)) { $port = {{DEFAULT_LOCAL_PORT}} } else { $port = $portInput }
+$nicknameInput = Read-Host "昵称 [默认 留言板]"
+if ([string]::IsNullOrWhiteSpace($nicknameInput)) { $nickname = "留言板" } else { $nickname = $nicknameInput }
+$messageInput = Read-Host "留言 [默认 这是一个临时留言板]"
+if ([string]::IsNullOrWhiteSpace($messageInput)) { $message = "这是一个临时留言板" } else { $message = $messageInput }
+
+$python = Get-Command python -ErrorAction SilentlyContinue
+$pyLauncher = Get-Command py -ErrorAction SilentlyContinue
+
+if ($python -or $pyLauncher) {
+    Write-Host "使用 Python 版"
+    if (-not (Test-Path "demo_server.py")) {
+        Invoke-WebRequest -Uri "{{DEMO_BIN_BASE_URL}}/demo_server.py" -OutFile "demo_server.py"
+    }
+    if ($python) {
+        python demo_server.py --port $port --nickname $nickname --message $message
+    } else {
+        py -3 demo_server.py --port $port --nickname $nickname --message $message
+    }
+    exit $LASTEXITCODE
+}
+
+Write-Host "未找到 Python，使用预编译 Go 兜底版"
+if (-not (Test-Path "demo-server.exe")) {
+    Invoke-WebRequest -Uri "{{DEMO_BIN_BASE_URL}}/demo-server-windows-amd64.exe" -OutFile "demo-server.exe"
+}
+
+Unblock-File ".\demo-server.exe" -ErrorAction SilentlyContinue
+.\demo-server.exe --port $port --nickname $nickname --message $message

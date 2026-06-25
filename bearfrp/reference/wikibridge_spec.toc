@@ -1,0 +1,38 @@
+\contentsline {section}{文档变更历史记录}{I}{Doc-Start}%
+\contentsline {section}{\numberline {1}引言}{1}{section.1}%
+\contentsline {subsection}{\numberline {1.1}编写目的}{1}{subsection.1.1}%
+\contentsline {subsection}{\numberline {1.2}读者对象}{1}{subsection.1.2}%
+\contentsline {subsection}{\numberline {1.3}软件项目概述}{1}{subsection.1.3}%
+\contentsline {subsection}{\numberline {1.4}文档概述}{2}{subsection.1.4}%
+\contentsline {subsection}{\numberline {1.5}定义}{2}{subsection.1.5}%
+\contentsline {subsection}{\numberline {1.6}参考资料}{2}{subsection.1.6}%
+\contentsline {section}{\numberline {2}软件设计约束}{3}{section.2}%
+\contentsline {subsection}{\numberline {2.1}软件设计目标和原则}{3}{subsection.2.1}%
+\contentsline {subsection}{\numberline {2.2}软件设计的约束和限制}{3}{subsection.2.2}%
+\contentsline {section}{\numberline {3}软件设计}{4}{section.3}%
+\contentsline {subsection}{\numberline {3.1}软件体系结构设计}{4}{subsection.3.1}%
+\contentsline {subsubsection}{\numberline {3.1.1}用户端子系统}{4}{subsubsection.3.1.1}%
+\contentsline {subsubsection}{\numberline {3.1.2}服务器子系统}{5}{subsubsection.3.1.2}%
+\contentsline {subsubsection}{\numberline {3.1.3}消费端子系统}{5}{subsubsection.3.1.3}%
+\contentsline {subsection}{\numberline {3.2}用户界面设计}{5}{subsection.3.2}%
+\contentsline {subsection}{\numberline {3.3}用例设计}{6}{subsection.3.3}%
+\contentsline {subsubsection}{\numberline {3.3.1}管理素材箱用例}{6}{subsubsection.3.3.1}%
+\contentsline {subsubsection}{\numberline {3.3.2}编译 Wiki 用例}{7}{subsubsection.3.3.2}%
+\contentsline {subsubsection}{\numberline {3.3.3}检查优化图谱用例}{7}{subsubsection.3.3.3}%
+\contentsline {subsubsection}{\numberline {3.3.4}发布到公网用例}{7}{subsubsection.3.3.4}%
+\contentsline {subsubsection}{\numberline {3.3.5}浏览与问答用例}{7}{subsubsection.3.3.5}%
+\contentsline {subsection}{\numberline {3.4}核心流程设计}{7}{subsection.3.4}%
+\contentsline {subsection}{\numberline {3.5}类设计和构件设计}{7}{subsection.3.5}%
+\contentsline {subsubsection}{\numberline {3.5.1}关键类关系}{8}{subsubsection.3.5.1}%
+\contentsline {subsubsection}{\numberline {3.5.2}关键方法设计}{9}{subsubsection.3.5.2}%
+\contentsline {subsection}{\numberline {3.6}数据设计}{9}{subsection.3.6}%
+\contentsline {subsubsection}{\numberline {3.6.1}本地数据结构}{10}{subsubsection.3.6.1}%
+\contentsline {subsubsection}{\numberline {3.6.2}服务器数据表}{10}{subsubsection.3.6.2}%
+\contentsline {subsubsection}{\numberline {3.6.3}数据安全设计}{10}{subsubsection.3.6.3}%
+\contentsline {subsection}{\numberline {3.7}部署设计}{11}{subsection.3.7}%
+\contentsline {subsubsection}{\numberline {3.7.1}用户端部署}{11}{subsubsection.3.7.1}%
+\contentsline {subsubsection}{\numberline {3.7.2}服务器部署}{11}{subsubsection.3.7.2}%
+\contentsline {subsubsection}{\numberline {3.7.3}消费端部署}{11}{subsubsection.3.7.3}%
+\contentsline {subsection}{\numberline {3.8}异常处理与可靠性设计}{11}{subsection.3.8}%
+\contentsline {subsection}{\numberline {3.9}测试设计}{12}{subsection.3.9}%
+\contentsline {section}{结论}{13}{Item.13}%
