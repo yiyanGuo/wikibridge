@@ -12,6 +12,12 @@ Run BearFRP backend pytest through the project conda env:
 npm run test:backend
 ```
 
+Run real desktop processes against local fake BearFRP/frps/LLM services:
+
+```bash
+npm run test:integration:fake-stack
+```
+
 Individual targets:
 
 ```bash

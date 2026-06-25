@@ -51,6 +51,14 @@ if (options.includeIntegration) {
   })
 }
 
+if (options.includeFakeStack) {
+  steps.push({
+    name: "desktop fake stack integration tests",
+    command: npmBin,
+    args: ["run", "test:integration:fake-stack"],
+  })
+}
+
 const startedAt = Date.now()
 
 for (const [index, step] of steps.entries()) {
@@ -82,6 +90,7 @@ function parseArgs(rawArgs) {
   const sidecarArgs = []
   let includeSystem = false
   let includeIntegration = false
+  let includeFakeStack = false
 
   for (let index = 0; index < rawArgs.length; index += 1) {
     const arg = rawArgs[index]
@@ -98,6 +107,10 @@ function parseArgs(rawArgs) {
       includeSystem = true
       continue
     }
+    if (arg === "--include-fake-stack") {
+      includeFakeStack = true
+      continue
+    }
     if (arg === "--platform") {
       const value = rawArgs[index + 1]
       if (!value) fail("--platform requires a value")
@@ -112,11 +125,11 @@ function parseArgs(rawArgs) {
     fail(`Unknown option "${arg}"`)
   }
 
-  return { sidecarArgs, includeSystem, includeIntegration }
+  return { sidecarArgs, includeSystem, includeIntegration, includeFakeStack }
 }
 
 function printHelp() {
-  console.log(`Usage: npm run ci:check -- [--platform <platform>] [--include-system] [--include-integration]
+  console.log(`Usage: npm run ci:check -- [--platform <platform>] [--include-system] [--include-integration] [--include-fake-stack]
 
 Runs the minimal manual CI checks for the desktop app:
   1. BearFRP backend pytest
@@ -126,7 +139,8 @@ Runs the minimal manual CI checks for the desktop app:
 
 Use --platform when checking sidecars for a non-host packaging target.
 Use --include-system to also run Playwright system tests.
-Use --include-integration to also run real desktop integration tests.`)
+Use --include-integration to also run real desktop integration tests.
+Use --include-fake-stack to run real app processes against fake BearFRP/frps/LLM services.`)
 }
 
 function fail(message) {

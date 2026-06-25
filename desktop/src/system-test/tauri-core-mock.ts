@@ -2,6 +2,15 @@ type AppSnapshot = {
   is_authenticated: boolean;
 };
 
+type LlmWikiLlmConfig = {
+  provider: string;
+  apiKey: string;
+  model: string;
+  baseUrl: string;
+  maxContextSize: number;
+  configured: boolean;
+};
+
 type UserDto = {
   username: string;
   balance_mb: number;
@@ -86,6 +95,7 @@ export type SystemTestState = {
   services: {
     bearfrpBackendUrl: string;
   };
+  llmConfig: LlmWikiLlmConfig;
   authenticated: boolean;
   user: UserDto | null;
   projects: KnowledgeProject[];
@@ -146,6 +156,10 @@ export async function invoke<T = unknown>(command: string, args?: unknown): Prom
     case 'save_settings':
       state.services.bearfrpBackendUrl = readStringArg(args, 'url');
       return snapshot() as T;
+    case 'get_llm_wiki_llm_config':
+      return clone(state.llmConfig) as T;
+    case 'set_llm_wiki_llm_config':
+      return saveLlmWikiConfig(args) as T;
     case 'list_remote_knowledge_bases':
       return clone(state.remoteKnowledgeBases) as T;
     case 'add_remote_knowledge_base':
@@ -230,6 +244,14 @@ function createState(overrides: Partial<SystemTestState> = {}): SystemTestState 
   const defaultProject = sampleProject();
   const base: SystemTestState = {
     services: { bearfrpBackendUrl: 'https://bearfrp.example.test' },
+    llmConfig: {
+      provider: 'deepseek',
+      apiKey: 'sk-system-test',
+      model: 'deepseek-v4-flash',
+      baseUrl: 'https://api.deepseek.com/v1',
+      maxContextSize: 64000,
+      configured: true
+    },
     authenticated: false,
     user: null,
     projects: [defaultProject],
@@ -257,6 +279,7 @@ function createState(overrides: Partial<SystemTestState> = {}): SystemTestState 
     ...base,
     ...clone(overrides),
     services: { ...base.services, ...clone(overrides.services) },
+    llmConfig: { ...base.llmConfig, ...clone(overrides.llmConfig) },
     wikiProjects: { ...base.wikiProjects, ...clone(overrides.wikiProjects) },
     projectTrees: { ...base.projectTrees, ...clone(overrides.projectTrees) },
     projectDocuments: { ...base.projectDocuments, ...clone(overrides.projectDocuments) },
@@ -339,6 +362,20 @@ function ensureWikiProject(projectId: string): WikiProjectState {
   if (!project) throw new Error('项目不存在');
   state.wikiProjects[projectId] ||= sampleWikiProject(project);
   return clone(state.wikiProjects[projectId]);
+}
+
+function saveLlmWikiConfig(args: unknown): LlmWikiLlmConfig {
+  const input = readInput(args);
+  const next: LlmWikiLlmConfig = {
+    provider: String(input.provider || 'deepseek'),
+    apiKey: String(input.apiKey || ''),
+    model: String(input.model || 'deepseek-v4-flash'),
+    baseUrl: String(input.baseUrl || 'https://api.deepseek.com/v1'),
+    maxContextSize: Number(input.maxContextSize || 64000),
+    configured: Boolean(String(input.apiKey || '').trim())
+  };
+  state.llmConfig = next;
+  return clone(next);
 }
 
 function ensureProjectTree(projectId: string): ProjectTreeNode {

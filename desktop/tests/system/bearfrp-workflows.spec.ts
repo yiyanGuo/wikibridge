@@ -24,12 +24,12 @@ test('imports sources, builds wiki, refreshes graph, and starts/stops Chat', asy
   await expect(page.getByText('Graph：1/0')).toBeVisible();
 
   await page.getByRole('button', { name: '启动 Chat' }).click();
-  await expect(page.getByText('OpenCode Chat 已启动：http://127.0.0.1:9010')).toBeVisible();
+  await expect(page.getByText('消费端 Chat 已启动：http://127.0.0.1:9010')).toBeVisible();
   await expect.poll(() => getOpenCalls(page)).toContainEqual({ url: 'http://127.0.0.1:9010', target: '_blank' });
   await expect(page.getByRole('button', { name: '停止 Chat' })).toBeVisible();
 
   await page.getByRole('button', { name: '停止 Chat' }).click();
-  await expect(page.getByText('OpenCode Chat 已停止')).toBeVisible();
+  await expect(page.getByText('消费端 Chat 已停止')).toBeVisible();
   await expect(page.getByRole('button', { name: '启动 Chat' })).toBeVisible();
 });
 
