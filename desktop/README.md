@@ -27,7 +27,7 @@ src-tauri/binaries/
 
 Use `.exe` suffixes on Windows.
 
-Build and copy current-platform OpenCode and LLM Wiki sidecars:
+Build and copy current-platform frpc, OpenCode, and LLM Wiki sidecars:
 
 ```bash
 npm run sidecars

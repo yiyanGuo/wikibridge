@@ -9,6 +9,7 @@ npm run sidecars
 Individual targets:
 
 ```bash
+npm run sidecars:frpc
 npm run sidecars:llm-wiki
 npm run sidecars:opencode
 ```
