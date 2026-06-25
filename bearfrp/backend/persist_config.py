@@ -18,9 +18,9 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from backend.config import ROOT_DIR
+from backend.config import CONFIG_DIR
 
-_PERSIST_FILE = ROOT_DIR / "config" / "allocatable_range.json"
+_PERSIST_FILE = CONFIG_DIR / "allocatable_range.json"
 
 
 def load_allocatable_range(default_start: int, default_end: int) -> tuple[int, int]:

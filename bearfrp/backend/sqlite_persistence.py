@@ -20,11 +20,11 @@ from __future__ import annotations
 import sqlite3
 from typing import Iterable
 
-from backend.config import ROOT_DIR
+from backend.config import CONFIG_DIR
 from backend.models import Proxy, RechargeLog, Store, User
 
 
-_DB_FILE = ROOT_DIR / "config" / "bearfrps.db"
+_DB_FILE = CONFIG_DIR / "bearfrps.db"
 
 
 def load_store_unlocked(store: Store) -> bool:

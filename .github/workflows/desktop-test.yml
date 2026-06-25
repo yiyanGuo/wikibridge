@@ -1,0 +1,109 @@
+name: Desktop Tests
+
+on:
+  pull_request:
+  push:
+    branches:
+      - master
+      - main
+
+jobs:
+  desktop:
+    name: desktop (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-latest
+          - macos-latest
+          - windows-latest
+
+    defaults:
+      run:
+        shell: bash -l {0}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Linux Tauri dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev \
+            libayatana-appindicator3-dev \
+            librsvg2-dev \
+            patchelf
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: desktop/package-lock.json
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: |
+            desktop/src-tauri
+            llm_wiki/src-tauri
+
+      - uses: conda-incubator/setup-miniconda@v3
+        with:
+          auto-update-conda: true
+          python-version: "3.11"
+          activate-environment: bearfrp_test
+
+      - name: Install BearFRP Python dependencies
+        run: |
+          conda run -n bearfrp_test python -m pip install --upgrade pip
+          conda run -n bearfrp_test python -m pip install -r bearfrp/requirements.txt
+
+      - name: Run BearFRP backend tests
+        working-directory: bearfrp
+        run: conda run -n bearfrp_test python -m pytest -q
+
+      - name: Install desktop dependencies
+        working-directory: desktop
+        run: npm ci
+
+      - name: Install Playwright browser
+        working-directory: desktop
+        run: npm run test:system:install
+
+      - name: Prepare desktop sidecars
+        working-directory: desktop
+        run: |
+          npm run sidecars:frpc
+          npm run sidecars
+
+      - name: Run desktop system tests
+        working-directory: desktop
+        run: npm run test:system
+
+      - name: Run desktop CI checks
+        working-directory: desktop
+        run: npm run ci:check
+
+      - name: Run desktop integration tests
+        working-directory: desktop
+        run: npm run test:integration:desktop
+
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-${{ matrix.os }}
+          path: desktop/playwright-report
+          if-no-files-found: ignore
+
+      - name: Upload desktop test logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: desktop-test-results-${{ matrix.os }}
+          path: desktop/test-results
+          if-no-files-found: ignore

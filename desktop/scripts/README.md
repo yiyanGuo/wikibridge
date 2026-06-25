@@ -6,6 +6,12 @@ Build and copy current-platform sidecars into Tauri's bundled resource tree:
 npm run sidecars
 ```
 
+Run BearFRP backend pytest through the project conda env:
+
+```bash
+npm run test:backend
+```
+
 Individual targets:
 
 ```bash

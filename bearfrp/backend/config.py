@@ -29,6 +29,7 @@ from pydantic import BaseModel
 
 
 ROOT_DIR = Path(__file__).resolve().parents[1]
+CONFIG_DIR = Path(os.getenv("BEARFRPS_CONFIG_DIR", ROOT_DIR / "config"))
 
 
 class Settings(BaseModel):

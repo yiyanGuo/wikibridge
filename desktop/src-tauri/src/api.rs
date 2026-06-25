@@ -355,3 +355,51 @@ fn network_error(error: reqwest::Error) -> String {
         format!("网络请求失败: {error}")
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn client() -> ApiClient {
+        ApiClient {
+            base_url: "https://bearfrp.example.test".to_string(),
+            user_session: Some("session-1".to_string()),
+            uid_cookie: Some("uid-1".to_string()),
+            client: Client::new(),
+        }
+    }
+
+    #[test]
+    fn url_joins_backend_base_and_api_path() {
+        let client = client();
+        assert_eq!(
+            client.url("/api/user/me"),
+            "https://bearfrp.example.test/api/user/me"
+        );
+    }
+
+    #[test]
+    fn with_auth_adds_user_session_and_uid_cookies() {
+        let client = client();
+        let request = client
+            .with_auth(client.client.get(client.url("/api/user/me")))
+            .build()
+            .unwrap();
+        let cookie = request.headers().get(COOKIE).unwrap().to_str().unwrap();
+        assert!(cookie.contains("user_session=session-1"));
+        assert!(cookie.contains("uid=uid-1"));
+    }
+
+    #[test]
+    fn extract_cookie_reads_named_set_cookie_value() {
+        let mut headers = HeaderMap::new();
+        headers.append(
+            SET_COOKIE,
+            "user_session=session-2; Path=/; HttpOnly".parse().unwrap(),
+        );
+        headers.append(SET_COOKIE, "uid=uid-2; Path=/".parse().unwrap());
+        assert_eq!(extract_cookie(&headers, "user_session"), Some("session-2".to_string()));
+        assert_eq!(extract_cookie(&headers, "uid"), Some("uid-2".to_string()));
+        assert_eq!(extract_cookie(&headers, "missing"), None);
+    }
+}

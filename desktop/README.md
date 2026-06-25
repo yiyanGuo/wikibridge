@@ -33,6 +33,12 @@ Build and copy current-platform frpc, OpenCode, and LLM Wiki sidecars:
 npm run sidecars
 ```
 
+Download current-platform `frpc` from the upstream frp release:
+
+```bash
+npm run sidecars:frpc
+```
+
 Copy existing build outputs without rebuilding:
 
 ```bash
@@ -49,6 +55,63 @@ npm run tauri:dev
 
 The OpenCode entry requires `opencode` and `llm-wiki-server` binaries to be
 present under `src-tauri/binaries` for the current platform.
+
+## Testing
+
+Run the minimal desktop check before handoff or packaging:
+
+```bash
+npm run ci:check
+```
+
+The current check runs BearFRP backend pytest, the frontend build, validates
+required sidecar binaries for the host platform, and runs the Tauri Rust
+contract tests. To run only the BearFRP backend tests:
+
+```bash
+npm run test:backend
+```
+
+To check sidecars for a specific packaging target:
+
+```bash
+npm run ci:check -- --platform linux-amd64
+```
+
+Run browser-level desktop system tests with a mocked Tauri backend:
+
+```bash
+npm run test:system:install
+npm run test:system
+```
+
+These tests use a mocked Tauri backend and are intended to capture correct
+behavior even when the current app still has known bugs.
+
+Run real integration checks:
+
+```bash
+npm run test:integration:desktop
+```
+
+Integration tests require a conda environment named `bearfrp_test` with
+`bearfrp/requirements.txt` installed. The script starts the BearFRP backend
+with an isolated temporary config directory, checks current-platform sidecars,
+and writes logs under `test-results/integration/`.
+
+Run the full local suite:
+
+```bash
+npm run test:all
+```
+
+`test:all` includes backend pytest and real integration tests, so it requires
+`bearfrp_test` and current-platform sidecars. Known product bugs should be
+tracked in `tests/system/known-bugs.ts` and marked with Playwright
+`test.fail()` until the bug is fixed.
+
+GitHub Actions runs the desktop suite on Linux, macOS, and Windows. Failed runs
+upload Playwright reports and integration logs as workflow artifacts.
 
 ## Packaging
 

@@ -284,3 +284,57 @@ fn restrict_file_permissions(path: &PathBuf) {
         let _ = fs::set_permissions(path, fs::Permissions::from_mode(0o600));
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn temp_state_path(name: &str) -> PathBuf {
+        let root = std::env::temp_dir().join(format!(
+            "wikibridge-state-{name}-{}",
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_millis()
+        ));
+        fs::create_dir_all(&root).unwrap();
+        root.join("state.json")
+    }
+
+    #[test]
+    fn normalize_base_url_trims_slash_and_rejects_bad_schemes() {
+        assert_eq!(
+            normalize_base_url(" https://bearfrp.example.test/ ").unwrap(),
+            "https://bearfrp.example.test"
+        );
+        assert_eq!(normalize_base_url("  ").unwrap(), "");
+        assert!(normalize_base_url("ftp://bearfrp.example.test").is_err());
+        assert!(normalize_base_url("bearfrp.example.test").is_err());
+    }
+
+    #[test]
+    fn load_persisted_state_returns_default_when_missing() {
+        let path = temp_state_path("missing");
+        let state = load_persisted_state(&path).unwrap();
+        assert_eq!(state.base_url, "");
+        assert!(state.projects.is_empty());
+        let _ = fs::remove_dir_all(path.parent().unwrap());
+    }
+
+    #[test]
+    fn load_persisted_state_normalizes_base_url_and_rejects_corruption() {
+        let path = temp_state_path("normalizes");
+        fs::write(
+            &path,
+            r#"{"base_url":"https://bearfrp.example.test/","user_session":null,"uid_cookie":null,"enabled_proxy_ids":[],"last_configs":{}}"#,
+        )
+        .unwrap();
+        let state = load_persisted_state(&path).unwrap();
+        assert_eq!(state.base_url, "https://bearfrp.example.test");
+
+        fs::write(&path, "{not-json").unwrap();
+        let err = load_persisted_state(&path).unwrap_err();
+        assert!(err.contains("本地状态文件格式错误"));
+        let _ = fs::remove_dir_all(path.parent().unwrap());
+    }
+}
