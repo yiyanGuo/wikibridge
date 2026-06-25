@@ -14,6 +14,11 @@ const options = parseArgs(process.argv.slice(2))
 
 const steps = [
   {
+    name: "BearFRP backend tests",
+    command: npmBin,
+    args: ["run", "test:backend"],
+  },
+  {
     name: "frontend build",
     command: npmBin,
     args: ["run", "build"],
@@ -114,9 +119,10 @@ function printHelp() {
   console.log(`Usage: npm run ci:check -- [--platform <platform>] [--include-system] [--include-integration]
 
 Runs the minimal manual CI checks for the desktop app:
-  1. frontend TypeScript/Vite build
-  2. required sidecar binary layout check
-  3. Tauri Rust tests
+  1. BearFRP backend pytest
+  2. frontend TypeScript/Vite build
+  3. required sidecar binary layout check
+  4. Tauri Rust tests
 
 Use --platform when checking sidecars for a non-host packaging target.
 Use --include-system to also run Playwright system tests.

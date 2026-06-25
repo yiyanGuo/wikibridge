@@ -31,13 +31,17 @@ try {
   process.exitCode = 1
 } finally {
   for (const child of children.reverse()) {
-    child.kill()
+    child.process.kill()
+    child.log.end()
   }
 }
+
+process.exit(process.exitCode ?? 0)
 
 async function runBearfrpSmoke() {
   const port = await freePort()
   const configDir = mkdtempSync(path.join(tmpdir(), "wikibridge-bearfrp-config-"))
+  const frpsDir = mkdtempSync(path.join(tmpdir(), "wikibridge-frps-"))
   const logPath = path.join(artifactsDir, "bearfrp-backend.log")
   const backend = spawn(
     condaBin,
@@ -61,6 +65,7 @@ async function runBearfrpSmoke() {
         ...process.env,
         BACKEND_PORT: String(port),
         BEARFRPS_CONFIG_DIR: configDir,
+        BEARFRPS_FRPS_DIR: frpsDir,
         BEARFRPS_START_FRPS: "0",
         SERVER_PUBLIC_HOST: "127.0.0.1",
         USAGE_POLL_INTERVAL_SEC: "3600",
@@ -73,7 +78,7 @@ async function runBearfrpSmoke() {
   await waitForHttp(`${baseUrl}/`, "BearFRP backend")
 
   const userPage = await fetchText(`${baseUrl}/user`)
-  assertIncludes(userPage, "WikiBridge", "/user page")
+  assertIncludes(userPage, "BearFRPs", "/user page")
 
   const username = `ci_${Date.now()}`
   const password = "integration-secret"
@@ -178,11 +183,6 @@ function run(command, args) {
 function spawn(command, args, { cwd, env, logPath }) {
   const log = createWriteStream(logPath, { flags: "a" })
   log.write(`\n=== ${command} ${args.join(" ")} ===\n`)
-  const child = spawnSyncLike(command, args, cwd, env, log)
-  return child
-}
-
-function spawnSyncLike(command, args, cwd, env, log) {
   const child = spawnChild(command, args, {
     cwd,
     env,
@@ -194,7 +194,10 @@ function spawnSyncLike(command, args, cwd, env, log) {
   child.on("exit", (code, signal) => {
     log.write(`\n=== exited code=${code} signal=${signal} ===\n`)
   })
-  return child
+  const closed = new Promise((resolve) => {
+    child.once("close", resolve)
+  })
+  return { process: child, log, closed }
 }
 
 async function fetchText(url, options) {
