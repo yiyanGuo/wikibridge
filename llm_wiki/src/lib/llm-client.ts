@@ -131,7 +131,7 @@ export async function streamChat(
         onError(new Error(`Request timed out after ${Math.round(timeoutMs / 60000)} min. Try a faster model or a smaller context.`))
         return
       }
-      onError(new Error("Request was cancelled"))
+      onDone()
       return
     }
     if (isFetchNetworkError(err)) {

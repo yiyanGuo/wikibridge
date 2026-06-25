@@ -15,6 +15,9 @@ const required = [
   ["opencode", "opencode"],
   ["llm-wiki-server", "llm-wiki-server"],
 ]
+const requiredResources = [
+  path.join(desktopDir, "src-tauri", "binaries", "pdfium", platform, pdfiumDestName(platform)),
+]
 
 const missing = []
 const notExecutable = []
@@ -29,6 +32,10 @@ for (const [group, name] of required) {
   if (!platform.startsWith("windows-") && (statSync(file).mode & 0o111) === 0) {
     notExecutable.push(file)
   }
+}
+
+for (const file of requiredResources) {
+  if (!existsSync(file)) missing.push(file)
 }
 
 if (missing.length > 0 || notExecutable.length > 0) {
@@ -64,4 +71,10 @@ function parseArgs(rawArgs) {
 function fail(message) {
   console.error(message)
   process.exit(1)
+}
+
+function pdfiumDestName(targetPlatform) {
+  if (targetPlatform.startsWith("windows-")) return "pdfium.dll"
+  if (targetPlatform.startsWith("darwin-")) return "libpdfium.dylib"
+  return "libpdfium.so"
 }

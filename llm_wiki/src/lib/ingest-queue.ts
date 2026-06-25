@@ -4,6 +4,7 @@ import { useWikiStore } from "@/stores/wiki-store"
 import { normalizePath, isAbsolutePath } from "@/lib/path-utils"
 import { getProjectPathById } from "@/lib/project-identity"
 import { hasUsableLlm } from "@/lib/has-usable-llm"
+import { sweepResolvedReviews } from "@/lib/sweep-reviews"
 
 // ── Types ─────────────────────────────────────────────────────────────────
 
@@ -501,10 +502,9 @@ async function onQueueDrained(projectId: string, projectPath: string): Promise<v
   const signal = sweepAbortController.signal
 
   try {
-    const { sweepResolvedReviews } = await import("@/lib/sweep-reviews")
     await sweepResolvedReviews(projectPath, signal)
   } catch (err) {
-    console.error("[Ingest Queue] Failed to load sweep-reviews:", err)
+    console.error("[Ingest Queue] review sweep failed:", err)
   } finally {
     if (sweepAbortController && sweepAbortController.signal === signal) {
       sweepAbortController = null

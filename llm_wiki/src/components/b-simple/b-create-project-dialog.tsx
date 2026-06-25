@@ -5,7 +5,6 @@
 import { useState } from "react"
 import { open } from "@tauri-apps/plugin-dialog"
 import { X, FolderOpen } from "lucide-react"
-import { useWikiStore } from "@/stores/wiki-store"
 import { createProject } from "@/commands/fs"
 import type { WikiProject } from "@/types/wiki"
 

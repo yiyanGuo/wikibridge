@@ -36,7 +36,8 @@
     "resources": [
       "binaries/frpc/**/*",
       "binaries/opencode/**/*",
-      "binaries/llm-wiki-server/**/*"
+      "binaries/llm-wiki-server/**/*",
+      "binaries/pdfium/**/*"
     ]
   }
 }

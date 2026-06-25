@@ -24,13 +24,14 @@ const args = new Set(parsed.args)
 const target = parsed.target
 const skipBuild = args.has("--skip-build")
 
-if (!["all", "frpc", "opencode", "llm-wiki"].includes(target)) {
-  fail(`Unknown target "${target}". Use all, frpc, opencode, or llm-wiki.`)
+if (!["all", "frpc", "opencode", "llm-wiki", "pdfium"].includes(target)) {
+  fail(`Unknown target "${target}". Use all, frpc, opencode, llm-wiki, or pdfium.`)
 }
 
 if (target === "all" || target === "frpc") prepareFrpc()
 if (target === "all" || target === "llm-wiki") prepareLlmWiki()
 if (target === "all" || target === "opencode") prepareOpenCode()
+if (target === "all" || target === "pdfium") preparePdfium()
 
 function prepareFrpc() {
   const executable = executableName(platform, "frpc")
@@ -96,6 +97,12 @@ function prepareOpenCode() {
   copyBinary(source, dest, "opencode")
 }
 
+function preparePdfium() {
+  const source = pdfiumSourcePath(platform)
+  const dest = path.join(desktopDir, "src-tauri", "binaries", "pdfium", platform, pdfiumDestName(platform))
+  copyBinary(source, dest, "pdfium")
+}
+
 function copyBinary(sourceCandidates, dest, label) {
   const candidates = Array.isArray(sourceCandidates) ? sourceCandidates : [sourceCandidates]
   const source = candidates.find((candidate) => existsSync(candidate))
@@ -132,7 +139,7 @@ function parseArgs(rawArgs) {
 
   const positional = parsed.args.filter((arg) => !arg.startsWith("--"))
   if (positional.length > 1) {
-    fail(`Too many targets: ${positional.join(", ")}. Use one of all, frpc, opencode, or llm-wiki.`)
+    fail(`Too many targets: ${positional.join(", ")}. Use one of all, frpc, opencode, llm-wiki, or pdfium.`)
   }
 
   return {
@@ -156,6 +163,30 @@ function opencodeSourcePaths(opencodeRoot, executable) {
   const candidates = [path.join(binDir, executable)]
   if (platform.startsWith("windows-")) candidates.push(path.join(binDir, "opencode"))
   return candidates
+}
+
+function pdfiumSourcePath(targetPlatform) {
+  const pdfiumDir = path.join(repoRoot, "llm_wiki", "src-tauri", "pdfium")
+  switch (targetPlatform) {
+    case "darwin-arm64":
+      return path.join(pdfiumDir, "libpdfium.dylib")
+    case "darwin-amd64":
+      return path.join(pdfiumDir, "libpdfium-x86_64.dylib")
+    case "linux-arm64":
+      return path.join(pdfiumDir, "libpdfium-arm64.so")
+    case "linux-amd64":
+      return path.join(pdfiumDir, "libpdfium.so")
+    case "windows-amd64":
+      return path.join(pdfiumDir, "pdfium.dll")
+    default:
+      fail(`Unsupported pdfium platform "${targetPlatform}".`)
+  }
+}
+
+function pdfiumDestName(targetPlatform) {
+  if (targetPlatform.startsWith("windows-")) return "pdfium.dll"
+  if (targetPlatform.startsWith("darwin-")) return "libpdfium.dylib"
+  return "libpdfium.so"
 }
 
 function frpDownloadSpec(version, targetPlatform) {

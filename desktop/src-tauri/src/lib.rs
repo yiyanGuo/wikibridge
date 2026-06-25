@@ -15,6 +15,7 @@ mod api;
 mod frpc;
 mod local_service;
 mod sidecar;
+mod source_text;
 mod state;
 mod wiki;
 
@@ -1450,6 +1451,9 @@ pub fn run() {
             let runtime = DesktopRuntime::new(app.handle())
                 .map_err(|error| std::io::Error::new(std::io::ErrorKind::Other, error))?;
             app.manage(Mutex::new(runtime));
+            if let Ok(dir) = app.path().resource_dir() {
+                source_text::set_resource_dir_hint(dir);
+            }
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -1479,6 +1483,8 @@ pub fn run() {
             add_project_materials,
             build_project,
             link_project,
+            wiki::get_llm_wiki_llm_config,
+            wiki::set_llm_wiki_llm_config,
             wiki::get_wiki_project,
             wiki::import_wiki_sources,
             wiki::build_wiki_project,

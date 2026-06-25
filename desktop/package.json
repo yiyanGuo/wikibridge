@@ -6,10 +6,11 @@
   "scripts": {
     "dev": "vite --host 127.0.0.1 --port 1420",
     "build": "tsc --noEmit && vite build",
-    "sidecars": "node scripts/prepare-sidecars.mjs all",
+    "sidecars": "node scripts/prepare-sidecars.mjs",
     "sidecars:frpc": "node scripts/prepare-sidecars.mjs frpc",
     "sidecars:llm-wiki": "node scripts/prepare-sidecars.mjs llm-wiki",
     "sidecars:opencode": "node scripts/prepare-sidecars.mjs opencode",
+    "sidecars:pdfium": "node scripts/prepare-sidecars.mjs pdfium",
     "sidecars:check": "node scripts/check-sidecars.mjs",
     "tauri:dev": "tauri dev",
     "tauri:build": "npm run sidecars:check && node scripts/run-tauri-build.mjs"

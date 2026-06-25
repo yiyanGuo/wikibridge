@@ -2,19 +2,27 @@ use std::{
     collections::{BTreeMap, BTreeSet},
     fs,
     path::{Component, Path, PathBuf},
+    time::Duration,
 };
 
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use tauri::{AppHandle, State};
+use url::Url;
 
 use crate::{
-    sidecar, unix_millis, unix_timestamp, write_project_manifest, DesktopRuntime, SharedRuntime,
+    sidecar, source_text, unix_millis, unix_timestamp, write_project_manifest, DesktopRuntime,
+    SharedRuntime,
 };
 
 const MAX_SOURCE_BYTES: u64 = 100 * 1024 * 1024;
 const INGEST_QUEUE_FILE: &str = ".llm-wiki/ingest-queue.json";
+const DEEPSEEK_PRESET_ID: &str = "deepseek";
+const DEFAULT_DEEPSEEK_BASE_URL: &str = "https://api.deepseek.com/v1";
+const DEFAULT_DEEPSEEK_MODEL: &str = "deepseek-v4-flash";
+const DEFAULT_DEEPSEEK_CONTEXT_SIZE: u64 = 64_000;
+const DEFAULT_OLLAMA_URL: &str = "http://localhost:11434";
 
 const INCLUDE_EXTENSIONS: &[&str] = &[
     "md", "mdx", "txt", "pdf", "doc", "docx", "pptx", "xls", "xlsx", "odt", "odp", "ods", "rtf",
@@ -62,6 +70,7 @@ pub struct WikiProjectDto {
 pub struct WikiProjectStateDto {
     pub project: WikiProjectDto,
     pub queue: WikiQueueSummaryDto,
+    pub failed_tasks: Vec<WikiFailedTaskDto>,
     pub source_count: usize,
     pub wiki_count: usize,
 }
@@ -87,10 +96,42 @@ pub struct WikiImportResultDto {
 
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
+pub struct WikiFailedTaskDto {
+    pub source_path: String,
+    pub error: String,
+}
+
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct WikiBuildResultDto {
     pub project: WikiProjectDto,
     pub queue: WikiQueueSummaryDto,
+    pub failed_tasks: Vec<WikiFailedTaskDto>,
     pub enqueued_count: usize,
+    pub processed_count: usize,
+    pub failed_count: usize,
+    pub written_paths: Vec<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct LlmWikiLlmConfigDto {
+    pub provider: String,
+    pub api_key: String,
+    pub model: String,
+    pub base_url: String,
+    pub max_context_size: u64,
+    pub configured: bool,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct LlmWikiLlmConfigInput {
+    pub provider: Option<String>,
+    pub api_key: String,
+    pub model: Option<String>,
+    pub base_url: Option<String>,
+    pub max_context_size: Option<u64>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -149,6 +190,23 @@ struct ServerGraphResponse {
 }
 
 #[tauri::command]
+pub fn get_llm_wiki_llm_config(
+    runtime: State<'_, SharedRuntime>,
+) -> Result<LlmWikiLlmConfigDto, String> {
+    let runtime = runtime.lock().map_err(crate::lock_error)?;
+    read_deepseek_llm_config(&runtime.paths.app_data_dir)
+}
+
+#[tauri::command]
+pub fn set_llm_wiki_llm_config(
+    runtime: State<'_, SharedRuntime>,
+    input: LlmWikiLlmConfigInput,
+) -> Result<LlmWikiLlmConfigDto, String> {
+    let runtime = runtime.lock().map_err(crate::lock_error)?;
+    write_deepseek_llm_config(&runtime.paths.app_data_dir, input)
+}
+
+#[tauri::command]
 pub fn get_wiki_project(
     runtime: State<'_, SharedRuntime>,
     project_id: String,
@@ -158,6 +216,7 @@ pub fn get_wiki_project(
     let root = PathBuf::from(&project.path);
     Ok(WikiProjectStateDto {
         queue: read_queue_summary(&root)?,
+        failed_tasks: read_failed_tasks(&root, 8)?,
         source_count: count_ingestable_sources(&root)?,
         wiki_count: count_markdown_files(&root.join("wiki"))?,
         project,
@@ -246,23 +305,36 @@ pub fn import_wiki_sources(
 }
 
 #[tauri::command]
-pub fn build_wiki_project(
+pub async fn build_wiki_project(
     runtime: State<'_, SharedRuntime>,
     project_id: String,
 ) -> Result<WikiBuildResultDto, String> {
-    let mut runtime = runtime.lock().map_err(crate::lock_error)?;
-    let project = ensure_wiki_project(&mut runtime, &project_id)?;
-    let root = PathBuf::from(&project.path);
-    let sources = collect_ingestable_source_paths(&root)?;
-    let enqueued_count = enqueue_ingest_tasks(&root, &project.id, &sources)?;
-    let queue = read_queue_summary(&root)?;
-    if enqueued_count > 0 {
-        runtime.save()?;
+    let (project, config, enqueued_count) = {
+        let mut runtime = runtime.lock().map_err(crate::lock_error)?;
+        let project = ensure_wiki_project(&mut runtime, &project_id)?;
+        let config = read_deepseek_llm_config(&runtime.paths.app_data_dir)?;
+        let root = PathBuf::from(&project.path);
+        let sources = collect_ingestable_source_paths(&root)?;
+        let enqueued_count = enqueue_ingest_tasks(&root, &project.id, &sources)?;
+        if enqueued_count > 0 {
+            runtime.save()?;
+        }
+        (project, config, enqueued_count)
+    };
+    if !config.configured {
+        return Err("请先配置 DeepSeek API Key，再构建知识库。".to_string());
     }
+    let root = PathBuf::from(&project.path);
+    let build = process_ingest_queue_with_deepseek(&root, &project.id, &config).await?;
+    let queue = read_queue_summary(&root)?;
     Ok(WikiBuildResultDto {
         project,
         queue,
+        failed_tasks: read_failed_tasks(&root, 8)?,
         enqueued_count,
+        processed_count: build.processed_count,
+        failed_count: build.failed_count,
+        written_paths: build.written_paths,
     })
 }
 
@@ -403,22 +475,181 @@ fn ensure_project_identity(root: &Path, fallback_id: &str) -> Result<String, Str
     Ok(id)
 }
 
-fn register_llm_wiki_project(app_data_dir: &Path, project: &WikiProjectDto) -> Result<(), String> {
-    let data_dir = app_data_dir.join("llm-wiki");
-    fs::create_dir_all(&data_dir)
-        .map_err(|error| format!("无法创建 LLM Wiki 数据目录: {error}"))?;
-    let state_path = data_dir.join("app-state.json");
-    let mut state = fs::read_to_string(&state_path)
-        .ok()
-        .and_then(|raw| serde_json::from_str::<Value>(&raw).ok())
-        .unwrap_or_else(|| json!({}));
+fn read_deepseek_llm_config(app_data_dir: &Path) -> Result<LlmWikiLlmConfigDto, String> {
+    let state = read_llm_wiki_app_state(app_data_dir)?;
+    let active_deepseek =
+        state.get("activePresetId").and_then(Value::as_str) == Some(DEEPSEEK_PRESET_ID);
+    let provider_config = state
+        .get("providerConfigs")
+        .and_then(Value::as_object)
+        .and_then(|configs| configs.get(DEEPSEEK_PRESET_ID))
+        .and_then(Value::as_object);
+    let llm_config = state
+        .get("llmConfig")
+        .and_then(Value::as_object)
+        .filter(|config| {
+            active_deepseek && config.get("provider").and_then(Value::as_str) == Some("custom")
+        });
 
-    if !state.is_object() {
-        state = json!({});
+    let api_key = provider_config
+        .and_then(|config| config.get("apiKey"))
+        .and_then(Value::as_str)
+        .or_else(|| {
+            llm_config
+                .and_then(|config| config.get("apiKey"))
+                .and_then(Value::as_str)
+        })
+        .unwrap_or("")
+        .to_string();
+    let model = provider_config
+        .and_then(|config| config.get("model"))
+        .and_then(Value::as_str)
+        .or_else(|| {
+            llm_config
+                .and_then(|config| config.get("model"))
+                .and_then(Value::as_str)
+        })
+        .filter(|value| !value.trim().is_empty())
+        .unwrap_or(DEFAULT_DEEPSEEK_MODEL)
+        .to_string();
+    let base_url = provider_config
+        .and_then(|config| config.get("baseUrl"))
+        .and_then(Value::as_str)
+        .or_else(|| {
+            llm_config
+                .and_then(|config| config.get("customEndpoint"))
+                .and_then(Value::as_str)
+        })
+        .filter(|value| !value.trim().is_empty())
+        .unwrap_or(DEFAULT_DEEPSEEK_BASE_URL)
+        .to_string();
+    let max_context_size = provider_config
+        .and_then(|config| config.get("maxContextSize"))
+        .and_then(Value::as_u64)
+        .or_else(|| {
+            llm_config
+                .and_then(|config| config.get("maxContextSize"))
+                .and_then(Value::as_u64)
+        })
+        .filter(|value| *value > 0)
+        .unwrap_or(DEFAULT_DEEPSEEK_CONTEXT_SIZE);
+
+    Ok(LlmWikiLlmConfigDto {
+        provider: DEEPSEEK_PRESET_ID.to_string(),
+        configured: api_key.trim().len() > 0 && active_deepseek,
+        api_key,
+        model,
+        base_url,
+        max_context_size,
+    })
+}
+
+fn write_deepseek_llm_config(
+    app_data_dir: &Path,
+    input: LlmWikiLlmConfigInput,
+) -> Result<LlmWikiLlmConfigDto, String> {
+    if let Some(provider) = input.provider.as_deref() {
+        let provider = provider.trim();
+        if !provider.is_empty() && provider != DEEPSEEK_PRESET_ID {
+            return Err("当前只支持 DeepSeek 配置".to_string());
+        }
     }
-    let object = state
-        .as_object_mut()
-        .ok_or_else(|| "LLM Wiki app-state 格式错误".to_string())?;
+
+    let api_key = input.api_key.trim().to_string();
+    if api_key.is_empty() {
+        return Err("DeepSeek API Key 不能为空".to_string());
+    }
+
+    let model = input
+        .model
+        .as_deref()
+        .unwrap_or(DEFAULT_DEEPSEEK_MODEL)
+        .trim();
+    let model = if model.is_empty() {
+        DEFAULT_DEEPSEEK_MODEL.to_string()
+    } else {
+        model.to_string()
+    };
+    let base_url = input
+        .base_url
+        .as_deref()
+        .unwrap_or(DEFAULT_DEEPSEEK_BASE_URL)
+        .trim()
+        .trim_end_matches('/')
+        .to_string();
+    let base_url = if base_url.is_empty() {
+        DEFAULT_DEEPSEEK_BASE_URL.to_string()
+    } else {
+        validate_http_url(&base_url)?;
+        base_url
+    };
+    let max_context_size = input
+        .max_context_size
+        .filter(|value| *value > 0)
+        .unwrap_or(DEFAULT_DEEPSEEK_CONTEXT_SIZE);
+
+    let mut state = read_llm_wiki_app_state(app_data_dir)?;
+    let object = llm_wiki_app_state_object_mut(&mut state)?;
+
+    {
+        let provider_configs = object
+            .entry("providerConfigs".to_string())
+            .or_insert_with(|| json!({}));
+        if !provider_configs.is_object() {
+            *provider_configs = json!({});
+        }
+        let provider_configs = provider_configs
+            .as_object_mut()
+            .ok_or_else(|| "LLM Wiki providerConfigs 格式错误".to_string())?;
+        provider_configs.insert(
+            DEEPSEEK_PRESET_ID.to_string(),
+            json!({
+                "apiKey": api_key,
+                "model": model,
+                "baseUrl": base_url,
+                "apiMode": "chat_completions",
+                "maxContextSize": max_context_size,
+            }),
+        );
+    }
+
+    let previous_llm_config = object.get("llmConfig").and_then(Value::as_object);
+    let reasoning = previous_llm_config
+        .and_then(|config| config.get("reasoning"))
+        .cloned()
+        .unwrap_or_else(|| json!({ "mode": "auto" }));
+    let ollama_url = previous_llm_config
+        .and_then(|config| config.get("ollamaUrl"))
+        .and_then(Value::as_str)
+        .filter(|value| !value.trim().is_empty())
+        .unwrap_or(DEFAULT_OLLAMA_URL);
+
+    object.insert(
+        "llmConfig".to_string(),
+        json!({
+            "provider": "custom",
+            "apiKey": api_key,
+            "model": model,
+            "ollamaUrl": ollama_url,
+            "customEndpoint": base_url,
+            "apiMode": "chat_completions",
+            "maxContextSize": max_context_size,
+            "reasoning": reasoning,
+            "localCliIsolation": false,
+        }),
+    );
+    object.insert(
+        "activePresetId".to_string(),
+        Value::String(DEEPSEEK_PRESET_ID.to_string()),
+    );
+
+    write_llm_wiki_app_state(app_data_dir, &state)?;
+    read_deepseek_llm_config(app_data_dir)
+}
+
+fn register_llm_wiki_project(app_data_dir: &Path, project: &WikiProjectDto) -> Result<(), String> {
+    let mut state = read_llm_wiki_app_state(app_data_dir)?;
+    let object = llm_wiki_app_state_object_mut(&mut state)?;
 
     let api_config = object
         .entry("apiConfig".to_string())
@@ -461,9 +692,72 @@ fn register_llm_wiki_project(app_data_dir: &Path, project: &WikiProjectDto) -> R
     recent_projects.truncate(10);
     object.insert("recentProjects".to_string(), Value::Array(recent_projects));
 
-    let text = serde_json::to_string_pretty(&state)
+    write_llm_wiki_app_state(app_data_dir, &state)
+}
+
+fn llm_wiki_app_state_path(app_data_dir: &Path) -> PathBuf {
+    app_data_dir.join("llm-wiki").join("app-state.json")
+}
+
+fn read_llm_wiki_app_state(app_data_dir: &Path) -> Result<Value, String> {
+    let state_path = llm_wiki_app_state_path(app_data_dir);
+    if !state_path.exists() {
+        return Ok(json!({}));
+    }
+    let raw = fs::read_to_string(&state_path)
+        .map_err(|error| format!("无法读取 LLM Wiki app-state: {error}"))?;
+    let parsed = serde_json::from_str::<Value>(&raw)
+        .map_err(|error| format!("LLM Wiki app-state 格式错误: {error}"))?;
+    if parsed.is_object() {
+        Ok(parsed)
+    } else {
+        Ok(json!({}))
+    }
+}
+
+fn write_llm_wiki_app_state(app_data_dir: &Path, state: &Value) -> Result<(), String> {
+    let state_path = llm_wiki_app_state_path(app_data_dir);
+    if let Some(parent) = state_path.parent() {
+        fs::create_dir_all(parent)
+            .map_err(|error| format!("无法创建 LLM Wiki 数据目录: {error}"))?;
+    }
+    let text = serde_json::to_string_pretty(state)
         .map_err(|error| format!("无法序列化 LLM Wiki app-state: {error}"))?;
-    fs::write(state_path, text).map_err(|error| format!("无法写入 LLM Wiki app-state: {error}"))
+    fs::write(&state_path, text)
+        .map_err(|error| format!("无法写入 LLM Wiki app-state: {error}"))?;
+    restrict_file_permissions(&state_path);
+    Ok(())
+}
+
+fn llm_wiki_app_state_object_mut(
+    state: &mut Value,
+) -> Result<&mut serde_json::Map<String, Value>, String> {
+    if !state.is_object() {
+        *state = json!({});
+    }
+    state
+        .as_object_mut()
+        .ok_or_else(|| "LLM Wiki app-state 格式错误".to_string())
+}
+
+fn validate_http_url(value: &str) -> Result<(), String> {
+    let parsed =
+        Url::parse(value).map_err(|_| "DeepSeek Base URL 必须是完整的 http(s) URL".to_string())?;
+    if parsed.scheme() != "http" && parsed.scheme() != "https" {
+        return Err("DeepSeek Base URL 只支持 http 或 https".to_string());
+    }
+    if parsed.host_str().is_none() {
+        return Err("DeepSeek Base URL 必须包含主机名".to_string());
+    }
+    Ok(())
+}
+
+fn restrict_file_permissions(path: &Path) {
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        let _ = fs::set_permissions(path, fs::Permissions::from_mode(0o600));
+    }
 }
 
 fn import_source_file(
@@ -593,6 +887,20 @@ fn read_queue_summary(root: &Path) -> Result<WikiQueueSummaryDto, String> {
     Ok(summary)
 }
 
+fn read_failed_tasks(root: &Path, limit: usize) -> Result<Vec<WikiFailedTaskDto>, String> {
+    let mut tasks = read_ingest_queue(&root.join(INGEST_QUEUE_FILE))?;
+    tasks.retain(|task| task.status == "failed");
+    tasks.sort_by(|left, right| right.added_at.cmp(&left.added_at));
+    Ok(tasks
+        .into_iter()
+        .take(limit)
+        .map(|task| WikiFailedTaskDto {
+            source_path: task.source_path,
+            error: task.error.unwrap_or_else(|| "未知错误".to_string()),
+        })
+        .collect())
+}
+
 fn read_ingest_queue(path: &Path) -> Result<Vec<IngestTask>, String> {
     if !path.exists() {
         return Ok(Vec::new());
@@ -607,6 +915,512 @@ fn write_ingest_queue(path: &Path, tasks: &[IngestTask]) -> Result<(), String> {
     let text = serde_json::to_string_pretty(tasks)
         .map_err(|error| format!("无法序列化 ingest queue: {error}"))?;
     fs::write(path, text).map_err(|error| format!("无法写入 ingest queue: {error}"))
+}
+
+#[derive(Debug, Default)]
+struct WikiBuildProcessingSummary {
+    processed_count: usize,
+    failed_count: usize,
+    written_paths: Vec<String>,
+}
+
+async fn process_ingest_queue_with_deepseek(
+    root: &Path,
+    project_id: &str,
+    config: &LlmWikiLlmConfigDto,
+) -> Result<WikiBuildProcessingSummary, String> {
+    let queue_path = root.join(INGEST_QUEUE_FILE);
+    let client = Client::builder()
+        .timeout(Duration::from_secs(10 * 60))
+        .build()
+        .map_err(|error| format!("无法初始化 DeepSeek HTTP 客户端: {error}"))?;
+    let mut summary = WikiBuildProcessingSummary::default();
+
+    loop {
+        let mut tasks = read_ingest_queue(&queue_path)?;
+        for task in tasks
+            .iter_mut()
+            .filter(|task| task.project_id == project_id && task.status == "processing")
+        {
+            task.status = "pending".to_string();
+            task.error = None;
+        }
+        let Some(index) = tasks
+            .iter()
+            .position(|task| task.project_id == project_id && task.status == "pending")
+        else {
+            write_ingest_queue(&queue_path, &tasks)?;
+            break;
+        };
+
+        tasks[index].status = "processing".to_string();
+        tasks[index].error = None;
+        let task = tasks[index].clone();
+        write_ingest_queue(&queue_path, &tasks)?;
+
+        match deepseek_ingest_source(root, &task, config, &client).await {
+            Ok(written_paths) if !written_paths.is_empty() => {
+                summary.processed_count += 1;
+                summary.written_paths.extend(written_paths);
+                let mut tasks = read_ingest_queue(&queue_path)?;
+                tasks.retain(|candidate| candidate.id != task.id);
+                write_ingest_queue(&queue_path, &tasks)?;
+            }
+            Ok(_) => {
+                summary.failed_count += 1;
+                mark_ingest_task_failed(
+                    &queue_path,
+                    &task.id,
+                    "DeepSeek 构建未生成任何 wiki 文件".to_string(),
+                )?;
+            }
+            Err(error) => {
+                summary.failed_count += 1;
+                mark_ingest_task_failed(&queue_path, &task.id, error)?;
+            }
+        }
+    }
+
+    summary.written_paths.sort();
+    summary.written_paths.dedup();
+    Ok(summary)
+}
+
+fn mark_ingest_task_failed(queue_path: &Path, task_id: &str, error: String) -> Result<(), String> {
+    let mut tasks = read_ingest_queue(queue_path)?;
+    if let Some(task) = tasks.iter_mut().find(|task| task.id == task_id) {
+        task.status = "failed".to_string();
+        task.retry_count = task.retry_count.saturating_add(1);
+        task.error = Some(trim_error_message(&error));
+    }
+    write_ingest_queue(queue_path, &tasks)
+}
+
+fn trim_error_message(value: &str) -> String {
+    const MAX_ERROR_CHARS: usize = 800;
+    if value.chars().count() <= MAX_ERROR_CHARS {
+        return value.to_string();
+    }
+    format!(
+        "{}...",
+        value.chars().take(MAX_ERROR_CHARS).collect::<String>()
+    )
+}
+
+async fn deepseek_ingest_source(
+    root: &Path,
+    task: &IngestTask,
+    config: &LlmWikiLlmConfigDto,
+    client: &Client,
+) -> Result<Vec<String>, String> {
+    let source_rel = normalize_rel_string(&task.source_path);
+    if !is_ingestable_source_path(&source_rel) {
+        return Err(format!("source 路径不允许构建: {source_rel}"));
+    }
+    let source_path = root.join(&source_rel);
+    let source_content = source_text::read_source_text_for_ingest(&source_path)
+        .map_err(|error| format!("无法读取 source {source_rel}: {error}"))?;
+    let source_context = truncate_chars(&source_content, source_context_budget(config));
+    let source_name = source_path
+        .file_name()
+        .and_then(|value| value.to_str())
+        .unwrap_or(source_rel.as_str());
+    let source_summary_path = format!("wiki/sources/{}.md", source_summary_slug(&source_rel));
+    let prompt = build_headless_generation_prompt(
+        root,
+        source_name,
+        &source_summary_path,
+        &task.folder_context,
+        &source_context,
+    );
+    let generation = call_deepseek_chat(client, config, prompt).await?;
+    let mut written_paths = write_headless_file_blocks(root, &generation)?;
+
+    if written_paths.is_empty() {
+        return Err("DeepSeek 输出中没有可写入的 FILE block".to_string());
+    }
+
+    if !written_paths
+        .iter()
+        .any(|path| path == &source_summary_path)
+    {
+        write_fallback_source_summary(
+            root,
+            &source_summary_path,
+            source_name,
+            &source_rel,
+            &source_context,
+        )?;
+        written_paths.push(source_summary_path);
+    }
+
+    Ok(written_paths)
+}
+
+fn source_context_budget(config: &LlmWikiLlmConfigDto) -> usize {
+    let budget = (config.max_context_size as usize).saturating_sub(12_000);
+    budget.clamp(4_000, 48_000)
+}
+
+fn truncate_chars(value: &str, max_chars: usize) -> String {
+    if value.chars().count() <= max_chars {
+        return value.to_string();
+    }
+    let head = value.chars().take(max_chars).collect::<String>();
+    format!("{head}\n\n[Source truncated for Desktop headless build.]")
+}
+
+fn build_headless_generation_prompt(
+    root: &Path,
+    source_name: &str,
+    source_summary_path: &str,
+    folder_context: &str,
+    source_content: &str,
+) -> String {
+    let purpose = fs::read_to_string(root.join("purpose.md")).unwrap_or_default();
+    let schema = fs::read_to_string(root.join("schema.md")).unwrap_or_default();
+    let index = fs::read_to_string(root.join("wiki/index.md")).unwrap_or_default();
+    let overview = fs::read_to_string(root.join("wiki/overview.md")).unwrap_or_default();
+    let today = "YYYY-MM-DD";
+
+    let folder_context = if folder_context.trim().is_empty() {
+        "(none)"
+    } else {
+        folder_context
+    };
+
+    vec![
+        "You are LLM Wiki's headless ingest worker.".to_string(),
+        "Read the source and generate concise, factual Markdown wiki pages.".to_string(),
+        "Output only FILE blocks. Do not use code fences around FILE blocks. Do not add a preamble."
+            .to_string(),
+        String::new(),
+        "Required FILE block format:".to_string(),
+        "---FILE: wiki/path/file-name.md---".to_string(),
+        "---".to_string(),
+        "type: concept".to_string(),
+        "title: Page Title".to_string(),
+        format!("created: {today}"),
+        format!("updated: {today}"),
+        "tags: [generated]".to_string(),
+        "related: []".to_string(),
+        format!("sources: [\"{source_name}\"]"),
+        "---".to_string(),
+        "# Page Title".to_string(),
+        "Body with [[wikilinks]] to related generated pages.".to_string(),
+        "---END FILE---".to_string(),
+        String::new(),
+        "Generate at least two pages:".to_string(),
+        format!("1. A source summary at exactly {source_summary_path}."),
+        "2. One or more entity/concept pages under wiki/entities/ or wiki/concepts/ for the important subjects."
+            .to_string(),
+        String::new(),
+        "Rules:".to_string(),
+        "- Every path must be under wiki/ and use kebab-case filenames where practical.".to_string(),
+        "- Use [[wikilinks]] in body text to connect related pages.".to_string(),
+        "- Preserve concrete facts, relationships, dates, and named entities from the source.".to_string(),
+        "- Keep pages short but non-empty. Do not invent facts not present in the source.".to_string(),
+        "- Never write outside wiki/.".to_string(),
+        String::new(),
+        "Project purpose:".to_string(),
+        purpose,
+        String::new(),
+        "Project schema:".to_string(),
+        schema,
+        String::new(),
+        "Existing index:".to_string(),
+        index,
+        String::new(),
+        "Existing overview:".to_string(),
+        overview,
+        String::new(),
+        "Source metadata:".to_string(),
+        format!("File: {source_name}"),
+        format!("Folder context: {folder_context}"),
+        String::new(),
+        "Source content:".to_string(),
+        source_content.to_string(),
+    ]
+    .join("\n")
+}
+
+async fn call_deepseek_chat(
+    client: &Client,
+    config: &LlmWikiLlmConfigDto,
+    prompt: String,
+) -> Result<String, String> {
+    let url = chat_completions_url(&config.base_url);
+    let mut body = json!({
+        "model": config.model,
+        "stream": false,
+        "temperature": 0.1,
+        "max_tokens": 8192,
+        "messages": [
+            {
+                "role": "system",
+                "content": "You generate LLM Wiki FILE blocks from source material. Output only the requested blocks."
+            },
+            { "role": "user", "content": prompt }
+        ],
+    });
+    if supports_deepseek_thinking_param(&config.model) {
+        body["thinking"] = json!({ "type": "disabled" });
+    }
+
+    let response = client
+        .post(url)
+        .bearer_auth(config.api_key.trim())
+        .json(&body)
+        .send()
+        .await
+        .map_err(|error| format!("DeepSeek 请求失败: {error}"))?;
+    let status = response.status();
+    let text = response
+        .text()
+        .await
+        .map_err(|error| format!("无法读取 DeepSeek 响应: {error}"))?;
+    if !status.is_success() {
+        return Err(format!(
+            "DeepSeek 调用失败 HTTP {}: {}",
+            status.as_u16(),
+            trim_error_message(&text)
+        ));
+    }
+
+    let value = serde_json::from_str::<Value>(&text)
+        .map_err(|error| format!("DeepSeek 响应不是有效 JSON: {error}"))?;
+    let content = value
+        .get("choices")
+        .and_then(Value::as_array)
+        .and_then(|choices| choices.first())
+        .and_then(|choice| choice.get("message"))
+        .and_then(|message| message.get("content"))
+        .and_then(Value::as_str)
+        .unwrap_or("")
+        .trim()
+        .to_string();
+    if content.is_empty() {
+        return Err("DeepSeek 响应为空".to_string());
+    }
+    Ok(content)
+}
+
+fn chat_completions_url(base_url: &str) -> String {
+    let base = base_url.trim().trim_end_matches('/');
+    if base.to_lowercase().ends_with("/chat/completions") {
+        base.to_string()
+    } else {
+        format!("{base}/chat/completions")
+    }
+}
+
+fn supports_deepseek_thinking_param(model: &str) -> bool {
+    let normalized = model.to_ascii_lowercase();
+    normalized.contains("deepseek-v4") || normalized.contains("deepseek_v4")
+}
+
+#[derive(Debug)]
+struct FileBlock {
+    path: String,
+    content: String,
+}
+
+fn write_headless_file_blocks(root: &Path, text: &str) -> Result<Vec<String>, String> {
+    let blocks = parse_headless_file_blocks(text);
+    let mut written = Vec::new();
+    for block in blocks {
+        let Some(safe_path) = safe_ingest_file_path(&block.path) else {
+            continue;
+        };
+        let target = root.join(&safe_path);
+        if let Some(parent) = target.parent() {
+            fs::create_dir_all(parent).map_err(|error| format!("无法创建 wiki 目录: {error}"))?;
+        }
+        fs::write(&target, block.content.trim_start())
+            .map_err(|error| format!("无法写入 wiki 文件 {}: {error}", safe_path.display()))?;
+        written.push(safe_path.to_string_lossy().replace('\\', "/"));
+    }
+    Ok(written)
+}
+
+fn parse_headless_file_blocks(text: &str) -> Vec<FileBlock> {
+    let normalized = text.replace("\r\n", "\n");
+    let lines = normalized.lines().collect::<Vec<_>>();
+    let mut blocks = Vec::new();
+    let mut index = 0;
+    while index < lines.len() {
+        let line = lines[index].trim();
+        let Some(path) = parse_file_opener(line) else {
+            index += 1;
+            continue;
+        };
+        index += 1;
+        let mut content = Vec::new();
+        let mut closed = false;
+        while index < lines.len() {
+            if is_file_closer(lines[index].trim()) {
+                closed = true;
+                index += 1;
+                break;
+            }
+            content.push(lines[index]);
+            index += 1;
+        }
+        if closed {
+            blocks.push(FileBlock {
+                path,
+                content: content.join("\n"),
+            });
+        }
+    }
+    blocks
+}
+
+fn parse_file_opener(line: &str) -> Option<String> {
+    if !line.starts_with("---") || !line.ends_with("---") {
+        return None;
+    }
+    let inner = line.trim_matches('-').trim();
+    let lower = inner.to_ascii_lowercase();
+    let rest = lower.strip_prefix("file:")?;
+    let offset = inner.len().saturating_sub(rest.len());
+    let path = inner[offset..].trim();
+    if path.is_empty() {
+        None
+    } else {
+        Some(path.to_string())
+    }
+}
+
+fn is_file_closer(line: &str) -> bool {
+    line.eq_ignore_ascii_case("---END FILE---")
+        || line
+            .chars()
+            .filter(|ch| !ch.is_whitespace())
+            .collect::<String>()
+            .eq_ignore_ascii_case("---ENDFILE---")
+}
+
+fn safe_ingest_file_path(raw: &str) -> Option<PathBuf> {
+    if raw.trim().is_empty() || raw.contains('\0') || raw.chars().any(|ch| ch.is_control()) {
+        return None;
+    }
+    if raw.starts_with('/') || raw.starts_with('\\') {
+        return None;
+    }
+    let normalized = raw.replace('\\', "/");
+    if !normalized.starts_with("wiki/") {
+        return None;
+    }
+    let mut out = PathBuf::new();
+    for segment in normalized.split('/') {
+        if segment.is_empty()
+            || segment == "."
+            || segment == ".."
+            || segment.ends_with(' ')
+            || segment.ends_with('.')
+            || segment.contains(':')
+            || segment.contains('<')
+            || segment.contains('>')
+            || segment.contains('"')
+            || segment.contains('|')
+            || segment.contains('?')
+            || segment.contains('*')
+        {
+            return None;
+        }
+        let stem = segment.split('.').next().unwrap_or("").to_ascii_uppercase();
+        if matches!(
+            stem.as_str(),
+            "CON"
+                | "PRN"
+                | "AUX"
+                | "NUL"
+                | "COM1"
+                | "COM2"
+                | "COM3"
+                | "COM4"
+                | "COM5"
+                | "COM6"
+                | "COM7"
+                | "COM8"
+                | "COM9"
+                | "LPT1"
+                | "LPT2"
+                | "LPT3"
+                | "LPT4"
+                | "LPT5"
+                | "LPT6"
+                | "LPT7"
+                | "LPT8"
+                | "LPT9"
+        ) {
+            return None;
+        }
+        out.push(segment);
+    }
+    if out.extension().and_then(|value| value.to_str()) != Some("md") {
+        return None;
+    }
+    Some(out)
+}
+
+fn source_summary_slug(source_rel: &str) -> String {
+    let rel = normalize_rel_string(source_rel)
+        .trim_start_matches("raw/sources/")
+        .to_string();
+    let without_ext = rel.rsplit_once('.').map(|(stem, _)| stem).unwrap_or(&rel);
+    slugify_for_wiki_path(without_ext)
+}
+
+fn slugify_for_wiki_path(value: &str) -> String {
+    let mut out = String::new();
+    let mut last_dash = false;
+    for ch in value.chars() {
+        let next = if ch.is_ascii_alphanumeric() {
+            Some(ch.to_ascii_lowercase())
+        } else if ch.is_alphanumeric() {
+            Some(ch)
+        } else {
+            None
+        };
+        if let Some(ch) = next {
+            out.push(ch);
+            last_dash = false;
+        } else if !last_dash {
+            out.push('-');
+            last_dash = true;
+        }
+    }
+    let slug = out.trim_matches('-').to_string();
+    if slug.is_empty() {
+        format!("source-{}", unix_millis())
+    } else {
+        slug
+    }
+}
+
+fn write_fallback_source_summary(
+    root: &Path,
+    path: &str,
+    source_name: &str,
+    source_rel: &str,
+    source_content: &str,
+) -> Result<(), String> {
+    let safe_path =
+        safe_ingest_file_path(path).ok_or_else(|| format!("source summary 路径不安全: {path}"))?;
+    let target = root.join(&safe_path);
+    if let Some(parent) = target.parent() {
+        fs::create_dir_all(parent)
+            .map_err(|error| format!("无法创建 source summary 目录: {error}"))?;
+    }
+    let excerpt = truncate_chars(source_content, 2_400);
+    let title = source_name.trim_end_matches(".md").trim_end_matches(".txt");
+    let content = format!(
+        "---\ntype: source\ntitle: \"Source: {source_name}\"\ntags: [source]\nrelated: []\nsources: [\"{source_name}\"]\n---\n\n# Source: {title}\n\nImported from `{source_rel}`.\n\n## Extract\n\n{excerpt}\n"
+    );
+    fs::write(&target, content)
+        .map_err(|error| format!("无法写入 source summary {}: {error}", safe_path.display()))
 }
 
 fn build_graph_from_wiki(
@@ -937,6 +1751,11 @@ fn write_if_missing(path: &Path, content: &str) -> Result<(), String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::{
+        io::{Read, Write},
+        net::TcpListener,
+        thread,
+    };
 
     fn temp_root(name: &str) -> PathBuf {
         let root = std::env::temp_dir().join(format!("wikibridge-{name}-{}", unix_millis()));
@@ -1000,6 +1819,319 @@ mod tests {
 
         let err = reject_project_scoped_import(&project, &project.join("wiki")).unwrap_err();
         assert!(err.contains("不能导入当前 LLM Wiki 项目目录"));
+
+        let _ = fs::remove_dir_all(project);
+    }
+
+    #[test]
+    fn writes_deepseek_config_into_empty_llm_wiki_state() {
+        let app_data = temp_root("deepseek-empty-state");
+
+        let saved = write_deepseek_llm_config(
+            &app_data,
+            LlmWikiLlmConfigInput {
+                provider: Some("deepseek".to_string()),
+                api_key: " sk-test ".to_string(),
+                model: Some("deepseek-chat".to_string()),
+                base_url: Some("https://api.deepseek.com/v1/".to_string()),
+                max_context_size: Some(32_000),
+            },
+        )
+        .unwrap();
+
+        assert!(saved.configured);
+        assert_eq!(saved.api_key, "sk-test");
+        assert_eq!(saved.model, "deepseek-chat");
+        assert_eq!(saved.base_url, "https://api.deepseek.com/v1");
+        assert_eq!(saved.max_context_size, 32_000);
+
+        let state = read_llm_wiki_app_state(&app_data).unwrap();
+        assert_eq!(
+            state.get("activePresetId").and_then(Value::as_str),
+            Some("deepseek")
+        );
+        assert_eq!(
+            state
+                .get("llmConfig")
+                .and_then(|value| value.get("provider"))
+                .and_then(Value::as_str),
+            Some("custom")
+        );
+        assert_eq!(
+            state
+                .get("providerConfigs")
+                .and_then(|value| value.get("deepseek"))
+                .and_then(|value| value.get("apiKey"))
+                .and_then(Value::as_str),
+            Some("sk-test")
+        );
+
+        let _ = fs::remove_dir_all(app_data);
+    }
+
+    #[test]
+    fn deepseek_config_preserves_existing_llm_wiki_state() {
+        let app_data = temp_root("deepseek-preserve-state");
+        let initial = json!({
+            "apiConfig": { "enabled": true, "allowUnauthenticated": true },
+            "projectRegistry": {
+                "project-1": { "id": "project-1", "name": "One", "path": "/tmp/one" }
+            },
+            "recentProjects": [
+                { "id": "project-1", "name": "One", "path": "/tmp/one" }
+            ],
+            "providerConfigs": {
+                "openai": { "apiKey": "openai-key", "model": "gpt-4o" }
+            }
+        });
+        write_llm_wiki_app_state(&app_data, &initial).unwrap();
+
+        write_deepseek_llm_config(
+            &app_data,
+            LlmWikiLlmConfigInput {
+                provider: None,
+                api_key: "deepseek-key".to_string(),
+                model: None,
+                base_url: None,
+                max_context_size: None,
+            },
+        )
+        .unwrap();
+
+        let state = read_llm_wiki_app_state(&app_data).unwrap();
+        assert_eq!(
+            state
+                .get("apiConfig")
+                .and_then(|value| value.get("allowUnauthenticated"))
+                .and_then(Value::as_bool),
+            Some(true)
+        );
+        assert!(state
+            .get("projectRegistry")
+            .and_then(|value| value.get("project-1"))
+            .is_some());
+        assert_eq!(
+            state
+                .get("providerConfigs")
+                .and_then(|value| value.get("openai"))
+                .and_then(|value| value.get("apiKey"))
+                .and_then(Value::as_str),
+            Some("openai-key")
+        );
+        assert_eq!(
+            state
+                .get("providerConfigs")
+                .and_then(|value| value.get("deepseek"))
+                .and_then(|value| value.get("model"))
+                .and_then(Value::as_str),
+            Some(DEFAULT_DEEPSEEK_MODEL)
+        );
+
+        let _ = fs::remove_dir_all(app_data);
+    }
+
+    #[test]
+    fn reads_existing_deepseek_config() {
+        let app_data = temp_root("deepseek-read-state");
+        write_llm_wiki_app_state(
+            &app_data,
+            &json!({
+                "activePresetId": "deepseek",
+                "providerConfigs": {
+                    "deepseek": {
+                        "apiKey": "deepseek-key",
+                        "model": "deepseek-v4-pro",
+                        "baseUrl": "https://api.deepseek.com/v1",
+                        "maxContextSize": 128000
+                    }
+                }
+            }),
+        )
+        .unwrap();
+
+        let loaded = read_deepseek_llm_config(&app_data).unwrap();
+
+        assert!(loaded.configured);
+        assert_eq!(loaded.provider, "deepseek");
+        assert_eq!(loaded.api_key, "deepseek-key");
+        assert_eq!(loaded.model, "deepseek-v4-pro");
+        assert_eq!(loaded.max_context_size, 128_000);
+
+        let _ = fs::remove_dir_all(app_data);
+    }
+
+    #[test]
+    fn parses_headless_file_blocks_and_rejects_unsafe_paths() {
+        let parsed = parse_headless_file_blocks(
+            "---FILE: wiki/concepts/atlas-protocol.md---\n# Atlas\n---END FILE---\n\
+             --- FILE: ../escape.md ---\nnope\n--- END FILE ---\n",
+        );
+
+        assert_eq!(parsed.len(), 2);
+        assert_eq!(parsed[0].path, "wiki/concepts/atlas-protocol.md");
+        assert_eq!(parsed[0].content, "# Atlas");
+        assert!(safe_ingest_file_path(&parsed[0].path).is_some());
+        assert!(safe_ingest_file_path(&parsed[1].path).is_none());
+        assert!(safe_ingest_file_path("/tmp/wiki.md").is_none());
+        assert!(safe_ingest_file_path("wiki/../escape.md").is_none());
+        assert!(safe_ingest_file_path("raw/sources/nope.md").is_none());
+    }
+
+    #[test]
+    fn writes_headless_blocks_only_under_wiki() {
+        let project = temp_root("headless-block-write");
+        ensure_wiki_layout(&project).unwrap();
+        let written = write_headless_file_blocks(
+            &project,
+            "---FILE: wiki/concepts/bridge-relay.md---\n# Bridge Relay\n---END FILE---\n\
+             ---FILE: ../../outside.md---\n# Outside\n---END FILE---\n",
+        )
+        .unwrap();
+
+        assert_eq!(written, vec!["wiki/concepts/bridge-relay.md"]);
+        assert_eq!(
+            fs::read_to_string(project.join("wiki/concepts/bridge-relay.md")).unwrap(),
+            "# Bridge Relay"
+        );
+        assert!(!project.join("outside.md").exists());
+
+        let _ = fs::remove_dir_all(project);
+    }
+
+    #[test]
+    #[ignore = "manual PDF import/build verification using a repository PDF fixture"]
+    fn imports_repo_pdf_and_builds_with_fake_deepseek() {
+        let project = temp_root("repo-pdf-build");
+        ensure_wiki_layout(&project).unwrap();
+        let source = Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("../../bearfrp/reference/wikibridge_spec.pdf")
+            .canonicalize()
+            .expect("repository PDF fixture should exist");
+
+        let imported = import_source_file(&project, &source, &project.join("raw/sources"))
+            .unwrap()
+            .expect("PDF source should be imported");
+        assert_eq!(imported, "raw/sources/wikibridge_spec.pdf");
+        assert!(project.join("raw/sources/wikibridge_spec.pdf").exists());
+
+        let added = enqueue_ingest_tasks(&project, "project-1", &[imported]).unwrap();
+        assert_eq!(added, 1);
+
+        let (base_url, server) = start_fake_deepseek_server();
+        let config = LlmWikiLlmConfigDto {
+            provider: "deepseek".to_string(),
+            api_key: "test-key".to_string(),
+            model: "deepseek-chat".to_string(),
+            base_url,
+            max_context_size: 16_000,
+            configured: true,
+        };
+        let summary = tauri::async_runtime::block_on(process_ingest_queue_with_deepseek(
+            &project,
+            "project-1",
+            &config,
+        ))
+        .unwrap();
+        server.join().unwrap();
+
+        assert_eq!(summary.processed_count, 1);
+        assert_eq!(summary.failed_count, 0);
+        assert!(summary
+            .written_paths
+            .contains(&"wiki/sources/wikibridge-spec.md".to_string()));
+        assert!(summary
+            .written_paths
+            .contains(&"wiki/concepts/pdf-import-verification.md".to_string()));
+        assert_eq!(read_queue_summary(&project).unwrap().failed, 0);
+        assert!(project.join("wiki/sources/wikibridge-spec.md").exists());
+
+        let _ = fs::remove_dir_all(project);
+    }
+
+    fn start_fake_deepseek_server() -> (String, thread::JoinHandle<()>) {
+        let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+        let addr = listener.local_addr().unwrap();
+        let handle = thread::spawn(move || {
+            let (mut stream, _) = listener.accept().unwrap();
+            let mut request = Vec::new();
+            let mut buffer = [0_u8; 1024];
+            loop {
+                let read = stream.read(&mut buffer).unwrap();
+                if read == 0 {
+                    break;
+                }
+                request.extend_from_slice(&buffer[..read]);
+                if request.windows(4).any(|window| window == b"\r\n\r\n") {
+                    break;
+                }
+            }
+            let body = serde_json::json!({
+                "choices": [
+                    {
+                        "message": {
+                            "content": "---FILE: wiki/sources/wikibridge-spec.md---\n---\ntype: source\ntitle: WikiBridge Spec\ntags: [generated]\nrelated: []\nsources: [\"wikibridge_spec.pdf\"]\n---\n\n# WikiBridge Spec\n\nPDF import verification source summary.\n---END FILE---\n---FILE: wiki/concepts/pdf-import-verification.md---\n---\ntype: concept\ntitle: PDF Import Verification\ntags: [generated]\nrelated: []\nsources: [\"wikibridge_spec.pdf\"]\n---\n\n# PDF Import Verification\n\nThe build path handled extracted PDF text.\n---END FILE---"
+                        }
+                    }
+                ]
+            })
+            .to_string();
+            let response = format!(
+                "HTTP/1.1 200 OK\r\ncontent-type: application/json\r\ncontent-length: {}\r\nconnection: close\r\n\r\n{}",
+                body.len(),
+                body
+            );
+            stream.write_all(response.as_bytes()).unwrap();
+        });
+        (format!("http://{addr}/v1"), handle)
+    }
+
+    #[test]
+    fn reads_recent_failed_tasks_in_descending_order() {
+        let project = temp_root("failed-tasks");
+        ensure_wiki_layout(&project).unwrap();
+        write_ingest_queue(
+            &project.join(INGEST_QUEUE_FILE),
+            &[
+                IngestTask {
+                    id: "1".to_string(),
+                    project_id: "project-1".to_string(),
+                    source_path: "raw/sources/old.pdf".to_string(),
+                    folder_context: String::new(),
+                    status: "failed".to_string(),
+                    added_at: 10,
+                    error: Some("old".to_string()),
+                    retry_count: 1,
+                },
+                IngestTask {
+                    id: "2".to_string(),
+                    project_id: "project-1".to_string(),
+                    source_path: "raw/sources/new.pdf".to_string(),
+                    folder_context: String::new(),
+                    status: "failed".to_string(),
+                    added_at: 20,
+                    error: Some("new".to_string()),
+                    retry_count: 1,
+                },
+                IngestTask {
+                    id: "3".to_string(),
+                    project_id: "project-1".to_string(),
+                    source_path: "raw/sources/ok.pdf".to_string(),
+                    folder_context: String::new(),
+                    status: "done".to_string(),
+                    added_at: 30,
+                    error: None,
+                    retry_count: 0,
+                },
+            ],
+        )
+        .unwrap();
+
+        let failed = read_failed_tasks(&project, 8).unwrap();
+
+        assert_eq!(failed.len(), 2);
+        assert_eq!(failed[0].source_path, "raw/sources/new.pdf");
+        assert_eq!(failed[0].error, "new");
+        assert_eq!(failed[1].source_path, "raw/sources/old.pdf");
 
         let _ = fs::remove_dir_all(project);
     }
