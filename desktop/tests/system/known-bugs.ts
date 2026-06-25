@@ -6,6 +6,8 @@ export type KnownBug = {
   status: 'open' | 'fixed';
   expectedBehavior: string;
   currentBehavior: string;
+  linkedTest: string;
+  removeFailWhenFixed: string;
 };
 
 export const knownBugs: KnownBug[] = [];
