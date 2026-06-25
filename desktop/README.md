@@ -78,6 +78,12 @@ To check sidecars for a specific packaging target:
 npm run ci:check -- --platform linux-amd64
 ```
 
+To include fake-stack in a manual CI run:
+
+```bash
+npm run ci:check -- --include-fake-stack
+```
+
 Run browser-level desktop system tests with a mocked Tauri backend:
 
 ```bash
@@ -99,16 +105,29 @@ Integration tests require a conda environment named `bearfrp_test` with
 with an isolated temporary config directory, checks current-platform sidecars,
 and writes logs under `test-results/integration/`.
 
+Run the fake-stack integration layer:
+
+```bash
+npm run test:integration:fake-stack
+```
+
+Fake-stack starts the real BearFRP backend, `llm-wiki-server`, and `opencode`
+sidecars, but replaces external services with local fake frps admin and
+OpenAI-compatible LLM endpoints. The fake LLM requires `Bearer fake-token`,
+validates request shape, and writes logs under `test-results/fake-stack/`.
+This layer covers BearFRP plugin/admin contracts, llm-wiki project APIs, and
+OpenCode's llm-wiki proxy routes without deploying real frps, frpc, or an LLM.
+
 Run the full local suite:
 
 ```bash
 npm run test:all
 ```
 
-`test:all` includes backend pytest and real integration tests, so it requires
-`bearfrp_test` and current-platform sidecars. Known product bugs should be
-tracked in `tests/system/known-bugs.ts` and marked with Playwright
-`test.fail()` until the bug is fixed.
+`test:all` includes backend pytest, real integration tests, and fake-stack
+integration tests, so it requires `bearfrp_test` and current-platform sidecars.
+Known product bugs should be tracked in `tests/system/known-bugs.ts` and marked
+with Playwright `test.fail()` until the bug is fixed.
 
 GitHub Actions runs the desktop suite on Linux, macOS, and Windows. Failed runs
 upload Playwright reports and integration logs as workflow artifacts.
