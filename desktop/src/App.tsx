@@ -6,7 +6,6 @@ import {
   Globe2,
   Plus,
   RefreshCcw,
-  Save,
   Server,
   TerminalSquare,
   Trash2
@@ -14,10 +13,6 @@ import {
 import BearFrpApp from './BearFrpApp';
 
 type Entry = 'bearfrp' | 'opencode';
-
-type DesktopServicesState = {
-  bearfrpBackendUrl: string;
-};
 
 type RemoteKnowledgeBase = {
   remoteId: string;
@@ -40,8 +35,6 @@ type RemoteKnowledgeBaseCheck = {
 
 export default function App() {
   const [activeEntry, setActiveEntry] = useState<Entry>('bearfrp');
-  const [services, setServices] = useState<DesktopServicesState | null>(null);
-  const [backendDraft, setBackendDraft] = useState('');
   const [remoteKnowledgeBases, setRemoteKnowledgeBases] = useState<RemoteKnowledgeBase[]>([]);
   const [remoteName, setRemoteName] = useState('');
   const [remoteUrl, setRemoteUrl] = useState('');
@@ -58,13 +51,6 @@ export default function App() {
   const viewerUrl = openCodeKnowledgeUrl(activeRemote?.url || '');
   const viewerTitle = activeRemote?.name || '远程知识库';
 
-  const refreshServices = useCallback(async () => {
-    const next = await invoke<DesktopServicesState>('get_desktop_services_state');
-    setServices(next);
-    setBackendDraft(next.bearfrpBackendUrl);
-    return next;
-  }, []);
-
   const refreshRemoteKnowledgeBases = useCallback(async () => {
     const items = await invoke<RemoteKnowledgeBase[]>('list_remote_knowledge_bases');
     setRemoteKnowledgeBases(sortRemoteKnowledgeBases(items));
@@ -72,23 +58,8 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    Promise.all([refreshServices(), refreshRemoteKnowledgeBases()]).catch((err) => setError(friendlyError(err)));
-  }, [refreshRemoteKnowledgeBases, refreshServices]);
-
-  async function saveBackendUrl(event: FormEvent) {
-    event.preventDefault();
-    setBusy('backend');
-    setError('');
-    try {
-      await invoke('set_bearfrp_backend_url', { url: backendDraft });
-      await refreshServices();
-      setNotice('发布端后端已保存');
-    } catch (err) {
-      setError(friendlyError(err));
-    } finally {
-      setBusy('');
-    }
-  }
+    refreshRemoteKnowledgeBases().catch((err) => setError(friendlyError(err)));
+  }, [refreshRemoteKnowledgeBases]);
 
   async function addRemoteKnowledgeBase(event: FormEvent) {
     event.preventDefault();
@@ -189,7 +160,6 @@ export default function App() {
             className="icon-button"
             title="刷新"
             onClick={() => {
-              refreshServices().catch((err) => setError(friendlyError(err)));
               refreshRemoteKnowledgeBases().catch((err) => setError(friendlyError(err)));
             }}
             disabled={Boolean(busy)}
@@ -208,23 +178,6 @@ export default function App() {
 
       {activeEntry === 'bearfrp' ? (
         <section className="entry-pane">
-          <form className="backend-strip" onSubmit={saveBackendUrl}>
-            <label>
-              发布端后端
-              <input
-                value={backendDraft}
-                onChange={(event) => setBackendDraft(event.target.value)}
-                placeholder="https://bearfrp.example.com"
-              />
-            </label>
-            <button className="secondary" disabled={busy === 'backend'}>
-              <Save size={17} />
-              保存
-            </button>
-          </form>
-          {!services?.bearfrpBackendUrl && (
-            <div className="inline-alert desktop-inline-alert">请先配置远端发布端后端 URL。</div>
-          )}
           <BearFrpApp />
         </section>
       ) : (

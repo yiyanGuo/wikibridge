@@ -91,6 +91,8 @@ type Invocation = {
   args?: unknown;
 };
 
+const FIXED_BEARFRP_BACKEND_URL = 'https://frp.muleizh.ink';
+
 export type SystemTestState = {
   services: {
     bearfrpBackendUrl: string;
@@ -154,7 +156,7 @@ export async function invoke<T = unknown>(command: string, args?: unknown): Prom
       return clone(state.services) as T;
     case 'set_bearfrp_backend_url':
     case 'save_settings':
-      state.services.bearfrpBackendUrl = readStringArg(args, 'url');
+      state.services.bearfrpBackendUrl = FIXED_BEARFRP_BACKEND_URL;
       return snapshot() as T;
     case 'get_llm_wiki_llm_config':
       return clone(state.llmConfig) as T;
@@ -243,7 +245,7 @@ export async function invoke<T = unknown>(command: string, args?: unknown): Prom
 function createState(overrides: Partial<SystemTestState> = {}): SystemTestState {
   const defaultProject = sampleProject();
   const base: SystemTestState = {
-    services: { bearfrpBackendUrl: 'https://bearfrp.example.test' },
+    services: { bearfrpBackendUrl: FIXED_BEARFRP_BACKEND_URL },
     llmConfig: {
       provider: 'deepseek',
       apiKey: 'sk-system-test',
@@ -278,7 +280,7 @@ function createState(overrides: Partial<SystemTestState> = {}): SystemTestState 
   return {
     ...base,
     ...clone(overrides),
-    services: { ...base.services, ...clone(overrides.services) },
+    services: { ...base.services, ...clone(overrides.services), bearfrpBackendUrl: FIXED_BEARFRP_BACKEND_URL },
     llmConfig: { ...base.llmConfig, ...clone(overrides.llmConfig) },
     wikiProjects: { ...base.wikiProjects, ...clone(overrides.wikiProjects) },
     projectTrees: { ...base.projectTrees, ...clone(overrides.projectTrees) },

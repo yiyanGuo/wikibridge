@@ -136,24 +136,6 @@ button {
   min-height: 0;
 }
 
-.backend-strip {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 10px;
-  align-items: end;
-  padding: 14px 20px;
-  border-bottom: 1px solid #d8e0e8;
-  background: #f8fafc;
-}
-
-.backend-strip label {
-  max-width: 760px;
-}
-
-.desktop-inline-alert {
-  margin: 12px 20px 0;
-}
-
 .opencode-pane {
   padding: 16px 20px 20px;
 }
@@ -1312,11 +1294,6 @@ button:disabled {
   .desktop-actions {
     justify-content: flex-start;
     flex-wrap: wrap;
-  }
-
-  .backend-strip {
-    grid-template-columns: 1fr;
-    padding: 14px 16px;
   }
 
   .workspace {

@@ -10,7 +10,8 @@ use url::Url;
 
 use crate::{frpc::ManagedProcess, local_service::LocalServiceProcess, sidecar::OpenCodeStack};
 
-const DEFAULT_BASE_URL: &str = "";
+pub const FIXED_BASE_URL: &str = "https://frp.muleizh.ink";
+const DEFAULT_BASE_URL: &str = FIXED_BASE_URL;
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct PersistedState {
@@ -187,8 +188,8 @@ impl DesktopRuntime {
         }
     }
 
-    pub fn set_base_url(&mut self, base_url: String) -> Result<(), String> {
-        let normalized = normalize_base_url(&base_url)?;
+    pub fn set_base_url(&mut self, _base_url: String) -> Result<(), String> {
+        let normalized = fixed_base_url()?;
         if normalized != self.persisted.base_url {
             self.persisted.base_url = normalized;
             self.clear_auth();
@@ -251,6 +252,10 @@ impl Drop for DesktopRuntime {
     }
 }
 
+pub fn fixed_base_url() -> Result<String, String> {
+    normalize_base_url(FIXED_BASE_URL)
+}
+
 pub fn normalize_base_url(value: &str) -> Result<String, String> {
     let trimmed = value.trim().trim_end_matches('/');
     if trimmed.is_empty() {
@@ -273,8 +278,24 @@ fn load_persisted_state(path: &PathBuf) -> Result<PersistedState, String> {
     let text = fs::read_to_string(path).map_err(|error| format!("无法读取本地状态: {error}"))?;
     let mut state: PersistedState =
         serde_json::from_str(&text).map_err(|error| format!("本地状态文件格式错误: {error}"))?;
-    state.base_url = normalize_base_url(&state.base_url)?;
+    apply_fixed_base_url(&mut state)?;
     Ok(state)
+}
+
+fn apply_fixed_base_url(state: &mut PersistedState) -> Result<(), String> {
+    let fixed = fixed_base_url()?;
+    let already_fixed = normalize_base_url(&state.base_url)
+        .map(|base_url| base_url == fixed)
+        .unwrap_or(false);
+    state.base_url = fixed;
+    if !already_fixed {
+        state.user_session = None;
+        state.uid_cookie = None;
+        state.enabled_proxy_ids.clear();
+        state.last_configs.clear();
+        state.connections.clear();
+    }
+    Ok(())
 }
 
 fn restrict_file_permissions(path: &PathBuf) {
@@ -316,22 +337,32 @@ mod tests {
     fn load_persisted_state_returns_default_when_missing() {
         let path = temp_state_path("missing");
         let state = load_persisted_state(&path).unwrap();
-        assert_eq!(state.base_url, "");
+        assert_eq!(state.base_url, FIXED_BASE_URL);
         assert!(state.projects.is_empty());
         let _ = fs::remove_dir_all(path.parent().unwrap());
     }
 
     #[test]
-    fn load_persisted_state_normalizes_base_url_and_rejects_corruption() {
-        let path = temp_state_path("normalizes");
+    fn load_persisted_state_forces_fixed_base_url_and_clears_old_backend_state() {
+        let path = temp_state_path("fixed-backend");
         fs::write(
             &path,
-            r#"{"base_url":"https://bearfrp.example.test/","user_session":null,"uid_cookie":null,"enabled_proxy_ids":[],"last_configs":{}}"#,
+            r#"{"base_url":"https://bearfrp.example.test/","user_session":"session-1","uid_cookie":"uid-1","enabled_proxy_ids":[1],"last_configs":{"1":"config"},"connections":{"connection-1":{"connection_id":"connection-1","project_id":"project-1","proxy_id":1,"local_host":"127.0.0.1","local_port":9010,"created_at":1}}}"#,
         )
         .unwrap();
         let state = load_persisted_state(&path).unwrap();
-        assert_eq!(state.base_url, "https://bearfrp.example.test");
+        assert_eq!(state.base_url, FIXED_BASE_URL);
+        assert!(state.user_session.is_none());
+        assert!(state.uid_cookie.is_none());
+        assert!(state.enabled_proxy_ids.is_empty());
+        assert!(state.last_configs.is_empty());
+        assert!(state.connections.is_empty());
+        let _ = fs::remove_dir_all(path.parent().unwrap());
+    }
 
+    #[test]
+    fn load_persisted_state_rejects_corrupt_json() {
+        let path = temp_state_path("corrupt-json");
         fs::write(&path, "{not-json").unwrap();
         let err = load_persisted_state(&path).unwrap_err();
         assert!(err.contains("本地状态文件格式错误"));

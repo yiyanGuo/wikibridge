@@ -11,7 +11,7 @@ use std::{
 use serde::Serialize;
 use tauri::{AppHandle, Manager};
 
-use crate::state::{DesktopRuntime, KnowledgeProject};
+use crate::state::{DesktopRuntime, KnowledgeProject, FIXED_BASE_URL};
 
 const HOST: &str = "127.0.0.1";
 const OPENCODE_START_PORT: u16 = 4096;
@@ -112,7 +112,7 @@ pub fn desktop_services_state(runtime: &mut DesktopRuntime) -> DesktopServicesSt
     let opencode_port = runtime.opencode_stack.opencode_port;
     let llm_wiki_port = runtime.opencode_stack.llm_wiki_port;
     DesktopServicesState {
-        bearfrp_backend_url: runtime.persisted.base_url.clone(),
+        bearfrp_backend_url: FIXED_BASE_URL.to_string(),
         app_data_dir: runtime.paths.app_data_dir.to_string_lossy().to_string(),
         opencode: SidecarStateDto {
             running: runtime.opencode_stack.opencode.is_some(),

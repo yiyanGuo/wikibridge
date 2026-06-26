@@ -64,6 +64,7 @@ export async function getOpenCalls(page: Page) {
 declare global {
   interface Window {
     __wikibridgeSystemTest?: {
+      getState: () => SystemTestState;
       getInvocations: () => Array<{ command: string; args?: unknown }>;
       failCommand: (command: string, message: string) => void;
       clearCommandFailure: (command: string) => void;
