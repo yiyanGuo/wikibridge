@@ -3,3 +3,4 @@ doc/
 .omo/
 llm_wiki/data/
 .env
+node_modules/
