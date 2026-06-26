@@ -32,16 +32,16 @@ test('logs in and manages a published Chat connection', async ({ page }) => {
 
   await expect(page.getByText('alice')).toBeVisible();
   await page.getByLabel('选择知识库项目').selectOption({ label: '示例知识库' });
-  await page.getByRole('button', { name: '发布 Chat' }).click();
-  await expect(page.getByText('消费端 Chat 发布连接已创建')).toBeVisible();
+  await page.getByRole('button', { name: '发布 API' }).click();
+  await expect(page.getByText('知识库 API 分享连接已创建')).toBeVisible();
   await expect(page.getByRole('heading', { name: '示例知识库' })).toBeVisible();
 
   await page.getByRole('button', { name: '开启访问' }).click();
   await expect(page.locator('.alert.notice')).toHaveText('访问已开启');
-  await expect(page.getByText('https://chat.example.test/mock')).toBeVisible();
+  await expect(page.getByText('https://wiki.example.test/api/v1')).toBeVisible();
 
   await page.getByTitle('复制访问地址').click();
-  await expect.poll(() => getClipboardText(page)).toBe('https://chat.example.test/mock');
+  await expect.poll(() => getClipboardText(page)).toBe('https://wiki.example.test/api/v1');
   await expect(page.getByText('访问地址已复制')).toBeVisible();
 
   await page.getByRole('button', { name: '关闭访问' }).click();

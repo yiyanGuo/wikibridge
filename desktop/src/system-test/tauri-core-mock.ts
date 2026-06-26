@@ -47,11 +47,48 @@ type ProjectConnection = {
   status: string;
 };
 
+type SidecarState = {
+  running: boolean;
+  healthy: boolean;
+  url?: string | null;
+  port?: number | null;
+  logPath?: string | null;
+  projectId?: string | null;
+};
+
+type DesktopServicesState = {
+  bearfrpBackendUrl: string;
+  appDataDir: string;
+  opencode: SidecarState;
+  llmWiki: SidecarState;
+};
+
+type LlmSettings = {
+  provider: string;
+  model: string;
+  baseUrl?: string | null;
+  hasApiKey: boolean;
+};
+
+type RemoteProject = {
+  id: string;
+  name: string;
+  path: string;
+  current: boolean;
+};
+
 type RemoteKnowledgeBase = {
   remoteId: string;
   name: string;
   url: string;
+  apiUrl: string;
   status: string;
+  projectCount: number;
+  projects: RemoteProject[];
+  currentProject?: RemoteProject | null;
+  authRequired: boolean;
+  mcpStatus: string;
+  token?: string | null;
   addedAt: number;
   lastOpenedAt?: number | null;
 };
@@ -92,9 +129,8 @@ type Invocation = {
 };
 
 export type SystemTestState = {
-  services: {
-    bearfrpBackendUrl: string;
-  };
+  services: DesktopServicesState;
+  llmSettings: LlmSettings;
   llmConfig: LlmWikiLlmConfig;
   authenticated: boolean;
   user: UserDto | null;
@@ -160,6 +196,23 @@ export async function invoke<T = unknown>(command: string, args?: unknown): Prom
       return clone(state.llmConfig) as T;
     case 'set_llm_wiki_llm_config':
       return saveLlmWikiConfig(args) as T;
+    case 'get_llm_settings':
+      return clone(state.llmSettings) as T;
+    case 'save_llm_settings':
+      return saveLlmSettings(args) as T;
+    case 'clear_llm_settings':
+      state.llmSettings = { ...state.llmSettings, hasApiKey: false };
+      state.services.opencode = stoppedSidecar();
+      state.services.llmWiki = stoppedSidecar();
+      return clone(state.llmSettings) as T;
+    case 'ensure_opencode_stack_running':
+      return ensureOpenCodeStackRunning() as T;
+    case 'stop_opencode_stack':
+      state.services.opencode = stoppedSidecar();
+      state.services.llmWiki = stoppedSidecar();
+      return undefined as T;
+    case 'create_opencode_session':
+      return createOpenCodeSession() as T;
     case 'list_remote_knowledge_bases':
       return clone(state.remoteKnowledgeBases) as T;
     case 'add_remote_knowledge_base':
@@ -171,6 +224,10 @@ export async function invoke<T = unknown>(command: string, args?: unknown): Prom
       return undefined as T;
     case 'check_remote_knowledge_base':
       return checkRemoteKnowledgeBase(readStringArg(args, 'url')) as T;
+    case 'select_remote_knowledge_base_project':
+      return selectRemoteKnowledgeBaseProject(readStringArg(args, 'remoteId'), readStringArg(args, 'projectId')) as T;
+    case 'ensure_opencode_for_remote':
+      return ensureOpenCodeForRemote(readStringArg(args, 'remoteId')) as T;
     case 'get_state':
       return snapshot() as T;
     case 'list_projects':
@@ -227,7 +284,7 @@ export async function invoke<T = unknown>(command: string, args?: unknown): Prom
     case 'create_connection':
       return createConnection(args) as T;
     case 'start_connection':
-      return updateConnection(readStringArg(args, 'connectionId'), { running: true, public_url: 'https://chat.example.test/mock' }) as T;
+      return updateConnection(readStringArg(args, 'connectionId'), { running: true, public_url: 'https://wiki.example.test/api/v1' }) as T;
     case 'stop_connection':
       return updateConnection(readStringArg(args, 'connectionId'), { running: false }) as T;
     case 'delete_connection':
@@ -243,7 +300,18 @@ export async function invoke<T = unknown>(command: string, args?: unknown): Prom
 function createState(overrides: Partial<SystemTestState> = {}): SystemTestState {
   const defaultProject = sampleProject();
   const base: SystemTestState = {
-    services: { bearfrpBackendUrl: 'https://bearfrp.example.test' },
+    services: {
+      bearfrpBackendUrl: 'https://bearfrp.example.test',
+      appDataDir: '/tmp/wikibridge/system-test',
+      opencode: stoppedSidecar(),
+      llmWiki: stoppedSidecar()
+    },
+    llmSettings: {
+      provider: 'deepseek',
+      model: 'deepseek-chat',
+      baseUrl: 'https://api.deepseek.com',
+      hasApiKey: true
+    },
     llmConfig: {
       provider: 'deepseek',
       apiKey: 'sk-system-test',
@@ -279,6 +347,7 @@ function createState(overrides: Partial<SystemTestState> = {}): SystemTestState 
     ...base,
     ...clone(overrides),
     services: { ...base.services, ...clone(overrides.services) },
+    llmSettings: { ...base.llmSettings, ...clone(overrides.llmSettings) },
     llmConfig: { ...base.llmConfig, ...clone(overrides.llmConfig) },
     wikiProjects: { ...base.wikiProjects, ...clone(overrides.wikiProjects) },
     projectTrees: { ...base.projectTrees, ...clone(overrides.projectTrees) },
@@ -290,11 +359,20 @@ function createState(overrides: Partial<SystemTestState> = {}): SystemTestState 
 
 function addRemoteKnowledgeBase(args: unknown): RemoteKnowledgeBase {
   const input = readInput(args);
-  const url = String(input.url || '').trim().replace(/\/+$/, '');
-  const existing = state.remoteKnowledgeBases.find((item) => item.url === url);
+  const url = normalizeRemoteUrl(String(input.url || ''));
+  const apiUrl = normalizeRemoteApiUrl(url);
+  const existing = state.remoteKnowledgeBases.find((item) => item.apiUrl === apiUrl || item.url === url);
+  const projects = sampleRemoteProjects();
+  const currentProject = projects.find((project) => project.current) || projects[0] || null;
   if (existing) {
     existing.name = String(input.name || '') || new URL(url).host;
+    existing.url = url;
+    existing.apiUrl = apiUrl;
     existing.status = 'ready';
+    existing.projectCount = projects.length;
+    existing.projects = projects;
+    existing.currentProject = currentProject;
+    existing.authRequired = false;
     existing.lastOpenedAt = Date.now();
     return clone(existing);
   }
@@ -302,11 +380,18 @@ function addRemoteKnowledgeBase(args: unknown): RemoteKnowledgeBase {
     remoteId: `remote-${state.nextId++}`,
     name: String(input.name || '') || new URL(url).host,
     url,
+    apiUrl,
     status: 'ready',
+    projectCount: projects.length,
+    projects,
+    currentProject,
+    authRequired: false,
+    mcpStatus: 'not_registered',
+    token: typeof input.token === 'string' && input.token.trim() ? input.token.trim() : null,
     addedAt: Date.now(),
     lastOpenedAt: Date.now()
   };
-  state.remoteKnowledgeBases = [remote, ...state.remoteKnowledgeBases.filter((item) => item.url !== url)];
+  state.remoteKnowledgeBases = [remote, ...state.remoteKnowledgeBases.filter((item) => item.apiUrl !== apiUrl && item.url !== url)];
   return clone(remote);
 }
 
@@ -318,16 +403,123 @@ function touchRemoteKnowledgeBase(remoteId: string): RemoteKnowledgeBase {
 }
 
 function checkRemoteKnowledgeBase(url: string) {
-  const normalized = url.trim().replace(/\/+$/, '');
+  const normalized = normalizeRemoteUrl(url);
+  const apiUrl = normalizeRemoteApiUrl(normalized);
   const ok = !normalized.includes('down');
+  const projects = ok ? sampleRemoteProjects() : [];
+  const currentProject = projects.find((project) => project.current) || projects[0] || null;
+  const existing = state.remoteKnowledgeBases.find((item) => item.url === normalized || item.apiUrl === apiUrl || item.url === url);
+  if (existing) {
+    existing.url = normalized;
+    existing.apiUrl = apiUrl;
+    existing.status = ok ? 'ready' : 'unreachable';
+    existing.projectCount = projects.length;
+    existing.projects = projects;
+    existing.currentProject = currentProject;
+    existing.authRequired = false;
+  }
   return {
     url: normalized,
+    apiUrl,
     ok,
     status: ok ? 'ready' : 'unreachable',
-    message: ok ? '远程知识库可用' : '远程知识库不可达',
-    opencodeHealthy: ok,
+    message: ok ? `远程知识库 API 可用，发现 ${projects.length} 个项目` : '远程知识库不可达',
     llmWikiHealthy: ok,
-    kbMode: ok
+    projectCount: projects.length,
+    projects,
+    currentProject,
+    authRequired: false,
+    mcpStatus: existing?.mcpStatus || 'not_registered'
+  };
+}
+
+function selectRemoteKnowledgeBaseProject(remoteId: string, projectId: string): RemoteKnowledgeBase {
+  const remote = state.remoteKnowledgeBases.find((item) => item.remoteId === remoteId);
+  if (!remote) throw new Error('远程知识库不存在');
+  const project = remote.projects.find((item) => item.id === projectId);
+  if (!project) throw new Error('所选知识库项目不存在，请先重新检测远程知识库');
+  remote.projects = remote.projects.map((item) => ({ ...item, current: item.id === projectId }));
+  remote.currentProject = { ...project, current: true };
+  remote.mcpStatus = 'not_registered';
+  return clone(remote);
+}
+
+function ensureOpenCodeStackRunning() {
+  state.services.llmWiki = {
+    running: true,
+    healthy: true,
+    url: 'http://127.0.0.1:9011/api/v1',
+    port: 9011,
+    logPath: '/tmp/wikibridge/system-test/llm-wiki.log',
+    projectId: null
+  };
+  state.services.opencode = {
+    running: true,
+    healthy: true,
+    url: 'http://127.0.0.1:9010',
+    port: 9010,
+    logPath: '/tmp/wikibridge/system-test/opencode.log',
+    projectId: null
+  };
+  const session = createOpenCodeSession();
+  return {
+    opencodeUrl: 'http://127.0.0.1:9010',
+    llmWikiUrl: 'http://127.0.0.1:9011/api/v1',
+    opencodePort: 9010,
+    llmWikiPort: 9011,
+    opencodeLogPath: '/tmp/wikibridge/system-test/opencode.log',
+    llmWikiLogPath: '/tmp/wikibridge/system-test/llm-wiki.log',
+    projectId: null,
+    mcpServerName: null,
+    mcpStatus: null,
+    sessionId: session.sessionId,
+    sessionUrl: session.url
+  };
+}
+
+function ensureOpenCodeForRemote(remoteId: string) {
+  const remote = state.remoteKnowledgeBases.find((item) => item.remoteId === remoteId);
+  if (!remote) throw new Error('远程知识库不存在');
+  const stack = ensureOpenCodeStackRunning();
+  state.services.llmWiki = stoppedSidecar();
+  state.services.opencode.projectId = `remote-${remote.remoteId}`;
+  remote.mcpStatus = 'registered';
+  remote.lastOpenedAt = Date.now();
+  const session = createOpenCodeSession();
+  return {
+    stack: {
+      ...stack,
+      llmWikiUrl: remote.apiUrl || normalizeRemoteApiUrl(remote.url),
+      llmWikiPort: null,
+      llmWikiLogPath: null,
+      projectId: `remote-${remote.remoteId}`,
+      mcpServerName: `llm-wiki-${remote.remoteId}`,
+      mcpStatus: 'registered',
+      sessionId: session.sessionId,
+      sessionUrl: session.url
+    },
+    remote: clone(remote),
+    session
+  };
+}
+
+function createOpenCodeSession() {
+  if (!state.services.opencode.running) {
+    state.services.opencode = {
+      running: true,
+      healthy: true,
+      url: 'http://127.0.0.1:9010',
+      port: 9010,
+      logPath: '/tmp/wikibridge/system-test/opencode.log',
+      projectId: null
+    };
+  }
+  const sessionId = `session-${state.nextId++}`;
+  const directory = '/tmp/wikibridge/system-test/opencode-data/users/default';
+  return {
+    sessionId,
+    directory,
+    url: `http://127.0.0.1:9010/mock/session/${sessionId}`
   };
 }
 
@@ -376,6 +568,21 @@ function saveLlmWikiConfig(args: unknown): LlmWikiLlmConfig {
   };
   state.llmConfig = next;
   return clone(next);
+}
+
+function saveLlmSettings(args: unknown): LlmSettings {
+  const input = readInput(args);
+  const provider = String(input.provider || 'deepseek');
+  const model = String(input.model || 'deepseek-chat');
+  const baseUrl = typeof input.baseUrl === 'string' ? input.baseUrl : null;
+  const apiKey = typeof input.apiKey === 'string' ? input.apiKey.trim() : '';
+  state.llmSettings = {
+    provider,
+    model,
+    baseUrl,
+    hasApiKey: apiKey ? true : state.llmSettings.hasApiKey
+  };
+  return clone(state.llmSettings);
 }
 
 function ensureProjectTree(projectId: string): ProjectTreeNode {
@@ -454,6 +661,39 @@ function sampleProject(): KnowledgeProject {
     build_status: 'built',
     link_status: 'linked'
   };
+}
+
+function sampleRemoteProjects(): RemoteProject[] {
+  return [
+    {
+      id: 'remote-project-1',
+      name: '团队项目',
+      path: '/remote/team',
+      current: true
+    }
+  ];
+}
+
+function stoppedSidecar(): SidecarState {
+  return {
+    running: false,
+    healthy: false,
+    url: null,
+    port: null,
+    logPath: null,
+    projectId: null
+  };
+}
+
+function normalizeRemoteUrl(value: string) {
+  return value.trim().replace(/[?#].*$/, '').replace(/\/+$/, '');
+}
+
+function normalizeRemoteApiUrl(value: string) {
+  const normalized = normalizeRemoteUrl(value);
+  if (normalized.endsWith('/api/v1')) return normalized;
+  if (normalized.endsWith('/api')) return `${normalized}/v1`;
+  return `${normalized}/api/v1`;
 }
 
 function sampleWikiProject(project: KnowledgeProject): WikiProjectState {

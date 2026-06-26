@@ -48,7 +48,7 @@ test('opens and deletes a published Chat connection with confirmation', async ({
         project_id: 'project-1',
         project_name: '示例知识库',
         proxy_id: 1,
-        public_url: 'https://chat.example.test/existing',
+        public_url: 'https://wiki.example.test/api/v1/existing',
         running: true,
         enabled: true,
         service_ready: true,
@@ -62,16 +62,16 @@ test('opens and deletes a published Chat connection with confirmation', async ({
   await page.getByRole('button', { name: '访问连接' }).click();
   await page.getByTitle('打开访问地址').click();
   await expect.poll(() => getOpenCalls(page)).toContainEqual({
-    url: 'https://chat.example.test/existing',
+    url: 'https://wiki.example.test/api/v1/existing',
     target: '_blank'
   });
 
   await setConfirmResult(page, false);
   await page.getByTitle('删除连接').click();
-  await expect(page.getByText('https://chat.example.test/existing')).toBeVisible();
+  await expect(page.getByText('https://wiki.example.test/api/v1/existing')).toBeVisible();
 
   await setConfirmResult(page, true);
   await page.getByTitle('删除连接').click();
-  await expect(page.getByText('Chat 发布连接已删除')).toBeVisible();
-  await expect(page.getByText('https://chat.example.test/existing')).toBeHidden();
+  await expect(page.getByText('知识库 API 分享连接已删除')).toBeVisible();
+  await expect(page.getByText('https://wiki.example.test/api/v1/existing')).toBeHidden();
 });
