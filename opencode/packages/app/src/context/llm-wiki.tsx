@@ -1,9 +1,15 @@
 import { createSimpleContext } from "@opencode-ai/ui/context"
-import { createResource, createSignal, Show, type Accessor, type JSX } from "solid-js"
+import { createEffect, createResource, createSignal, Show, type Accessor, type JSX } from "solid-js"
 import { useServerSDK } from "./server-sdk"
-import type { LlmWikiProject, LlmWikiFileNode, LlmWikiSearchResult } from "@opencode-ai/sdk/v2/client"
+import type {
+  LlmWikiProject,
+  LlmWikiFileNode,
+  LlmWikiGraphEdge,
+  LlmWikiGraphNode,
+  LlmWikiSearchResult,
+} from "@opencode-ai/sdk/v2/client"
 
-export type { LlmWikiProject, LlmWikiFileNode, LlmWikiSearchResult }
+export type { LlmWikiProject, LlmWikiFileNode, LlmWikiGraphEdge, LlmWikiGraphNode, LlmWikiSearchResult }
 
 const FAKE_DIRECTORY = "."
 
@@ -14,6 +20,9 @@ export interface LlmWikiContextValue {
   files: Accessor<LlmWikiFileNode[]>
   filesLoading: Accessor<boolean>
   loadFile: (path: string) => Promise<{ content: string } | undefined>
+  graphNodes: Accessor<LlmWikiGraphNode[]>
+  graphEdges: Accessor<LlmWikiGraphEdge[]>
+  graphLoading: Accessor<boolean>
   searchResults: Accessor<LlmWikiSearchResult[]>
   searchLoading: Accessor<boolean>
   search: (query: string) => void
@@ -48,6 +57,12 @@ export const { use: useLlmWiki, provider: LlmWikiProvider } = createSimpleContex
       return data?.projects ?? []
     }
 
+    createEffect(() => {
+      const data = projectsResource()
+      if (currentProjectId() || !data?.currentProject?.id) return
+      setCurrentProjectId(data.currentProject.id)
+    })
+
     const currentProject = () => {
       const id = currentProjectId()
       if (!id) return undefined
@@ -74,6 +89,30 @@ export const { use: useLlmWiki, provider: LlmWikiProvider } = createSimpleContex
 
     const files = () => filesResource() ?? []
     const filesLoading = () => filesResource.loading
+
+    const [graphResource] = createResource(
+      () => ({ id: currentProjectId(), url: serverSDK().url }),
+      async (ctx) => {
+        if (!ctx.id) return { nodes: [], edges: [] }
+        try {
+          const response = await client().llmWiki.graph({
+            projectID: ctx.id,
+            directory: FAKE_DIRECTORY,
+            limit: "100",
+          })
+          return {
+            nodes: response.data?.nodes ?? [],
+            edges: response.data?.edges ?? [],
+          }
+        } catch {
+          return { nodes: [], edges: [] }
+        }
+      },
+    )
+
+    const graphNodes = () => graphResource()?.nodes ?? []
+    const graphEdges = () => graphResource()?.edges ?? []
+    const graphLoading = () => graphResource.loading
 
     const loadFile = async (path: string) => {
       const projectId = currentProjectId()
@@ -128,6 +167,9 @@ export const { use: useLlmWiki, provider: LlmWikiProvider } = createSimpleContex
       files,
       filesLoading,
       loadFile,
+      graphNodes,
+      graphEdges,
+      graphLoading,
       searchResults,
       searchLoading,
       search,

@@ -1,17 +1,43 @@
 #!/usr/bin/env node
 
 import { spawnSync } from "node:child_process"
-import { existsSync } from "node:fs"
-import { dirname, resolve } from "node:path"
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs"
+import { tmpdir } from "node:os"
+import { dirname, relative, resolve } from "node:path"
 import { fileURLToPath } from "node:url"
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const repoRoot = resolve(__dirname, "..")
+const sampleProjectId = "sample-wiki"
+const sampleProjectName = "Sample Wiki"
+const condaBin = process.platform === "win32" ? "conda.exe" : "conda"
+const condaEnvName = process.env.BEARFRP_CONDA_ENV || "bearfrp_test"
+const localBun = resolve(repoRoot, "desktop", "node_modules", ".bin", process.platform === "win32" ? "bun.cmd" : "bun")
 
 const options = parseArgs(process.argv.slice(2))
-const projectId = resolveProjectId(options)
 const startedAt = Date.now()
 const results = []
+
+if (options.prepareBlackboxData) {
+  const prepared = ensureLlmWikiProject()
+  if (!prepared.ok) {
+    console.error(`Failed to prepare LLM Wiki black-box data: ${prepared.detail}`)
+    process.exit(1)
+  }
+  console.log(`Prepared LLM Wiki black-box data: ${prepared.detail}`)
+  process.exit(0)
+}
+
+if (options.full && options.blackbox && shouldPrepareBlackboxData(options.tasks)) {
+  const prepared = ensureLlmWikiProject()
+  if (prepared.ok) {
+    console.log(`Prepared LLM Wiki black-box data: ${prepared.detail}`)
+  } else {
+    console.log(`LLM Wiki black-box data was not prepared: ${prepared.detail}`)
+  }
+}
+
+const projectId = resolveProjectId(options)
 
 const taskDefinitions = [
   {
@@ -43,9 +69,14 @@ const taskDefinitions = [
     whitebox: [
       commandStep("llm_wiki mocked tests", "npm", ["run", "test:mocks"], {
         cwd: "llm_wiki",
+        ensureNpmDependencies: options.full,
+        requiredNode: "20.19.0",
         requiredPath: "llm_wiki/node_modules",
       }),
-      commandStep("LLM Wiki MCP tests", "npm", ["run", "mcp:test"], { cwd: "llm_wiki" }),
+      commandStep("LLM Wiki MCP tests", "npm", ["run", "mcp:test"], {
+        cwd: "llm_wiki",
+        ensureNpmDependencies: options.full ? ["llm_wiki/mcp-server"] : false,
+      }),
     ],
     blackbox: [
       httpCheck("LLM Wiki health", `${options.llmWikiUrl}/health`, {
@@ -76,9 +107,8 @@ const taskDefinitions = [
     id: "T-03",
     name: "OpenCode KB permissions",
     whitebox: [
-      commandStep("OpenCode KB guard tests", "bun", ["test", "test/kb/guard.test.ts", "test/kb/server.test.ts"], {
+      commandStep("OpenCode KB guard tests", bunCommand(), ["test", "test/kb/guard.test.ts", "test/kb/server.test.ts"], {
         cwd: "opencode/packages/opencode",
-        requiredBinary: "bun",
       }),
     ],
     blackbox: [
@@ -86,10 +116,12 @@ const taskDefinitions = [
         expectStatus: 200,
         expectJson: (body) => body && body.healthy === true,
       }),
-      httpCheck("OpenCode KB blocks VCS in KB mode", `${options.baseUrl}/vcs?directory=..%2F`, {
+      httpCheck("OpenCode KB blocks terminal shells in KB mode", `${options.baseUrl}/pty/shells`, {
         expectStatus: 403,
       }),
-      httpCheck("OpenCode KB blocks VCS diff in KB mode", `${options.baseUrl}/vcs/diff?directory=..%2F&mode=git`, {
+      httpCheck("OpenCode KB blocks VCS apply in KB mode", `${options.baseUrl}/vcs/apply`, {
+        method: "POST",
+        json: { patch: "" },
         expectStatus: 403,
       }),
     ],
@@ -98,7 +130,7 @@ const taskDefinitions = [
     id: "T-04",
     name: "BearFRP users and proxies",
     whitebox: [
-      commandStep("BearFRP pytest API coverage", pythonCommand(), ["-m", "pytest", "-q", "tests/test_api.py"], {
+      commandStep("BearFRP pytest API coverage", pythonCommand(), pythonArgs(["-m", "pytest", "-q", "tests/test_api.py"]), {
         cwd: "bearfrp",
       }),
     ],
@@ -107,7 +139,7 @@ const taskDefinitions = [
     id: "T-05",
     name: "frps plugin authorization",
     whitebox: [
-      commandStep("BearFRP plugin and poller tests", pythonCommand(), ["-m", "pytest", "-q", "tests/test_plugin_and_poller.py"], {
+      commandStep("BearFRP plugin and poller tests", pythonCommand(), pythonArgs(["-m", "pytest", "-q", "tests/test_plugin_and_poller.py"]), {
         cwd: "bearfrp",
       }),
     ],
@@ -116,13 +148,12 @@ const taskDefinitions = [
     id: "T-06",
     name: "auto-publish sidecar",
     whitebox: [
-      commandStep("sidecar Python syntax", pythonCommand(), [
+      commandStep("sidecar Python syntax", pythonCommand(), pythonArgs([
         "-c",
         "import ast, pathlib; ast.parse(pathlib.Path('docker/bearfrp-wikibridge-frpc/start.py').read_text(encoding='utf-8'))",
-      ]),
+      ])),
       commandStep("sidecar image build", "docker", ["compose", "build", "bearfrp-wikibridge-frpc"], {
-        optional: true,
-        runWhen: () => options.docker,
+        runWhen: () => options.full && options.docker,
       }),
     ],
   },
@@ -148,7 +179,7 @@ const taskDefinitions = [
     id: "T-08",
     name: "exception and security boundaries",
     whitebox: [
-      commandStep("BearFRP pytest security/error coverage", pythonCommand(), ["-m", "pytest", "-q", "tests/test_api.py", "tests/test_plugin_and_poller.py"], {
+      commandStep("BearFRP pytest security/error coverage", pythonCommand(), pythonArgs(["-m", "pytest", "-q", "tests/test_api.py", "tests/test_plugin_and_poller.py"]), {
         cwd: "bearfrp",
       }),
     ],
@@ -178,7 +209,10 @@ const taskDefinitions = [
       }),
       commandStep("desktop Rust contract tests", "npm", ["run", "test:contracts"], {
         cwd: "desktop",
-        skipWhenProcessContains: "desktop/src-tauri/target/debug/binaries/",
+        env: options.full
+          ? { CARGO_TARGET_DIR: resolve(tmpdir(), "wikibridge-test-target", "desktop-tauri") }
+          : undefined,
+        skipWhenProcessContains: options.full ? undefined : "desktop/src-tauri/target/debug/binaries/",
       }),
     ],
   },
@@ -246,6 +280,13 @@ function commandStep(name, command, args, config = {}) {
         detail: `Node ${process.versions.node} is below required ${config.requiredNode}`,
       }
     }
+    const cwd = resolve(repoRoot, config.cwd ?? ".")
+    if (config.ensureNpmDependencies) {
+      const ensured = ensureNpmDependencies(config.ensureNpmDependencies, cwd)
+      if (!ensured.ok) {
+        return { name, status: ensured.status, detail: ensured.detail }
+      }
+    }
     if (config.requiredPath && !existsSync(resolve(repoRoot, config.requiredPath))) {
       return { name, status: "skip", detail: `missing path: ${config.requiredPath}` }
     }
@@ -257,12 +298,11 @@ function commandStep(name, command, args, config = {}) {
       }
     }
 
-    const cwd = resolve(repoRoot, config.cwd ?? ".")
     const result = spawnSync(command, args, {
       cwd,
-      env: { ...process.env, CI: process.env.CI ?? "1" },
+      env: { ...process.env, CI: process.env.CI ?? "1", ...(config.env ?? {}) },
       stdio: "inherit",
-      shell: false,
+      shell: process.platform === "win32",
     })
 
     if (result.error) {
@@ -325,10 +365,267 @@ function resolveProjectId(opts) {
   if (typeof currentProject === "string") return currentProject
   const current = projects.find((project) => project && project.current && typeof project.id === "string")
   if (current) return current.id
-  const defaultProject = projects.find((project) => project && project.id === "default")
-  if (defaultProject) return defaultProject.id
+  const sampleProject = projects.find((project) => project && project.id === sampleProjectId)
+  if (sampleProject) return sampleProject.id
   const first = projects.find((project) => project && typeof project.id === "string")
   return first?.id ?? null
+}
+
+function shouldPrepareBlackboxData(tasks) {
+  return tasks.has("T-02") || tasks.has("T-07") || tasks.has("T-08")
+}
+
+function ensureNpmDependencies(targets, fallbackCwd) {
+  const targetList =
+    targets === true || targets === undefined
+      ? [fallbackCwd]
+      : (Array.isArray(targets) ? targets : [targets]).map((target) => resolve(repoRoot, target))
+
+  for (const target of targetList) {
+    const cwd = resolve(target)
+    if (existsSync(resolve(cwd, "node_modules"))) continue
+    if (!existsSync(resolve(cwd, "package-lock.json"))) {
+      return { ok: false, status: "skip", detail: `missing package-lock.json in ${relativePath(cwd)}` }
+    }
+    const result = spawnSync("npm", ["ci"], {
+      cwd,
+      env: { ...process.env, CI: process.env.CI ?? "1" },
+      stdio: "inherit",
+      shell: false,
+    })
+    if (result.error) {
+      return { ok: false, status: "fail", detail: result.error.message }
+    }
+    if (result.status !== 0) {
+      return { ok: false, status: "fail", detail: `npm ci failed in ${relativePath(cwd)} with exit code ${result.status}` }
+    }
+  }
+  return { ok: true }
+}
+
+function ensureLlmWikiProject() {
+  if (options.llmWikiDataDir) {
+    return ensureLocalLlmWikiProject(resolve(options.llmWikiDataDir))
+  }
+  const compose = ensureComposeLlmWikiProject()
+  if (compose.ok) return compose
+  return {
+    ok: false,
+    detail: `${compose.detail}. Set --llm-wiki-data-dir to prepare a local LLM Wiki data directory directly.`,
+  }
+}
+
+function ensureComposeLlmWikiProject() {
+  if (!hasCommand("docker")) {
+    return { ok: false, detail: "missing command: docker" }
+  }
+  const container = composeContainerId("llm-wiki")
+  if (!container) {
+    return { ok: false, detail: "docker compose service llm-wiki is not running" }
+  }
+
+  const tmpRoot = mkdtempSync(resolve(tmpdir(), "wikibridge-sample-wiki-"))
+  const localDataDir = resolve(tmpRoot, "data")
+  try {
+    mkdirSync(localDataDir, { recursive: true })
+    if (composeFileExists("llm-wiki", "/data/app-state.json")) {
+      const copyStateFrom = spawnSync("docker", ["cp", `${container}:/data/app-state.json`, resolve(localDataDir, "app-state.json")], {
+        cwd: repoRoot,
+        encoding: "utf8",
+        stdio: ["ignore", "pipe", "pipe"],
+        shell: false,
+      })
+      if (copyStateFrom.error) {
+        return { ok: false, detail: copyStateFrom.error.message }
+      }
+      if (copyStateFrom.status !== 0) {
+        return { ok: false, detail: (copyStateFrom.stderr || copyStateFrom.stdout || `docker cp exited ${copyStateFrom.status}`).trim() }
+      }
+    }
+
+    writeLlmWikiFixture(localDataDir, "/data")
+
+    const copyProjectTo = spawnSync("docker", ["cp", resolve(localDataDir, sampleProjectId), `${container}:/data/`], {
+      cwd: repoRoot,
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "pipe"],
+      shell: false,
+    })
+    if (copyProjectTo.error) {
+      return { ok: false, detail: copyProjectTo.error.message }
+    }
+    if (copyProjectTo.status !== 0) {
+      return { ok: false, detail: (copyProjectTo.stderr || copyProjectTo.stdout || `docker cp exited ${copyProjectTo.status}`).trim() }
+    }
+    const copyStateTo = spawnSync("docker", ["cp", resolve(localDataDir, "app-state.json"), `${container}:/data/app-state.json`], {
+      cwd: repoRoot,
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "pipe"],
+      shell: false,
+    })
+    if (copyStateTo.error) {
+      return { ok: false, detail: copyStateTo.error.message }
+    }
+    if (copyStateTo.status !== 0) {
+      return { ok: false, detail: (copyStateTo.stderr || copyStateTo.stdout || `docker cp exited ${copyStateTo.status}`).trim() }
+    }
+
+    const chown = spawnSync("docker", ["compose", "exec", "-T", "--user", "root", "llm-wiki", "sh", "-lc", "chown -R llmwiki:llmwiki /data/sample-wiki /data/app-state.json"], {
+      cwd: repoRoot,
+      stdio: "ignore",
+      shell: false,
+    })
+    if (chown.error || chown.status !== 0) {
+      return { ok: false, detail: chown.error?.message ?? `chown exited ${chown.status}` }
+    }
+
+    return { ok: true, detail: `wrote /data/${sampleProjectId} in docker compose llm-wiki` }
+  } finally {
+    rmSync(tmpRoot, { recursive: true, force: true })
+  }
+}
+
+function ensureLocalLlmWikiProject(dataDir) {
+  try {
+    writeLlmWikiFixture(dataDir, dataDir)
+    return { ok: true, detail: `wrote ${resolve(dataDir, sampleProjectId)}` }
+  } catch (error) {
+    return { ok: false, detail: error instanceof Error ? error.message : String(error) }
+  }
+}
+
+function writeLlmWikiFixture(dataDir, projectPathRoot) {
+  const projectPath = normalizeProjectPath(resolve(projectPathRoot, sampleProjectId))
+  const projectDir = resolve(dataDir, sampleProjectId)
+  mkdirSync(resolve(projectDir, ".llm-wiki"), { recursive: true })
+  mkdirSync(resolve(projectDir, "wiki"), { recursive: true })
+  mkdirSync(resolve(projectDir, "raw", "sources"), { recursive: true })
+
+  writeJson(resolve(projectDir, ".llm-wiki", "project.json"), {
+    id: sampleProjectId,
+    name: sampleProjectName,
+  })
+  writeJson(resolve(projectDir, ".llm-wiki", "review.json"), [])
+  writeFileSync(
+    resolve(projectDir, "purpose.md"),
+    "# Sample Wiki Purpose\n\nThis project exists for WikiBridge black-box API checks.\n",
+    "utf8",
+  )
+  writeFileSync(
+    resolve(projectDir, "wiki", "index.md"),
+    [
+      "# Sample Wiki Index",
+      "",
+      "This page mentions WikiBridge black-box search coverage and links to [[README]].",
+      "",
+    ].join("\n"),
+    "utf8",
+  )
+  writeFileSync(
+    resolve(projectDir, "wiki", "README.md"),
+    [
+      "# Sample Wiki README",
+      "",
+      "Backlink to [[index]] for graph coverage and project-level file checks.",
+      "",
+    ].join("\n"),
+    "utf8",
+  )
+  writeFileSync(
+    resolve(projectDir, "wiki", "xss.md"),
+    [
+      "# XSS Safety Fixture",
+      "",
+      "The browser must render this sample as inert text without opening alert, confirm, or prompt dialogs.",
+      "",
+      "```html",
+      "<script>alert(1)</script>",
+      "```",
+      "",
+    ].join("\n"),
+    "utf8",
+  )
+  writeFileSync(
+    resolve(projectDir, "raw", "sources", "source.md"),
+    "# Sample Source\n\nSource text for sample-wiki black-box coverage.\n",
+    "utf8",
+  )
+  mergeLlmWikiAppState(resolve(dataDir, "app-state.json"), projectPath)
+}
+
+function mergeLlmWikiAppState(path, projectPath) {
+  const state = readJson(path) ?? {}
+  const project = { id: sampleProjectId, name: sampleProjectName, path: projectPath }
+  const registry =
+    state.projectRegistry && typeof state.projectRegistry === "object" && !Array.isArray(state.projectRegistry)
+      ? state.projectRegistry
+      : {}
+  registry[sampleProjectId] = project
+
+  const recentProjects = Array.isArray(state.recentProjects) ? state.recentProjects : []
+  const filteredRecents = recentProjects.filter((item) => item?.id !== sampleProjectId && item?.path !== projectPath)
+  state.projectRegistry = registry
+  state.recentProjects = [project, ...filteredRecents].slice(0, 10)
+  if (!state.currentProject || typeof state.currentProject !== "object") {
+    state.currentProject = project
+  }
+  const previousApiConfig = state.apiConfig && typeof state.apiConfig === "object" ? state.apiConfig : {}
+  state.apiConfig = {
+    mcpEnabled: previousApiConfig.mcpEnabled === true,
+    ...previousApiConfig,
+    enabled: true,
+    allowUnauthenticated: options.llmWikiToken ? false : (previousApiConfig.allowUnauthenticated ?? true),
+    token: options.llmWikiToken || previousApiConfig.token || "",
+  }
+  if (!state.embeddingConfig || typeof state.embeddingConfig !== "object") {
+    state.embeddingConfig = { enabled: false, endpoint: "", apiKey: "", model: "" }
+  }
+  writeJson(path, state)
+}
+
+function composeContainerId(service) {
+  const result = spawnSync("docker", ["compose", "ps", "-q", service], {
+    cwd: repoRoot,
+    encoding: "utf8",
+    stdio: ["ignore", "pipe", "ignore"],
+    shell: false,
+  })
+  if (result.status !== 0) return ""
+  return result.stdout.trim().split(/\s+/).find(Boolean) ?? ""
+}
+
+function composeFileExists(service, path) {
+  const result = spawnSync("docker", ["compose", "exec", "-T", service, "sh", "-lc", `test -f ${shellQuote(path)}`], {
+    cwd: repoRoot,
+    stdio: "ignore",
+    shell: false,
+  })
+  return result.status === 0
+}
+
+function writeJson(path, value) {
+  writeFileSync(path, `${JSON.stringify(value, null, 2)}\n`, "utf8")
+}
+
+function readJson(path) {
+  try {
+    return JSON.parse(readFileSync(path, "utf8"))
+  } catch {
+    return null
+  }
+}
+
+function normalizeProjectPath(path) {
+  return path.replace(/\\/g, "/").replace(/\/+$/, "")
+}
+
+function relativePath(path) {
+  const rel = relative(repoRoot, path)
+  return rel && !rel.startsWith("..") ? rel : path
+}
+
+function isLlmWikiRequest(url) {
+  return Boolean(options.llmWikiUrl && url.startsWith(options.llmWikiUrl)) || url.startsWith(`${options.baseUrl}/instance/llm-wiki`)
 }
 
 function curlJson(url, config) {
@@ -337,7 +634,7 @@ function curlJson(url, config) {
   for (const [key, value] of Object.entries(config.headers ?? {})) {
     args.push("-H", `${key}: ${value}`)
   }
-  if (options.llmWikiToken && url.startsWith(options.llmWikiUrl)) {
+  if (options.llmWikiToken && isLlmWikiRequest(url)) {
     args.push("-H", `Authorization: Bearer ${options.llmWikiToken}`)
     args.push("-H", `X-LLM-Wiki-Token: ${options.llmWikiToken}`)
   }
@@ -399,9 +696,12 @@ function parseArgs(rawArgs) {
   let whitebox = true
   let blackbox = false
   let docker = false
+  let full = false
+  let prepareBlackboxData = false
   let baseUrl = process.env.WIKIBRIDGE_BASE_URL ?? "http://127.0.0.1"
   let llmWikiUrl = process.env.LLM_WIKI_API_URL
   let llmWikiUrlExplicit = Boolean(process.env.LLM_WIKI_API_URL)
+  let llmWikiDataDir = process.env.LLM_WIKI_DATA_DIR ?? ""
   let bearfrpUrl = process.env.BEARFRP_API_URL ?? "http://127.0.0.1:8000"
   let projectId = process.env.WIKIBRIDGE_TEST_PROJECT ?? "current"
   let projectExplicit = Boolean(process.env.WIKIBRIDGE_TEST_PROJECT)
@@ -429,6 +729,14 @@ function parseArgs(rawArgs) {
     }
     if (arg === "--docker") {
       docker = true
+      continue
+    }
+    if (arg === "--full") {
+      full = true
+      continue
+    }
+    if (arg === "--prepare-blackbox-data") {
+      prepareBlackboxData = true
       continue
     }
     if (arg === "--task") {
@@ -465,6 +773,15 @@ function parseArgs(rawArgs) {
     if (arg.startsWith("--llm-wiki-url=")) {
       llmWikiUrl = arg.slice("--llm-wiki-url=".length)
       llmWikiUrlExplicit = true
+      continue
+    }
+    if (arg === "--llm-wiki-data-dir") {
+      llmWikiDataDir = requireValue(rawArgs, index, arg)
+      index += 1
+      continue
+    }
+    if (arg.startsWith("--llm-wiki-data-dir=")) {
+      llmWikiDataDir = arg.slice("--llm-wiki-data-dir=".length)
       continue
     }
     if (arg === "--bearfrp-url") {
@@ -508,7 +825,7 @@ function parseArgs(rawArgs) {
     failUsage(`Unknown option: ${arg}`)
   }
 
-  if (!whitebox && !blackbox) {
+  if (!whitebox && !blackbox && !prepareBlackboxData) {
     failUsage("At least one of --whitebox or --blackbox must be enabled")
   }
   if (!Number.isFinite(httpTimeout) || httpTimeout <= 0) {
@@ -520,8 +837,11 @@ function parseArgs(rawArgs) {
     whitebox,
     blackbox,
     docker,
+    full,
+    prepareBlackboxData,
     baseUrl: stripTrailingSlash(baseUrl),
     llmWikiUrl: stripTrailingSlash(llmWikiUrl ?? (llmWikiUrlExplicit ? "" : `${baseUrl}/instance/llm-wiki`)),
+    llmWikiDataDir,
     bearfrpUrl: stripTrailingSlash(bearfrpUrl),
     projectId,
     projectExplicit,
@@ -559,22 +879,35 @@ Runs the black-box and white-box checks mapped to /doc/测试文档.pdf tasks T-
 
 Default:
   node scripts/test-tasks.mjs
-    Runs white-box checks that do not require a running Compose stack.
+    Runs lightweight white-box checks that do not require a running Compose stack.
 
 Useful modes:
   node scripts/test-tasks.mjs --task T-04,T-05
+  node scripts/test-tasks.mjs --full --task T-02
   node scripts/test-tasks.mjs --blackbox --no-whitebox
-  node scripts/test-tasks.mjs --blackbox --base-url http://127.0.0.1 --bearfrp-url http://127.0.0.1:8000
+  node scripts/test-tasks.mjs --full --blackbox --base-url http://127.0.0.1 --bearfrp-url http://127.0.0.1:8000
   node scripts/test-tasks.mjs --blackbox --llm-wiki-url http://127.0.0.1:19828/api/v1
+  node scripts/test-tasks.mjs --full --docker --task T-06
+
+Notes:
+  --full enables slower completion steps such as npm ci, black-box fixture data
+  preparation, and isolated Cargo target directories. T-02 mocked tests and
+  T-09 Playwright checks require Node >=20.19.0; use nvm/fnm/asdf or your
+  package manager to run this script under a newer Node when needed.
 
 Options:
   --task <ids>          Comma-separated task ids, for example T-01,T-02.
   --whitebox           Run source-level tests. Enabled by default.
   --no-whitebox        Disable source-level tests.
   --blackbox           Run HTTP checks against already-started services.
-  --docker             Also run optional Docker image build checks.
+  --full               Enable slower setup to turn eligible skips into real checks.
+  --prepare-blackbox-data
+                       Only prepare the sample LLM Wiki black-box project and exit.
+  --docker             With --full, also run Docker image build checks.
   --base-url <url>     Unified nginx/OpenCode URL. Default: WIKIBRIDGE_BASE_URL or http://127.0.0.1.
   --llm-wiki-url <url> LLM Wiki API base. Default: LLM_WIKI_API_URL or <base-url>/instance/llm-wiki.
+  --llm-wiki-data-dir <dir>
+                       Direct LLM Wiki data dir for fixture preparation. Default: LLM_WIKI_DATA_DIR.
   --bearfrp-url <url>  BearFRP API URL. Default: BEARFRP_API_URL or http://127.0.0.1:8000.
   --project <id>       Project id for LLM Wiki checks. Default: WIKIBRIDGE_TEST_PROJECT or current.
   --query <text>       Search query for LLM Wiki checks. Default: WIKIBRIDGE_TEST_QUERY or example.
@@ -605,7 +938,17 @@ function shellQuote(value) {
 }
 
 function pythonCommand() {
-  return process.env.PYTHON ?? "python3"
+  return process.env.PYTHON ?? condaBin
+}
+
+function pythonArgs(args) {
+  if (process.env.PYTHON) return args
+  return ["run", "-n", condaEnvName, "python", ...args]
+}
+
+function bunCommand() {
+  if (existsSync(localBun)) return localBun
+  return "bun"
 }
 
 function processListIncludes(needle) {

@@ -7,6 +7,8 @@ target
 assets/*.jpg
 assets/*.png
 src
+!src/lib
+!src/lib/source-watch-defaults.json
 index.html
 vite.config.ts
 package-lock.json
