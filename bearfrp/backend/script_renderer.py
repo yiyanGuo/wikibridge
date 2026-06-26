@@ -190,9 +190,7 @@ class ScriptRenderer:
         if proxy.http_locations:
             lines.append(f"locations = {_toml_array(proxy.http_locations)}")
         if proxy.host_header_rewrite:
-            lines.append(
-                f'hostHeaderRewrite = "{_toml_str(proxy.host_header_rewrite)}"'
-            )
+            lines.append(f'hostHeaderRewrite = "{_toml_str(proxy.host_header_rewrite)}"')
         return lines
 
     def render_frpc_visitor_config(self, proxy: Proxy, settings: Settings) -> str:

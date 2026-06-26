@@ -41,9 +41,7 @@ function linuxNoFileLimitArg(targetSoftLimit) {
 function readLinuxNoFileHardLimit() {
   try {
     const limits = readFileSync("/proc/self/limits", "utf8")
-    const line = limits
-      .split("\n")
-      .find((candidate) => candidate.startsWith("Max open files"))
+    const line = limits.split("\n").find((candidate) => candidate.startsWith("Max open files"))
     if (!line) return null
     const parts = line.trim().split(/\s+/)
     const hard = parts[4]
@@ -66,7 +64,7 @@ function checkLinuxInotifyCapacity() {
   fail(
     [
       `Linux inotify instances are nearly exhausted: ${usedInstances}/${maxInstances}.`,
-      "Tauri CLI creates a file watcher even for release builds and may panic with \"Too many open files\".",
+      'Tauri CLI creates a file watcher even for release builds and may panic with "Too many open files".',
       "Close applications that hold inotify watchers, or ask the user to raise fs.inotify.max_user_instances.",
     ].join("\n"),
   )

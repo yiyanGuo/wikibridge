@@ -73,6 +73,7 @@ app.include_router(admin_api.router)
 app.include_router(show_api.router)
 app.include_router(plugin_router)
 
+
 def _mount_static(app_: FastAPI, route: str, path: Path) -> None:
     path.mkdir(parents=True, exist_ok=True)
     app_.mount(route, StaticFiles(directory=str(path)), name=route.strip("/"))
@@ -124,6 +125,10 @@ async def shared_css():
 async def mock_api_js():
     path = ROOT_DIR / "frontend/mock_api.js"
     if not path.exists():
-        return Response("// mock_api.js is not ready\n", media_type="application/javascript", status_code=404)
-    text = path.read_text(encoding="utf-8").replace("window.USE_MOCK = true;", "window.USE_MOCK = false;", 1)
+        return Response(
+            "// mock_api.js is not ready\n", media_type="application/javascript", status_code=404
+        )
+    text = path.read_text(encoding="utf-8").replace(
+        "window.USE_MOCK = true;", "window.USE_MOCK = false;", 1
+    )
     return Response(text, media_type="application/javascript")

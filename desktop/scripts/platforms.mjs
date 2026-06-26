@@ -31,7 +31,12 @@ export function hostPlatformKey() {
         : process.platform === "linux"
           ? "linux"
           : failUnsupported(`Unsupported OS: ${process.platform}`)
-  const arch = process.arch === "arm64" ? "arm64" : process.arch === "x64" ? "amd64" : failUnsupported(`Unsupported arch: ${process.arch}`)
+  const arch =
+    process.arch === "arm64"
+      ? "arm64"
+      : process.arch === "x64"
+        ? "amd64"
+        : failUnsupported(`Unsupported arch: ${process.arch}`)
   if (os === "windows") return "windows-amd64"
   return `${os}-${arch}`
 }
@@ -76,7 +81,9 @@ export function opencodePackageKey(platform) {
 
 export function assertSupportedPlatform(platform) {
   if (!supportedPlatforms.includes(platform)) {
-    failUnsupported(`Unsupported platform "${platform}". Supported platforms: ${supportedPlatforms.join(", ")}`)
+    failUnsupported(
+      `Unsupported platform "${platform}". Supported platforms: ${supportedPlatforms.join(", ")}`,
+    )
   }
 }
 

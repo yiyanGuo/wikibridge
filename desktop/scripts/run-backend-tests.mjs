@@ -13,11 +13,7 @@ const envName = process.env.BEARFRP_CONDA_ENV || "bearfrp_test"
 const pytestArgs = process.argv.slice(2)
 
 run(process.execPath, [path.join(__dirname, "check-conda-env.mjs"), envName])
-run(
-  condaBin,
-  ["run", "-n", envName, "python", "-m", "pytest", "-q", ...pytestArgs],
-  bearfrpDir,
-)
+run(condaBin, ["run", "-n", envName, "python", "-m", "pytest", "-q", ...pytestArgs], bearfrpDir)
 
 function run(command, args, cwd = desktopDir) {
   const result = spawnSync(command, args, {

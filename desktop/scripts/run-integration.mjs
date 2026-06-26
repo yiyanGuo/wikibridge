@@ -101,7 +101,8 @@ async function runBearfrpSmoke() {
     headers: { cookie, "content-type": "application/json" },
     body: "{}",
   })
-  if (typeof recharge.body.balance_mb !== "number") fail("BearFRP recharge did not return balance_mb")
+  if (typeof recharge.body.balance_mb !== "number")
+    fail("BearFRP recharge did not return balance_mb")
 
   const proxy = await fetchJson(`${baseUrl}/api/proxies`, {
     method: "POST",
@@ -147,23 +148,38 @@ async function runSidecarSmoke() {
   mkdirSync(path.join(opencodeDataDir, "users", "default"), { recursive: true })
   mkdirSync(path.join(opencodeDataDir, "wiki"), { recursive: true })
   mkdirSync(opencodeWorkDir, { recursive: true })
-  const opencode = spawn(opencodeBinary, ["serve", "--hostname", "127.0.0.1", "--port", String(opencodePort)], {
-    cwd: opencodeWorkDir,
-    env: {
-      ...process.env,
-      OPENCODE_KB_MODE: "1",
-      OPENCODE_KB_DATA_DIR: opencodeDataDir,
-      OPENCODE_KB_USER: "default",
-      LLM_WIKI_BASE_URL: `http://127.0.0.1:${llmPort}/api/v1`,
+  const opencode = spawn(
+    opencodeBinary,
+    ["serve", "--hostname", "127.0.0.1", "--port", String(opencodePort)],
+    {
+      cwd: opencodeWorkDir,
+      env: {
+        ...process.env,
+        OPENCODE_KB_MODE: "1",
+        OPENCODE_KB_DATA_DIR: opencodeDataDir,
+        OPENCODE_KB_USER: "default",
+        LLM_WIKI_BASE_URL: `http://127.0.0.1:${llmPort}/api/v1`,
+      },
+      logPath: path.join(artifactsDir, "opencode.log"),
     },
-    logPath: path.join(artifactsDir, "opencode.log"),
-  })
+  )
   children.push(opencode)
-  await waitForHttp(`http://127.0.0.1:${opencodePort}/global/health`, "OpenCode sidecar", "\"healthy\":true")
+  await waitForHttp(
+    `http://127.0.0.1:${opencodePort}/global/health`,
+    "OpenCode sidecar",
+    '"healthy":true',
+  )
 }
 
 function sidecarBinary(group, name, platform) {
-  return path.join(desktopDir, "src-tauri", "binaries", group, platform, executableName(platform, name))
+  return path.join(
+    desktopDir,
+    "src-tauri",
+    "binaries",
+    group,
+    platform,
+    executableName(platform, name),
+  )
 }
 
 function run(command, args) {
@@ -232,7 +248,9 @@ async function waitForHttp(url, label, expectedText) {
 
 function cookieHeader(response) {
   const getSetCookie = response.headers.getSetCookie?.()
-  const values = getSetCookie?.length ? getSetCookie : [response.headers.get("set-cookie")].filter(Boolean)
+  const values = getSetCookie?.length
+    ? getSetCookie
+    : [response.headers.get("set-cookie")].filter(Boolean)
   return values.map((value) => value.split(";")[0]).join("; ")
 }
 

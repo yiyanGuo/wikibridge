@@ -188,8 +188,7 @@ pub fn ensure_opencode_stack_running(
         .map_err(|error| format!("无法创建消费端用户数据目录: {error}"))?;
     fs::create_dir_all(data_dir.join("wiki"))
         .map_err(|error| format!("无法创建消费端公共 Wiki 目录: {error}"))?;
-    fs::create_dir_all(&work_dir)
-        .map_err(|error| format!("无法创建消费端工作目录: {error}"))?;
+    fs::create_dir_all(&work_dir).map_err(|error| format!("无法创建消费端工作目录: {error}"))?;
 
     let opencode_port = ensure_opencode_running(
         app,
@@ -422,7 +421,8 @@ pub fn start_project_llm_wiki_server(
     runtime.opencode_stack.reap_exited();
 
     if let Some(port) = runtime.opencode_stack.llm_wiki_port {
-        let same_project = runtime.opencode_stack.project_id.as_deref() == Some(&project.project_id);
+        let same_project =
+            runtime.opencode_stack.project_id.as_deref() == Some(&project.project_id);
         if port == preferred_port
             && same_project
             && runtime.opencode_stack.llm_wiki.is_some()
@@ -609,12 +609,15 @@ fn ensure_opencode_running(
         ),
         ("OPENCODE_DB", db_path.to_string_lossy().to_string()),
         ("XDG_DATA_HOME", xdg_data_dir.to_string_lossy().to_string()),
-        ("XDG_STATE_HOME", xdg_state_dir.to_string_lossy().to_string()),
-        ("XDG_CACHE_HOME", xdg_cache_dir.to_string_lossy().to_string()),
         (
-            "LLM_WIKI_BASE_URL",
-            launch.llm_wiki_base_url.clone(),
+            "XDG_STATE_HOME",
+            xdg_state_dir.to_string_lossy().to_string(),
         ),
+        (
+            "XDG_CACHE_HOME",
+            xdg_cache_dir.to_string_lossy().to_string(),
+        ),
+        ("LLM_WIKI_BASE_URL", launch.llm_wiki_base_url.clone()),
         ("OPENCODE_CONFIG_CONTENT", config.content.clone()),
     ];
     if let Some(project_id) = &launch.llm_wiki_project_id {
@@ -725,7 +728,11 @@ fn register_llm_wiki_mcp(
     {
         environment.insert("LLM_WIKI_API_TOKEN".to_string(), json!(token));
     }
-    if let Some(project_id) = remote.current_project.as_ref().map(|project| project.id.as_str()) {
+    if let Some(project_id) = remote
+        .current_project
+        .as_ref()
+        .map(|project| project.id.as_str())
+    {
         environment.insert("LLM_WIKI_PROJECT_ID".to_string(), json!(project_id));
     }
 
@@ -762,7 +769,12 @@ fn write_kb_agent_instructions(launch: &OpenCodeLaunch) -> Result<(), String> {
         .as_deref()
         .map(str::trim)
         .filter(|project| !project.is_empty())
-        .map(|project| format!("- 当前 LLM Wiki project_id 是 `{}`。\n", markdown_inline(project)))
+        .map(|project| {
+            format!(
+                "- 当前 LLM Wiki project_id 是 `{}`。\n",
+                markdown_inline(project)
+            )
+        })
         .unwrap_or_default();
     let content = format!(
         "# WikiBridge Knowledge Base Chat\n\n\
@@ -782,7 +794,10 @@ Rules:\n\
 }
 
 fn markdown_inline(value: &str) -> String {
-    value.replace('\\', "\\\\").replace('`', "\\`").replace('*', "\\*")
+    value
+        .replace('\\', "\\\\")
+        .replace('`', "\\`")
+        .replace('*', "\\*")
 }
 
 pub fn llm_wiki_mcp_server_name(remote: &RemoteKnowledgeBase) -> String {
@@ -885,7 +900,9 @@ fn url_query_encode(value: &str) -> String {
     let mut out = String::with_capacity(value.len());
     for byte in value.bytes() {
         match byte {
-            b'A'..=b'Z' | b'a'..=b'z' | b'0'..=b'9' | b'-' | b'_' | b'.' | b'~' => out.push(byte as char),
+            b'A'..=b'Z' | b'a'..=b'z' | b'0'..=b'9' | b'-' | b'_' | b'.' | b'~' => {
+                out.push(byte as char)
+            }
             _ => out.push_str(&format!("%{byte:02X}")),
         }
     }
@@ -987,13 +1004,10 @@ fn mount_project_wiki(link_path: &Path, target_path: &Path) -> Result<(), String
         }
     }
     if let Some(parent) = link_path.parent() {
-        fs::create_dir_all(parent)
-            .map_err(|error| format!("无法创建消费端数据目录: {error}"))?;
+        fs::create_dir_all(parent).map_err(|error| format!("无法创建消费端数据目录: {error}"))?;
     }
     symlink_dir(&target, link_path).map_err(|error| {
-        format!(
-            "无法挂载项目 wiki 到消费端数据目录: {error}。请确认当前系统允许创建目录符号链接"
-        )
+        format!("无法挂载项目 wiki 到消费端数据目录: {error}。请确认当前系统允许创建目录符号链接")
     })
 }
 
@@ -1275,11 +1289,7 @@ mod tests {
     fn platform_key_uses_supported_packaging_names() {
         assert!(matches!(
             platform_key(),
-            "darwin-arm64"
-                | "darwin-amd64"
-                | "linux-arm64"
-                | "linux-amd64"
-                | "windows-amd64"
+            "darwin-arm64" | "darwin-amd64" | "linux-arm64" | "linux-amd64" | "windows-amd64"
         ));
     }
 
@@ -1304,7 +1314,11 @@ mod tests {
                 b"HTTP/1.1 200 OK\r\nContent-Length: 16\r\nConnection: close\r\n\r\n{\"healthy\":true}",
             );
         });
-        assert!(http_get_ok(port, "/global/health", Some("\"healthy\":true")));
+        assert!(http_get_ok(
+            port,
+            "/global/health",
+            Some("\"healthy\":true")
+        ));
     }
 
     #[test]

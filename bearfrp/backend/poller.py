@@ -88,9 +88,7 @@ class UsagePoller:
         if proxy_infos is None:
             return
         by_name = {
-            str(info.get("name")): info
-            for info in proxy_infos
-            if info.get("name") is not None
+            str(info.get("name")): info for info in proxy_infos if info.get("name") is not None
         }
         async with store.lock:
             store_changed = False
@@ -103,7 +101,9 @@ class UsagePoller:
                     )
                 elif proxy.proxy_type == ProxyType.HTTP:
                     info = by_name.get(proxy.frps_name)
-                    store_changed = _apply_poll_info(proxy, info, self.interval_sec) or store_changed
+                    store_changed = (
+                        _apply_poll_info(proxy, info, self.interval_sec) or store_changed
+                    )
                 else:
                     store_changed = (
                         _apply_p2p_poll_info(proxy, by_name, self.interval_sec) or store_changed

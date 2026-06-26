@@ -39,6 +39,4 @@ def load_allocatable_range(default_start: int, default_end: int) -> tuple[int, i
 
 def save_allocatable_range(start: int, end: int) -> None:
     _PERSIST_FILE.parent.mkdir(parents=True, exist_ok=True)
-    _PERSIST_FILE.write_text(
-        json.dumps({"start": start, "end": end}), encoding="utf-8"
-    )
+    _PERSIST_FILE.write_text(json.dumps({"start": start, "end": end}), encoding="utf-8")

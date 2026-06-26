@@ -94,8 +94,7 @@ class PortPool:
     def reset(self) -> None:
         self._available = set(range(self.start, self.end + 1))
 
-    def update_range(self, new_start: int, new_end: int,
-                     currently_allocated: set[int]) -> None:
+    def update_range(self, new_start: int, new_end: int, currently_allocated: set[int]) -> None:
         if new_start > new_end:
             raise ValueError("start must be <= end")
         self.start = new_start

@@ -132,7 +132,13 @@ from __future__ import annotations
 import asyncio
 
 from backend.models import Proxy, ProxyStatus, ProxyType, TcpMapping, User, store
-from backend.plugin_handler import _auth_key, _handle_close_proxy, _handle_login, _handle_new_proxy, _handle_ping
+from backend.plugin_handler import (
+    _auth_key,
+    _handle_close_proxy,
+    _handle_login,
+    _handle_new_proxy,
+    _handle_ping,
+)
 from backend.poller import UsagePoller
 
 
@@ -164,7 +170,9 @@ def test_plugin_accepts_user_token_and_rewrites_frps_auth():
                 traffic_limit_mb=10,
             )
 
-        login = await _handle_login({**login_content("bearfrps-internal"), "metas": {"token": "user-token"}})
+        login = await _handle_login(
+            {**login_content("bearfrps-internal"), "metas": {"token": "user-token"}}
+        )
         assert login["reject"] is False
         assert login["unchange"] is False
         assert login["content"]["user"] == "u_a1b2c3d4"
@@ -215,7 +223,9 @@ def test_plugin_rejects_wrong_port_or_stopped_proxy():
 
         async with store.lock:
             store.proxies[1].status = ProxyStatus.STOPPED_BY_ADMIN
-        stopped = await _handle_login({**login_content("bearfrps-internal"), "metas": {"token": "user-token"}})
+        stopped = await _handle_login(
+            {**login_content("bearfrps-internal"), "metas": {"token": "user-token"}}
+        )
         assert stopped["reject"] is True
 
     asyncio.run(run())
@@ -241,7 +251,9 @@ def test_plugin_rejects_rotated_token_version():
                 traffic_limit_mb=10,
             )
 
-        old_login = await _handle_login({**login_content("bearfrps-internal"), "metas": {"token": "old-token"}})
+        old_login = await _handle_login(
+            {**login_content("bearfrps-internal"), "metas": {"token": "old-token"}}
+        )
         assert old_login["reject"] is False
 
         async with store.lock:
@@ -254,10 +266,14 @@ def test_plugin_rejects_rotated_token_version():
         assert stale_ping["reject"] is True
         assert stale_ping["reject_reason"] == "token has been rotated"
 
-        stale_login = await _handle_login({**login_content("bearfrps-internal"), "metas": {"token": "old-token"}})
+        stale_login = await _handle_login(
+            {**login_content("bearfrps-internal"), "metas": {"token": "old-token"}}
+        )
         assert stale_login["reject"] is True
 
-        fresh_login = await _handle_login({**login_content("bearfrps-internal"), "metas": {"token": "new-token"}})
+        fresh_login = await _handle_login(
+            {**login_content("bearfrps-internal"), "metas": {"token": "new-token"}}
+        )
         assert fresh_login["reject"] is False
         assert fresh_login["content"]["metas"]["token_version"] == "2"
 

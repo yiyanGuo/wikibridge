@@ -422,9 +422,7 @@ async def create_proxy(
             remote_port = tcp_mappings[0].remote_port
             local_port = tcp_mappings[0].local_port
         p2p_secret_key = new_token() if body.proxy_type == ProxyType.XTCP else None
-        p2p_fallback_name = (
-            f"{frps_name}__fallback" if body.proxy_type == ProxyType.XTCP else None
-        )
+        p2p_fallback_name = f"{frps_name}__fallback" if body.proxy_type == ProxyType.XTCP else None
         proxy = Proxy(
             id=proxy_id,
             uid=current.uid,

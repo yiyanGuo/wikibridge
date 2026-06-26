@@ -422,7 +422,10 @@ mod tests {
             "user_session=session-2; Path=/; HttpOnly".parse().unwrap(),
         );
         headers.append(SET_COOKIE, "uid=uid-2; Path=/".parse().unwrap());
-        assert_eq!(extract_cookie(&headers, "user_session"), Some("session-2".to_string()));
+        assert_eq!(
+            extract_cookie(&headers, "user_session"),
+            Some("session-2".to_string())
+        );
         assert_eq!(extract_cookie(&headers, "uid"), Some("uid-2".to_string()));
         assert_eq!(extract_cookie(&headers, "missing"), None);
     }

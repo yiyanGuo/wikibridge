@@ -353,7 +353,10 @@ impl DesktopRuntime {
         }
     }
 
-    pub fn set_llm_settings(&mut self, input: SaveLlmSettingsInput) -> Result<LlmSettingsDto, String> {
+    pub fn set_llm_settings(
+        &mut self,
+        input: SaveLlmSettingsInput,
+    ) -> Result<LlmSettingsDto, String> {
         let previous = self.persisted.llm_settings.clone();
         let mut settings = LlmSettings {
             provider: input.provider,

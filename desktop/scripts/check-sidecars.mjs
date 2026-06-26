@@ -63,7 +63,9 @@ function parseArgs(rawArgs) {
   }
 
   if (parsedArgs.args.length > 0) {
-    fail(`Unknown option "${parsedArgs.args[0]}". Use --platform <${supportedPlatforms.join("|")}>.`)
+    fail(
+      `Unknown option "${parsedArgs.args[0]}". Use --platform <${supportedPlatforms.join("|")}>.`,
+    )
   }
 
   return parsedArgs

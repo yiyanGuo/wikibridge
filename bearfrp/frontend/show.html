@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <!--
   @file frontend/show.html
   @brief 公网展示页，聚合展示在线用户 demo 服务入口。
@@ -20,140 +20,171 @@
     如果在线列表为空，显示空状态而不是错误页面。
 -->
 <html lang="zh-CN">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>BearFRPs - 在线服务</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-  <link rel="stylesheet" href="shared.css">
-  <script src="mock_api.js"></script>
-</head>
-<body class="bg-gray-50 min-h-screen text-gray-800" x-data="showApp()">
-
-  <header class="bg-white border-b border-gray-200 shadow-sm">
-    <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between flex-wrap gap-2">
-      <div class="flex items-center gap-4">
-        <span class="text-lg font-bold text-gray-900">BearFRPs</span>
-        <nav class="flex items-center gap-1">
-          <a href="/user" class="px-3 py-1.5 text-sm font-medium rounded-md text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors">用户端</a>
-          <a href="/admin" class="px-3 py-1.5 text-sm font-medium rounded-md text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors">管理端</a>
-          <a href="/show" class="px-3 py-1.5 text-sm font-medium rounded-md bg-blue-100 text-blue-700">展示页</a>
-        </nav>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BearFRPs - 在线服务</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <link rel="stylesheet" href="shared.css" />
+    <script src="mock_api.js"></script>
+  </head>
+  <body class="bg-gray-50 min-h-screen text-gray-800" x-data="showApp()">
+    <header class="bg-white border-b border-gray-200 shadow-sm">
+      <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between flex-wrap gap-2">
+        <div class="flex items-center gap-4">
+          <span class="text-lg font-bold text-gray-900">BearFRPs</span>
+          <nav class="flex items-center gap-1">
+            <a
+              href="/user"
+              class="px-3 py-1.5 text-sm font-medium rounded-md text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors"
+              >用户端</a
+            >
+            <a
+              href="/admin"
+              class="px-3 py-1.5 text-sm font-medium rounded-md text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors"
+              >管理端</a
+            >
+            <a href="/show" class="px-3 py-1.5 text-sm font-medium rounded-md bg-blue-100 text-blue-700">展示页</a>
+          </nav>
+        </div>
+        <div class="flex items-center gap-3">
+          <span class="text-sm text-gray-400" x-text="'当前在线 ' + proxies.length + ' 个'"></span>
+          <button class="btn btn-secondary btn-sm" @click="manualRefresh()">手动刷新</button>
+        </div>
       </div>
-      <div class="flex items-center gap-3">
-        <span class="text-sm text-gray-400" x-text="'当前在线 ' + proxies.length + ' 个'"></span>
-        <button class="btn btn-secondary btn-sm" @click="manualRefresh()">手动刷新</button>
-      </div>
-    </div>
-  </header>
+    </header>
 
-  <main class="max-w-7xl mx-auto px-4 py-6">
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-      <template x-for="p in proxies" :key="p.id">
-        <div class="rounded-lg overflow-hidden shadow-sm card-online">
-          <div class="flex items-center justify-between px-3 py-2 border-b border-green-200 bg-green-50">
-            <span class="font-medium text-sm truncate" x-text="p.name"></span>
-            <span class="text-xs text-gray-500 font-mono" x-text="entryLabel(p)" :title="mappingDetails(p)"></span>
-          </div>
-          <div class="bg-white" x-show="p.public_url">
-            <iframe :src="p.public_url"
-                    class="w-full border-0"
-                    style="height:300px"
-                    loading="lazy"
-                    sandbox="allow-scripts allow-same-origin allow-forms"
-                    :title="p.name"></iframe>
-          </div>
-          <div class="bg-white flex items-center justify-center text-center p-6"
-               style="height:300px"
-               x-show="!p.public_url">
-            <div>
-              <div class="text-xs text-gray-400 mb-2">P2P 访问端</div>
-              <div class="font-mono text-sm text-gray-700" x-text="p.visitor_endpoint || '127.0.0.1:9001'"></div>
+    <main class="max-w-7xl mx-auto px-4 py-6">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        <template x-for="p in proxies" :key="p.id">
+          <div class="rounded-lg overflow-hidden shadow-sm card-online">
+            <div class="flex items-center justify-between px-3 py-2 border-b border-green-200 bg-green-50">
+              <span class="font-medium text-sm truncate" x-text="p.name"></span>
+              <span class="text-xs text-gray-500 font-mono" x-text="entryLabel(p)" :title="mappingDetails(p)"></span>
+            </div>
+            <div class="bg-white" x-show="p.public_url">
+              <iframe
+                :src="p.public_url"
+                class="w-full border-0"
+                style="height: 300px"
+                loading="lazy"
+                sandbox="allow-scripts allow-same-origin allow-forms"
+                :title="p.name"
+              ></iframe>
+            </div>
+            <div
+              class="bg-white flex items-center justify-center text-center p-6"
+              style="height: 300px"
+              x-show="!p.public_url"
+            >
+              <div>
+                <div class="text-xs text-gray-400 mb-2">P2P 访问端</div>
+                <div class="font-mono text-sm text-gray-700" x-text="p.visitor_endpoint || '127.0.0.1:9001'"></div>
+              </div>
+            </div>
+            <div class="px-3 py-2 border-t border-green-200 bg-green-50 text-right">
+              <a
+                :href="p.public_url"
+                target="_blank"
+                rel="noopener"
+                class="text-xs text-blue-600 hover:text-blue-800 transition-colors"
+                x-show="p.public_url"
+              >
+                在新窗口打开 &#8599;
+              </a>
+              <span class="text-xs text-gray-500" x-show="!p.public_url">P2P</span>
             </div>
           </div>
-          <div class="px-3 py-2 border-t border-green-200 bg-green-50 text-right">
-            <a :href="p.public_url" target="_blank" rel="noopener"
-               class="text-xs text-blue-600 hover:text-blue-800 transition-colors"
-               x-show="p.public_url">
-              在新窗口打开 &#8599;
-            </a>
-            <span class="text-xs text-gray-500" x-show="!p.public_url">P2P</span>
-          </div>
-        </div>
-      </template>
-    </div>
+        </template>
+      </div>
 
-    <div x-show="proxies.length === 0" class="text-center py-20">
-      <p class="text-gray-400 text-lg">暂无在线服务</p>
-      <p class="text-gray-300 text-sm mt-2">当有用户连接 frpc 并启动 demo 服务后，这里会自动显示</p>
-    </div>
-  </main>
+      <div x-show="proxies.length === 0" class="text-center py-20">
+        <p class="text-gray-400 text-lg">暂无在线服务</p>
+        <p class="text-gray-300 text-sm mt-2">当有用户连接 frpc 并启动 demo 服务后，这里会自动显示</p>
+      </div>
+    </main>
 
-  <script>
-    function showApp() {
-      return {
-        proxies: [],
-        prevIds: [],
-        pollTimer: null,
+    <script>
+      function showApp() {
+        return {
+          proxies: [],
+          prevIds: [],
+          pollTimer: null,
 
-        async init() {
-          await this.loadOnline();
-          this.pollTimer = setInterval(() => this.loadOnline(), 5000);
-        },
+          async init() {
+            await this.loadOnline()
+            this.pollTimer = setInterval(() => this.loadOnline(), 5000)
+          },
 
-        async loadOnline() {
-          try {
-            const res = await fetch('/api/show/online', { credentials: 'same-origin' });
-            const data = await res.json();
-            var newProxies = data.proxies || [];
+          async loadOnline() {
+            try {
+              const res = await fetch("/api/show/online", { credentials: "same-origin" })
+              const data = await res.json()
+              var newProxies = data.proxies || []
 
-            var newIds = newProxies.map(function (p) { return p.id; }).sort();
-            var oldIds = this.prevIds.slice().sort();
+              var newIds = newProxies
+                .map(function (p) {
+                  return p.id
+                })
+                .sort()
+              var oldIds = this.prevIds.slice().sort()
 
-            if (JSON.stringify(newIds) !== JSON.stringify(oldIds)) {
-              this.proxies = newProxies;
-              this.prevIds = newIds;
+              if (JSON.stringify(newIds) !== JSON.stringify(oldIds)) {
+                this.proxies = newProxies
+                this.prevIds = newIds
+              }
+            } catch (e) {
+              console.error("Failed to load online proxies:", e)
             }
-          } catch (e) {
-            console.error('Failed to load online proxies:', e);
-          }
-        },
+          },
 
-        async manualRefresh() {
-          this.proxies = [];
-          this.prevIds = [];
-          await this.loadOnline();
-          toast('已刷新');
-        },
+          async manualRefresh() {
+            this.proxies = []
+            this.prevIds = []
+            await this.loadOnline()
+            toast("已刷新")
+          },
 
-        tcpMappings(p) {
-          if (!p || p.proxy_type !== 'tcp') return [];
-          if (Array.isArray(p.tcp_mappings) && p.tcp_mappings.length) return p.tcp_mappings;
-          if (p.remote_port != null) return [{ remote_port: p.remote_port, local_port: null }];
-          return [];
-        },
+          tcpMappings(p) {
+            if (!p || p.proxy_type !== "tcp") return []
+            if (Array.isArray(p.tcp_mappings) && p.tcp_mappings.length) return p.tcp_mappings
+            if (p.remote_port != null) return [{ remote_port: p.remote_port, local_port: null }]
+            return []
+          },
 
-        entryLabel(p) {
-          if (p.proxy_type === 'xtcp') return 'P2P';
-          if (p.proxy_type !== 'tcp') return 'HTTP';
-          var ports = this.tcpMappings(p).map(function (m) { return Number(m.remote_port); }).filter(function (n) { return n >= 1; });
-          if (!ports.length) return '-';
-          ports.sort(function (a, b) { return a - b; });
-          if (ports.length === 1) return String(ports[0]);
-          var contiguous = ports.every(function (port, idx) { return idx === 0 || port === ports[idx - 1] + 1; });
-          if (contiguous) return ports[0] + '-' + ports[ports.length - 1];
-          return ports.join(', ');
-        },
+          entryLabel(p) {
+            if (p.proxy_type === "xtcp") return "P2P"
+            if (p.proxy_type !== "tcp") return "HTTP"
+            var ports = this.tcpMappings(p)
+              .map(function (m) {
+                return Number(m.remote_port)
+              })
+              .filter(function (n) {
+                return n >= 1
+              })
+            if (!ports.length) return "-"
+            ports.sort(function (a, b) {
+              return a - b
+            })
+            if (ports.length === 1) return String(ports[0])
+            var contiguous = ports.every(function (port, idx) {
+              return idx === 0 || port === ports[idx - 1] + 1
+            })
+            if (contiguous) return ports[0] + "-" + ports[ports.length - 1]
+            return ports.join(", ")
+          },
 
-        mappingDetails(p) {
-          if (p && p.proxy_type === 'xtcp') return p.visitor_endpoint || '127.0.0.1:9001';
-          return this.tcpMappings(p).map(function (m) {
-            return m.remote_port + ' -> ' + (m.local_port || '-');
-          }).join('\n');
+          mappingDetails(p) {
+            if (p && p.proxy_type === "xtcp") return p.visitor_endpoint || "127.0.0.1:9001"
+            return this.tcpMappings(p)
+              .map(function (m) {
+                return m.remote_port + " -> " + (m.local_port || "-")
+              })
+              .join("\n")
+          },
         }
-      };
-    }
-  </script>
-</body>
+      }
+    </script>
+  </body>
 </html>

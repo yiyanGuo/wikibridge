@@ -283,8 +283,11 @@ async fn add_remote_knowledge_base(
         remote.api_url = check.api_url.clone();
         remote.status = check.status;
         remote.project_count = check.project_count;
-        let (projects, current_project) =
-            merge_remote_project_selection(check.projects, check.current_project, remote.current_project.as_ref());
+        let (projects, current_project) = merge_remote_project_selection(
+            check.projects,
+            check.current_project,
+            remote.current_project.as_ref(),
+        );
         remote.projects = projects;
         remote.current_project = current_project;
         remote.auth_required = check.auth_required;
@@ -468,8 +471,11 @@ async fn ensure_opencode_for_remote(
     remote.api_url = check.api_url;
     remote.status = check.status;
     remote.project_count = check.project_count;
-    let (projects, current_project) =
-        merge_remote_project_selection(check.projects, check.current_project, remote.current_project.as_ref());
+    let (projects, current_project) = merge_remote_project_selection(
+        check.projects,
+        check.current_project,
+        remote.current_project.as_ref(),
+    );
     remote.projects = projects;
     remote.current_project = current_project;
     remote.auth_required = check.auth_required;
@@ -487,7 +493,11 @@ async fn ensure_opencode_for_remote(
         .remote_knowledge_bases
         .insert(remote.remote_id.clone(), remote.clone());
     runtime.save()?;
-    Ok(RemoteKnowledgeBaseConnectDto { stack, remote, session })
+    Ok(RemoteKnowledgeBaseConnectDto {
+        stack,
+        remote,
+        session,
+    })
 }
 
 #[tauri::command]
@@ -1179,8 +1189,8 @@ fn normalize_remote_llm_wiki_url(value: &str) -> Result<String, String> {
     if trimmed.is_empty() {
         return Err("请输入远程知识库 API 分享链接".to_string());
     }
-    let mut parsed =
-        Url::parse(trimmed).map_err(|_| "知识库 API 分享链接必须是完整的 http(s) URL".to_string())?;
+    let mut parsed = Url::parse(trimmed)
+        .map_err(|_| "知识库 API 分享链接必须是完整的 http(s) URL".to_string())?;
     if parsed.scheme() != "http" && parsed.scheme() != "https" {
         return Err("知识库 API 分享链接只支持 http 或 https".to_string());
     }
@@ -1228,7 +1238,10 @@ fn merge_remote_project_selection(
     projects: Vec<RemoteKnowledgeBaseProject>,
     probed_current: Option<RemoteKnowledgeBaseProject>,
     preferred_current: Option<&RemoteKnowledgeBaseProject>,
-) -> (Vec<RemoteKnowledgeBaseProject>, Option<RemoteKnowledgeBaseProject>) {
+) -> (
+    Vec<RemoteKnowledgeBaseProject>,
+    Option<RemoteKnowledgeBaseProject>,
+) {
     let selected_id = preferred_current
         .and_then(|project| {
             projects

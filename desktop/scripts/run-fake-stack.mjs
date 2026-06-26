@@ -113,7 +113,10 @@ async function runBearfrpFakeStack(fakeFrps) {
 
   const tokenResponse = await fetchJson(`${baseUrl}/api/user/frpc-token`, { headers: { cookie } })
   const frpcToken = tokenResponse.body.token
-  assert(typeof frpcToken === "string" && frpcToken.length > 8, "BearFRP did not return a user frpc token")
+  assert(
+    typeof frpcToken === "string" && frpcToken.length > 8,
+    "BearFRP did not return a user frpc token",
+  )
 
   const httpSubdomain = `fake-stack-${Date.now()}`
   const httpProxy = await createBearfrpProxy(baseUrl, cookie, {
@@ -140,7 +143,11 @@ async function runBearfrpFakeStack(fakeFrps) {
   const tcpMapping = tcpProxy.body.proxy.tcp_mappings?.[0]
   assert(tcpMapping?.frps_name, "TCP proxy did not expose a tcp mapping frps_name")
   assertIncludes(tcpProxy.body.frpc_config, `metadatas.token = "${frpcToken}"`, "TCP frpc config")
-  assertIncludes(tcpProxy.body.frpc_config, `remotePort = ${tcpMapping.remote_port}`, "TCP frpc config")
+  assertIncludes(
+    tcpProxy.body.frpc_config,
+    `remotePort = ${tcpMapping.remote_port}`,
+    "TCP frpc config",
+  )
 
   const login = await postPlugin(baseUrl, {
     op: "Login",
@@ -155,9 +162,18 @@ async function runBearfrpFakeStack(fakeFrps) {
       metas: { token: frpcToken },
     },
   })
-  assert(login.body.reject === false && login.body.unchange === false, "BearFRP plugin Login was not accepted")
-  assert(login.body.content.user === register.body.uid, "BearFRP plugin Login did not rewrite user to uid")
-  assert(login.body.content.metas?.token_version === "1", "BearFRP plugin Login did not include token version")
+  assert(
+    login.body.reject === false && login.body.unchange === false,
+    "BearFRP plugin Login was not accepted",
+  )
+  assert(
+    login.body.content.user === register.body.uid,
+    "BearFRP plugin Login did not rewrite user to uid",
+  )
+  assert(
+    login.body.content.metas?.token_version === "1",
+    "BearFRP plugin Login did not include token version",
+  )
   const pluginUser = { user: login.body.content.user, metas: login.body.content.metas }
 
   const httpNewProxy = await postPlugin(baseUrl, {
@@ -170,7 +186,10 @@ async function runBearfrpFakeStack(fakeFrps) {
     },
   })
   assert(httpNewProxy.body.reject === false, "BearFRP plugin NewProxy rejected the HTTP proxy")
-  assert(httpNewProxy.body.content.bandwidth_limit === "512KB", "BearFRP plugin NewProxy did not inject bandwidth_limit")
+  assert(
+    httpNewProxy.body.content.bandwidth_limit === "512KB",
+    "BearFRP plugin NewProxy did not inject bandwidth_limit",
+  )
 
   const tcpNewProxy = await postPlugin(baseUrl, {
     op: "NewProxy",
@@ -260,7 +279,7 @@ async function runSidecarFakeStack(fakeLlm) {
   })
   children.push(llm)
   const llmBaseUrl = `http://127.0.0.1:${llmPort}/api/v1`
-  await waitForHttp(`${llmBaseUrl}/health`, "LLM Wiki sidecar", "\"ok\":true")
+  await waitForHttp(`${llmBaseUrl}/health`, "LLM Wiki sidecar", '"ok":true')
 
   await assertLlmWikiApi(llmBaseUrl, project, fakeLlm)
 
@@ -270,20 +289,24 @@ async function runSidecarFakeStack(fakeLlm) {
   mkdirSync(path.join(opencodeDataDir, "wiki"), { recursive: true })
   mkdirSync(opencodeWorkDir, { recursive: true })
 
-  const opencode = spawn(opencodeBinary, ["serve", "--hostname", "127.0.0.1", "--port", String(opencodePort)], {
-    cwd: opencodeWorkDir,
-    env: {
-      ...process.env,
-      OPENCODE_KB_MODE: "1",
-      OPENCODE_KB_DATA_DIR: opencodeDataDir,
-      OPENCODE_KB_USER: "default",
-      LLM_WIKI_BASE_URL: llmBaseUrl,
+  const opencode = spawn(
+    opencodeBinary,
+    ["serve", "--hostname", "127.0.0.1", "--port", String(opencodePort)],
+    {
+      cwd: opencodeWorkDir,
+      env: {
+        ...process.env,
+        OPENCODE_KB_MODE: "1",
+        OPENCODE_KB_DATA_DIR: opencodeDataDir,
+        OPENCODE_KB_USER: "default",
+        LLM_WIKI_BASE_URL: llmBaseUrl,
+      },
+      logPath: path.join(artifactsDir, "opencode.log"),
     },
-    logPath: path.join(artifactsDir, "opencode.log"),
-  })
+  )
   children.push(opencode)
   const opencodeBaseUrl = `http://127.0.0.1:${opencodePort}`
-  await waitForHttp(`${opencodeBaseUrl}/global/health`, "OpenCode sidecar", "\"healthy\":true")
+  await waitForHttp(`${opencodeBaseUrl}/global/health`, "OpenCode sidecar", '"healthy":true')
   await assertOpenCodeLlmWikiProxy(opencodeBaseUrl, project)
 }
 
@@ -373,13 +396,24 @@ function createLlmWikiProjectFixture(llmDataDir, fakeLlmBaseUrl) {
 
 async function assertLlmWikiApi(baseUrl, project, fakeLlm) {
   const health = await fetchJson(`${baseUrl}/health`)
-  assert(health.body.ok === true && health.body.allowUnauthenticated === true, "llm-wiki health did not expose unauthenticated local API")
+  assert(
+    health.body.ok === true && health.body.allowUnauthenticated === true,
+    "llm-wiki health did not expose unauthenticated local API",
+  )
 
   const projects = await fetchJson(`${baseUrl}/projects`)
-  assert(projects.body.projects.some((item) => item.id === project.id), "llm-wiki projects did not include the fixture project")
+  assert(
+    projects.body.projects.some((item) => item.id === project.id),
+    "llm-wiki projects did not include the fixture project",
+  )
 
-  const files = await fetchJson(`${baseUrl}/projects/${encodeURIComponent(project.id)}/files?root=wiki&recursive=true`)
-  assert(findFile(files.body.files, "wiki/index.md"), "llm-wiki files did not include wiki/index.md")
+  const files = await fetchJson(
+    `${baseUrl}/projects/${encodeURIComponent(project.id)}/files?root=wiki&recursive=true`,
+  )
+  assert(
+    findFile(files.body.files, "wiki/index.md"),
+    "llm-wiki files did not include wiki/index.md",
+  )
 
   const content = await fetchJson(
     `${baseUrl}/projects/${encodeURIComponent(project.id)}/files/content?path=${encodeURIComponent("wiki/index.md")}`,
@@ -391,11 +425,22 @@ async function assertLlmWikiApi(baseUrl, project, fakeLlm) {
     headers: { "content-type": "application/json" },
     body: JSON.stringify({ query: "contract testing", topK: 5, includeContent: true }),
   })
-  assert(search.body.results.some((item) => item.path === "wiki/index.md"), "llm-wiki search did not find wiki/index.md")
-  assert(fakeLlm.requests.some((request) => request.kind === "embedding"), "llm-wiki search did not call the fake embedding API")
+  assert(
+    search.body.results.some((item) => item.path === "wiki/index.md"),
+    "llm-wiki search did not find wiki/index.md",
+  )
+  assert(
+    fakeLlm.requests.some((request) => request.kind === "embedding"),
+    "llm-wiki search did not call the fake embedding API",
+  )
 
-  const graph = await fetchJson(`${baseUrl}/projects/${encodeURIComponent(project.id)}/graph?limit=20`)
-  assert(graph.body.nodes.some((node) => node.path === "wiki/index.md"), "llm-wiki graph did not include wiki/index.md")
+  const graph = await fetchJson(
+    `${baseUrl}/projects/${encodeURIComponent(project.id)}/graph?limit=20`,
+  )
+  assert(
+    graph.body.nodes.some((node) => node.path === "wiki/index.md"),
+    "llm-wiki graph did not include wiki/index.md",
+  )
 }
 
 async function assertOpenCodeLlmWikiProxy(baseUrl, project) {
@@ -403,27 +448,44 @@ async function assertOpenCodeLlmWikiProxy(baseUrl, project) {
   assert(health.body.ok === true, "OpenCode llm-wiki health proxy did not return ok")
 
   const projects = await fetchJson(`${baseUrl}/instance/llm-wiki/projects`)
-  assert(projects.body.projects.some((item) => item.id === project.id), "OpenCode llm-wiki projects proxy did not include fixture project")
+  assert(
+    projects.body.projects.some((item) => item.id === project.id),
+    "OpenCode llm-wiki projects proxy did not include fixture project",
+  )
 
   const files = await fetchJson(
     `${baseUrl}/instance/llm-wiki/projects/${encodeURIComponent(project.id)}/files?root=wiki&recursive=true`,
   )
-  assert(findFile(files.body.files, "wiki/index.md"), "OpenCode llm-wiki files proxy did not include wiki/index.md")
+  assert(
+    findFile(files.body.files, "wiki/index.md"),
+    "OpenCode llm-wiki files proxy did not include wiki/index.md",
+  )
 
   const content = await fetchJson(
     `${baseUrl}/instance/llm-wiki/projects/${encodeURIComponent(project.id)}/files/content?path=${encodeURIComponent("wiki/index.md")}`,
   )
   assertIncludes(content.body.content, "contract testing", "OpenCode llm-wiki file content proxy")
 
-  const search = await fetchJson(`${baseUrl}/instance/llm-wiki/projects/${encodeURIComponent(project.id)}/search`, {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify({ query: "contract testing", topK: 5, includeContent: true }),
-  })
-  assert(search.body.results.some((item) => item.path === "wiki/index.md"), "OpenCode llm-wiki search proxy did not find wiki/index.md")
+  const search = await fetchJson(
+    `${baseUrl}/instance/llm-wiki/projects/${encodeURIComponent(project.id)}/search`,
+    {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ query: "contract testing", topK: 5, includeContent: true }),
+    },
+  )
+  assert(
+    search.body.results.some((item) => item.path === "wiki/index.md"),
+    "OpenCode llm-wiki search proxy did not find wiki/index.md",
+  )
 
-  const graph = await fetchJson(`${baseUrl}/instance/llm-wiki/projects/${encodeURIComponent(project.id)}/graph?limit=20`)
-  assert(graph.body.nodes.some((node) => node.path === "wiki/index.md"), "OpenCode llm-wiki graph proxy did not include wiki/index.md")
+  const graph = await fetchJson(
+    `${baseUrl}/instance/llm-wiki/projects/${encodeURIComponent(project.id)}/graph?limit=20`,
+  )
+  assert(
+    graph.body.nodes.some((node) => node.path === "wiki/index.md"),
+    "OpenCode llm-wiki graph proxy did not include wiki/index.md",
+  )
 }
 
 async function startFakeLlm() {
@@ -446,13 +508,21 @@ async function startFakeLlm() {
         assertBearer(req)
         const body = await readJson(req)
         requests.push({ kind: "chat", body })
-        if (body.model !== fakeChatModel) return sendJson(res, 404, { error: { message: "unknown model" } })
-        if (!Array.isArray(body.messages)) return sendJson(res, 400, { error: { message: "messages must be an array" } })
+        if (body.model !== fakeChatModel)
+          return sendJson(res, 404, { error: { message: "unknown model" } })
+        if (!Array.isArray(body.messages))
+          return sendJson(res, 400, { error: { message: "messages must be an array" } })
         if (body.stream) return sendChatStream(res)
         return sendJson(res, 200, {
           id: "chatcmpl-fake-stack",
           object: "chat.completion",
-          choices: [{ index: 0, message: { role: "assistant", content: "fake-stack-ok" }, finish_reason: "stop" }],
+          choices: [
+            {
+              index: 0,
+              message: { role: "assistant", content: "fake-stack-ok" },
+              finish_reason: "stop",
+            },
+          ],
           usage: { prompt_tokens: 1, completion_tokens: 1, total_tokens: 2 },
         })
       }
@@ -460,7 +530,8 @@ async function startFakeLlm() {
         assertBearer(req)
         const body = await readJson(req)
         requests.push({ kind: "embedding", body })
-        if (body.model !== fakeEmbeddingModel) return sendJson(res, 404, { error: { message: "unknown model" } })
+        if (body.model !== fakeEmbeddingModel)
+          return sendJson(res, 404, { error: { message: "unknown model" } })
         if (typeof body.input !== "string" && !Array.isArray(body.input)) {
           return sendJson(res, 400, { error: { message: "input must be a string or array" } })
         }
@@ -471,11 +542,16 @@ async function startFakeLlm() {
           usage: { prompt_tokens: 1, total_tokens: 1 },
         })
       }
-      return sendJson(res, 404, { error: { message: `No fake LLM route for ${req.method} ${url.pathname}` } })
+      return sendJson(res, 404, {
+        error: { message: `No fake LLM route for ${req.method} ${url.pathname}` },
+      })
     } catch (error) {
       return sendJson(res, error.statusCode ?? 500, { error: { message: error.message } })
     } finally {
-      writeFileSync(path.join(artifactsDir, "fake-llm-requests.json"), JSON.stringify(requests, null, 2))
+      writeFileSync(
+        path.join(artifactsDir, "fake-llm-requests.json"),
+        JSON.stringify(requests, null, 2),
+      )
     }
   })
   await listen(server, port)
@@ -518,7 +594,9 @@ async function startFakeFrpsAdmin() {
       state.deletedOffline = url.searchParams.get("status") === "offline"
       return sendJson(res, 200, { ok: true })
     }
-    return sendJson(res, 404, { error: `No fake frps admin route for ${req.method} ${url.pathname}` })
+    return sendJson(res, 404, {
+      error: `No fake frps admin route for ${req.method} ${url.pathname}`,
+    })
   })
   await listen(server, port)
   return {
@@ -551,7 +629,9 @@ function deterministicEmbedding(input) {
   const text = Array.isArray(input) ? input.join("\n") : String(input)
   let seed = 0
   for (const char of text) seed = (seed + char.charCodeAt(0)) % 97
-  return Array.from({ length: 8 }, (_, index) => Number((((seed + index + 1) % 17) / 17).toFixed(6)))
+  return Array.from({ length: 8 }, (_, index) =>
+    Number((((seed + index + 1) % 17) / 17).toFixed(6)),
+  )
 }
 
 function sendChatStream(res) {
@@ -560,7 +640,9 @@ function sendChatStream(res) {
     "cache-control": "no-cache",
     connection: "keep-alive",
   })
-  res.write(`data: ${JSON.stringify({ choices: [{ delta: { content: "fake-stack-ok" }, index: 0 }] })}\n\n`)
+  res.write(
+    `data: ${JSON.stringify({ choices: [{ delta: { content: "fake-stack-ok" }, index: 0 }] })}\n\n`,
+  )
   res.write("data: [DONE]\n\n")
   res.end()
 }
@@ -673,7 +755,14 @@ async function freePort() {
 }
 
 function sidecarBinary(group, name, platform = hostPlatformKey()) {
-  return path.join(desktopDir, "src-tauri", "binaries", group, platform, executableName(platform, name))
+  return path.join(
+    desktopDir,
+    "src-tauri",
+    "binaries",
+    group,
+    platform,
+    executableName(platform, name),
+  )
 }
 
 function timestamp() {
@@ -682,7 +771,9 @@ function timestamp() {
 
 function cookieHeader(response) {
   const getSetCookie = response.headers.getSetCookie?.()
-  const values = getSetCookie?.length ? getSetCookie : [response.headers.get("set-cookie")].filter(Boolean)
+  const values = getSetCookie?.length
+    ? getSetCookie
+    : [response.headers.get("set-cookie")].filter(Boolean)
   return values.map((value) => value.split(";")[0]).join("; ")
 }
 

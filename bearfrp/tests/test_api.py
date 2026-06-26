@@ -163,7 +163,9 @@ from backend.models import Proxy, ProxyStatus, store
 from backend.user_persistence import load_registered_users_unlocked
 
 
-def register_user(client: TestClient, username: str = "alice", password: str = "password123") -> dict[str, object]:
+def register_user(
+    client: TestClient, username: str = "alice", password: str = "password123"
+) -> dict[str, object]:
     response = client.post(
         "/api/user/register",
         json={"username": username, "password": password},
@@ -200,14 +202,18 @@ def test_user_lifecycle_and_scripts():
         body = created.json()
         assert body["proxy"]["name"] == "demo"
         assert body["proxy"]["frps_remote_port"] == settings.allocatable_port_range_start
-        assert body["proxy"]["tcp_mappings"][0]["remote_port"] == settings.allocatable_port_range_start
+        assert (
+            body["proxy"]["tcp_mappings"][0]["remote_port"] == settings.allocatable_port_range_start
+        )
         assert body["proxy"]["public_urls"] == [body["proxy"]["public_url"]]
         assert body["proxy"]["token"] == frpc_token
         assert f'auth.token = "{settings.frps_auth_token}"' in body["frpc_config"]
         assert f'metadatas.token = "{frpc_token}"' in body["frpc_config"]
         assert f'metadatas.uid = "{uid}"' in body["frpc_config"]
         assert body["scripts"]["frpc"]["linux"]
-        assert client.get("/api/user/me").json()["balance_mb"] == settings.free_recharge_amount_mb - 10
+        assert (
+            client.get("/api/user/me").json()["balance_mb"] == settings.free_recharge_amount_mb - 10
+        )
 
         listed = client.get("/api/proxies")
         assert listed.status_code == 200
@@ -223,7 +229,10 @@ def test_user_lifecycle_and_scripts():
         assert rotated.json()["version"] == token_response.json()["version"] + 1
         rotated_scripts = client.get(f"/api/proxies/{body['proxy']['id']}/scripts")
         assert rotated_scripts.status_code == 200
-        assert f'metadatas.token = "{rotated.json()["token"]}"' in rotated_scripts.json()["frpc_config"]
+        assert (
+            f'metadatas.token = "{rotated.json()["token"]}"'
+            in rotated_scripts.json()["frpc_config"]
+        )
         assert frpc_token not in rotated_scripts.json()["frpc_config"]
 
         deleted = client.delete(f"/api/proxies/{body['proxy']['id']}")
@@ -365,7 +374,11 @@ def test_create_tcp_range_validation_and_release():
             start + 1,
             start + 2,
         ]
-        assert [m["local_port"] for m in created.json()["proxy"]["tcp_mappings"]] == [9000, 9000, 9000]
+        assert [m["local_port"] for m in created.json()["proxy"]["tcp_mappings"]] == [
+            9000,
+            9000,
+            9000,
+        ]
 
         partial_conflict = client.post(
             "/api/proxies",
@@ -400,7 +413,10 @@ def test_create_tcp_range_validation_and_release():
             },
         )
         assert many_to_many.status_code == 200
-        assert [m["local_port"] for m in many_to_many.json()["proxy"]["tcp_mappings"]] == [9400, 9401]
+        assert [m["local_port"] for m in many_to_many.json()["proxy"]["tcp_mappings"]] == [
+            9400,
+            9401,
+        ]
 
         too_many = client.post(
             "/api/proxies",
@@ -954,6 +970,7 @@ def test_invalid_uid_cookie_does_not_authenticate():
 
 def test_register_migrates_legacy_uid_data():
     with TestClient(app) as client:
+
         async def seed_legacy_user():
             async with store.lock:
                 legacy = store.ensure_user_unlocked("u_a1b2c3d4")
@@ -1076,7 +1093,10 @@ def test_admin_config_get_and_update():
         # Update to a larger range
         put = client.put(
             "/api/admin/config",
-            json={"start": settings.allocatable_port_range_start, "end": settings.allocatable_port_range_end + 10},
+            json={
+                "start": settings.allocatable_port_range_start,
+                "end": settings.allocatable_port_range_end + 10,
+            },
         )
         assert put.status_code == 200
 
@@ -1159,6 +1179,7 @@ def test_admin_port_range_ignores_http_proxies():
 
 def test_port_pool_update_range():
     from backend.port_pool import PortPool
+
     pool = PortPool(50000, 50003)
 
     p1 = pool.allocate()
@@ -1177,6 +1198,7 @@ def test_port_pool_update_range():
 
 def test_port_pool_batch_allocate_reserve_release():
     from backend.port_pool import PortPool
+
     pool = PortPool(50000, 50005)
 
     assert pool.allocate_contiguous(3) == [50000, 50001, 50002]
@@ -1191,11 +1213,13 @@ def test_port_pool_batch_allocate_reserve_release():
 
 def test_port_pool_skips_in_use_port(monkeypatch):
     from backend.port_pool import PortPool, _is_port_in_use
+
     pool = PortPool(50000, 50002)
 
     # Make port 50000 appear "in use"
     def fake_in_use(port):
         return port == 50000
+
     monkeypatch.setattr("backend.port_pool._is_port_in_use", fake_in_use)
 
     p = pool.allocate()

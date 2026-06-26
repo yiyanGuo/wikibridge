@@ -109,15 +109,9 @@ async def update_config(body: UpdateAllocatableRangeRequest) -> dict[str, bool]:
             mapping.remote_port
             for p in store.proxies.values()
             for mapping in p.tcp_mappings
-            if (
-                p.proxy_type == ProxyType.TCP
-                and p.status != ProxyStatus.DELETED
-            )
+            if (p.proxy_type == ProxyType.TCP and p.status != ProxyStatus.DELETED)
         }
-        outside = {
-            p for p in currently_allocated
-            if p < body.start or p > body.end
-        }
+        outside = {p for p in currently_allocated if p < body.start or p > body.end}
         if outside:
             raise HTTPException(
                 status_code=400,
@@ -174,7 +168,9 @@ async def list_admin_users() -> dict[str, list[dict[str, object]]]:
     """
 
     async with store.lock:
-        users = [store.user_to_dto(user) for user in sorted(store.users.values(), key=lambda u: u.uid)]
+        users = [
+            store.user_to_dto(user) for user in sorted(store.users.values(), key=lambda u: u.uid)
+        ]
     return {"users": users}
 
 
@@ -222,7 +218,9 @@ async def start_proxy(proxy_id: int) -> dict[str, bool]:
             if to_reserve:
                 unavailable = port_pool.reserve_many(to_reserve)
                 if unavailable:
-                    raise HTTPException(status_code=400, detail=f"公网端口不可用: {sorted(unavailable)}")
+                    raise HTTPException(
+                        status_code=400, detail=f"公网端口不可用: {sorted(unavailable)}"
+                    )
         proxy.status = ProxyStatus.ACTIVE
     return {"ok": True}
 
