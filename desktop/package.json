@@ -6,9 +6,23 @@
   "scripts": {
     "dev": "vite --host 127.0.0.1 --port 1420",
     "build": "tsc --noEmit && vite build",
-    "sidecars": "node scripts/prepare-sidecars.mjs all",
+    "ci:check": "node scripts/manual-ci.mjs",
+    "test:all": "node scripts/manual-ci.mjs --include-integration --include-fake-stack",
+    "test:backend": "node scripts/run-backend-tests.mjs",
+    "test:contracts": "cargo test --manifest-path src-tauri/Cargo.toml --locked",
+    "test:conda": "node scripts/check-conda-env.mjs bearfrp_test",
+    "test:integration:desktop": "node scripts/run-integration.mjs",
+    "test:integration:fake-stack": "node scripts/run-fake-stack.mjs",
+    "test:system": "playwright test",
+    "test:system:install": "playwright install chromium",
+    "test:system:ui": "playwright test --ui",
+    "test:system:report": "playwright show-report",
+    "test:system:server": "vite --mode system-test --host 127.0.0.1 --port 1421",
+    "sidecars": "node scripts/prepare-sidecars.mjs",
+    "sidecars:frpc": "node scripts/prepare-sidecars.mjs frpc",
     "sidecars:llm-wiki": "node scripts/prepare-sidecars.mjs llm-wiki",
     "sidecars:opencode": "node scripts/prepare-sidecars.mjs opencode",
+    "sidecars:pdfium": "node scripts/prepare-sidecars.mjs pdfium",
     "sidecars:check": "node scripts/check-sidecars.mjs",
     "tauri:dev": "tauri dev",
     "tauri:build": "npm run sidecars:check && node scripts/run-tauri-build.mjs"
@@ -26,6 +40,7 @@
     "remark-math": "^6.0.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.61.1",
     "@tauri-apps/cli": "^2.9.5",
     "@types/babel__generator": "^7.27.0",
     "@types/babel__template": "^7.4.4",

@@ -14,6 +14,7 @@ import {
   FilePlus2,
   FolderOpen,
   Hammer,
+  KeyRound,
   Link2,
   LogIn,
   LogOut,
@@ -22,6 +23,7 @@ import {
   Plus,
   Power,
   RefreshCcw,
+  Save,
   Server,
   Trash2,
   UserPlus
@@ -29,6 +31,15 @@ import {
 
 type AppSnapshot = {
   is_authenticated: boolean;
+};
+
+type LlmWikiLlmConfig = {
+  provider: string;
+  apiKey: string;
+  model: string;
+  baseUrl: string;
+  maxContextSize: number;
+  configured: boolean;
 };
 
 type UserDto = {
@@ -67,9 +78,15 @@ type WikiQueueSummary = {
   total: number;
 };
 
+type WikiFailedTask = {
+  sourcePath: string;
+  error: string;
+};
+
 type WikiProjectState = {
   project: WikiProject;
   queue: WikiQueueSummary;
+  failedTasks: WikiFailedTask[];
   sourceCount: number;
   wikiCount: number;
 };
@@ -84,7 +101,11 @@ type WikiImportResult = {
 type WikiBuildResult = {
   project: WikiProject;
   queue: WikiQueueSummary;
+  failedTasks: WikiFailedTask[];
   enqueuedCount: number;
+  processedCount: number;
+  failedCount: number;
+  writtenPaths: string[];
 };
 
 type WikiGraphNode = {
@@ -152,6 +173,15 @@ type ProjectTreeNode = {
 type AuthMode = 'login' | 'register';
 type AppPage = 'projects' | 'connections';
 
+const DEFAULT_LLM_WIKI_CONFIG: LlmWikiLlmConfig = {
+  provider: 'deepseek',
+  apiKey: '',
+  model: 'deepseek-v4-flash',
+  baseUrl: 'https://api.deepseek.com/v1',
+  maxContextSize: 64000,
+  configured: false
+};
+
 export default function App() {
   const [authMode, setAuthMode] = useState<AuthMode>('login');
   const [activePage, setActivePage] = useState<AppPage>('projects');
@@ -174,6 +204,7 @@ export default function App() {
   const [busy, setBusy] = useState('');
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
+  const [llmConfigDraft, setLlmConfigDraft] = useState<LlmWikiLlmConfig>(DEFAULT_LLM_WIKI_CONFIG);
 
   const isWorking = Boolean(busy);
   const connectedProjectIds = useMemo(
@@ -186,6 +217,7 @@ export default function App() {
     [projects, readerProjectId]
   );
   const readableFileCount = useMemo(() => countReadableFiles(readerTree), [readerTree]);
+  const latestWikiFailure = wikiProjectState?.failedTasks?.[0] || null;
 
   const refreshProjects = useCallback(async () => {
     const items = await invoke<KnowledgeProject[]>('list_projects');
@@ -197,6 +229,12 @@ export default function App() {
     const items = await invoke<ProjectConnection[]>('list_connections');
     setConnections(items);
     return items;
+  }, []);
+
+  const refreshLlmConfig = useCallback(async () => {
+    const config = await invoke<LlmWikiLlmConfig>('get_llm_wiki_llm_config');
+    setLlmConfigDraft(config);
+    return config;
   }, []);
 
   const updateConnectableProject = useCallback((nextProjects: KnowledgeProject[], nextConnections: ProjectConnection[]) => {
@@ -246,8 +284,8 @@ export default function App() {
   }, [refreshConnections, refreshProjects, updateConnectableProject]);
 
   useEffect(() => {
-    loadSession().catch((err) => setError(friendlyError(err)));
-  }, [loadSession]);
+    Promise.all([loadSession(), refreshLlmConfig()]).catch((err) => setError(friendlyError(err)));
+  }, [loadSession, refreshLlmConfig]);
 
   useEffect(() => {
     if (!user) return;
@@ -342,6 +380,29 @@ export default function App() {
     }
   }
 
+  async function saveLlmConfig(event: FormEvent) {
+    event.preventDefault();
+    setBusy('llm-config');
+    setError('');
+    try {
+      const saved = await invoke<LlmWikiLlmConfig>('set_llm_wiki_llm_config', {
+        input: {
+          provider: 'deepseek',
+          apiKey: llmConfigDraft.apiKey,
+          model: llmConfigDraft.model,
+          baseUrl: llmConfigDraft.baseUrl,
+          maxContextSize: llmConfigDraft.maxContextSize || DEFAULT_LLM_WIKI_CONFIG.maxContextSize
+        }
+      });
+      setLlmConfigDraft(saved);
+      setNotice('LLM Wiki 配置已保存');
+    } catch (err) {
+      setError(friendlyError(err));
+    } finally {
+      setBusy('');
+    }
+  }
+
   async function loadWikiProjectState(projectId: string) {
     const state = await invoke<WikiProjectState>('get_wiki_project', { projectId });
     setWikiProjectState(state);
@@ -361,7 +422,7 @@ export default function App() {
       setWikiProjectState((current) =>
         current
           ? { ...current, project: result.project, queue: result.queue }
-          : { project: result.project, queue: result.queue, sourceCount: result.importedPaths.length, wikiCount: 0 }
+          : { project: result.project, queue: result.queue, failedTasks: [], sourceCount: result.importedPaths.length, wikiCount: 0 }
       );
       await loadWikiProjectState(project.project_id);
       if (readerProjectId === project.project_id) {
@@ -377,16 +438,28 @@ export default function App() {
   }
 
   async function buildProject(project: KnowledgeProject) {
+    if (!llmConfigDraft.configured) {
+      setError('请先配置 DeepSeek API Key，再构建知识库。');
+      return;
+    }
     setBusy(`build-${project.project_id}`);
     setError('');
     try {
       const result = await invoke<WikiBuildResult>('build_wiki_project', { projectId: project.project_id });
-      setWikiProjectState((current) => (current ? { ...current, project: result.project, queue: result.queue } : current));
+      setWikiProjectState((current) =>
+        current ? { ...current, project: result.project, queue: result.queue, failedTasks: result.failedTasks } : current
+      );
       await loadWikiProjectState(project.project_id);
       if (readerProjectId === project.project_id) {
         await refreshReaderDocuments(project.project_id, readerContent?.document_id);
       }
-      setNotice(result.enqueuedCount > 0 ? `已加入构建队列：${result.enqueuedCount} 个 source` : '没有新的 source 需要加入队列');
+      if (result.failedCount > 0) {
+        setNotice(`构建完成：生成 ${result.writtenPaths.length} 个 Wiki 文件，失败 ${result.failedCount} 个 source`);
+      } else if (result.processedCount > 0) {
+        setNotice(`构建完成：处理 ${result.processedCount} 个 source，生成 ${result.writtenPaths.length} 个 Wiki 文件`);
+      } else {
+        setNotice(result.enqueuedCount > 0 ? `已加入构建队列：${result.enqueuedCount} 个 source` : '没有新的 source 需要构建');
+      }
     } catch (err) {
       setError(friendlyError(err));
     } finally {
@@ -429,7 +502,7 @@ export default function App() {
     try {
       await invoke('stop_project_chat', { projectId: project.project_id });
       setChatStack((current) => (current?.projectId === project.project_id ? null : current));
-      setNotice('OpenCode Chat 已停止');
+      setNotice('消费端 Chat 已停止');
     } catch (err) {
       setError(friendlyError(err));
     } finally {
@@ -649,7 +722,7 @@ export default function App() {
         <div className="brand">
           <Server size={22} aria-hidden="true" />
           <div>
-            <strong>BearFrps</strong>
+            <strong>发布端</strong>
             <span>知识库访问</span>
           </div>
         </div>
@@ -712,10 +785,18 @@ export default function App() {
             </div>
 
             <div className="project-toolbar">
-              <div className="status-row">
-                <span>队列：{queueLabel(wikiProjectState?.queue)}</span>
-                <span>Sources：{wikiProjectState?.sourceCount ?? 0}</span>
-                <span>Graph：{wikiGraph ? `${wikiGraph.nodes.length}/${wikiGraph.edges.length}` : '未刷新'}</span>
+              <div className="toolbar-status-stack">
+                <div className="status-row">
+                  <span>队列：{queueLabel(wikiProjectState?.queue)}</span>
+                  <span>Sources：{wikiProjectState?.sourceCount ?? 0}</span>
+                  <span>Graph：{wikiGraph ? `${wikiGraph.nodes.length}/${wikiGraph.edges.length}` : '未刷新'}</span>
+                </div>
+                {latestWikiFailure && (
+                  <div className="inline-alert reader-failure-alert">
+                    <strong>最近失败：{latestWikiFailure.sourcePath}</strong>
+                    <span>{latestWikiFailure.error}</span>
+                  </div>
+                )}
               </div>
               <div className="card-actions reader-actions">
                 <button className="secondary" onClick={() => importWikiSources(readerProject, 'files')} disabled={busy === `add-${readerProject.project_id}`}>
@@ -777,6 +858,9 @@ export default function App() {
                 </button>
               </div>
             </div>
+            {!llmConfigDraft.configured && (
+              <div className="inline-alert reader-config-alert">请先配置 DeepSeek API Key，再构建知识库。</div>
+            )}
 
             <div className="reader-shell">
               <aside className="reader-sidebar">
@@ -860,6 +944,61 @@ export default function App() {
               </div>
               <span className="count-pill">{projects.length} 个项目</span>
             </div>
+
+            <form className="llm-config-card" onSubmit={saveLlmConfig}>
+              <div className="llm-config-heading">
+                <div>
+                  <span className="llm-config-title">
+                    <KeyRound size={17} />
+                    DeepSeek
+                  </span>
+                  <p>LLM Wiki 构建配置</p>
+                </div>
+                <span className="status-pill" data-running={llmConfigDraft.configured}>
+                  {llmConfigDraft.configured ? '已配置' : '未配置'}
+                </span>
+              </div>
+              <div className="llm-config-grid">
+                <label>
+                  API Key
+                  <input
+                    value={llmConfigDraft.apiKey}
+                    type="password"
+                    autoComplete="off"
+                    placeholder="sk-..."
+                    onChange={(event) => setLlmConfigDraft((current) => ({ ...current, apiKey: event.target.value }))}
+                  />
+                </label>
+                <label>
+                  Model
+                  <input
+                    value={llmConfigDraft.model}
+                    placeholder={DEFAULT_LLM_WIKI_CONFIG.model}
+                    onChange={(event) => setLlmConfigDraft((current) => ({ ...current, model: event.target.value }))}
+                  />
+                </label>
+                <label>
+                  Base URL
+                  <input
+                    value={llmConfigDraft.baseUrl}
+                    placeholder={DEFAULT_LLM_WIKI_CONFIG.baseUrl}
+                    onChange={(event) => setLlmConfigDraft((current) => ({ ...current, baseUrl: event.target.value }))}
+                  />
+                </label>
+                <button
+                  className="primary"
+                  disabled={
+                    busy === 'llm-config' ||
+                    !llmConfigDraft.apiKey.trim() ||
+                    !llmConfigDraft.model.trim() ||
+                    !llmConfigDraft.baseUrl.trim()
+                  }
+                >
+                  <Save size={17} />
+                  保存
+                </button>
+              </div>
+            </form>
 
             <form className="project-form" onSubmit={createProject}>
               <input

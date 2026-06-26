@@ -797,6 +797,52 @@ button:disabled {
   word-break: break-word;
 }
 
+.llm-config-card {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  margin-bottom: 16px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: #f8fafc;
+}
+
+.llm-config-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.llm-config-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #0f172a;
+  font-weight: 700;
+}
+
+.llm-config-title svg {
+  color: #0f766e;
+}
+
+.llm-config-heading p {
+  margin: 6px 0 0;
+  color: #64748b;
+  font-size: 13px;
+}
+
+.llm-config-grid {
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr) minmax(150px, 0.8fr) minmax(220px, 1.1fr) auto;
+  align-items: end;
+  gap: 10px;
+}
+
+.reader-config-alert {
+  margin: 12px 0 0;
+}
+
 .count-pill,
 .status-pill,
 .status-row span {
@@ -1004,6 +1050,27 @@ button:disabled {
 .project-toolbar .status-row,
 .project-toolbar .card-actions {
   margin-top: 0;
+}
+
+.toolbar-status-stack {
+  min-width: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.reader-failure-alert {
+  max-width: 620px;
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.reader-failure-alert strong,
+.reader-failure-alert span {
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .reader-actions {
@@ -1396,7 +1463,8 @@ button:disabled {
   }
 
   .project-form,
-  .connection-form {
+  .connection-form,
+  .llm-config-grid {
     grid-template-columns: 1fr;
   }
 
@@ -1427,6 +1495,7 @@ button:disabled {
 
   .section-heading,
   .card-heading,
+  .llm-config-heading,
   .card-actions,
   .reader-header {
     flex-direction: column;

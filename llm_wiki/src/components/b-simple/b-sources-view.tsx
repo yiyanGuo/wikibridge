@@ -3,7 +3,7 @@
  * 支持拖拽上传、文件选择、URL添加
  */
 
-import { useState, useEffect, useRef, useCallback } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { open } from "@tauri-apps/plugin-dialog"
 import { Upload, File, Link2, Trash2, RefreshCw, Play, AlertCircle, Loader2, RotateCcw } from "lucide-react"
 import { useWikiStore } from "@/stores/wiki-store"
@@ -20,7 +20,6 @@ export function BSourcesView() {
   const [showUrlDialog, setShowUrlDialog] = useState(false)
   const [queueTasks, setQueueTasks] = useState<IngestTask[]>([])
   const [queueSummary, setQueueSummary] = useState({ pending: 0, processing: 0, failed: 0, completed: 0, total: 0 })
-  const fileInputRef = useRef<HTMLInputElement>(null)
 
   // 轮询队列状态
   const pollQueue = useCallback(() => {

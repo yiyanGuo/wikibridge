@@ -185,11 +185,11 @@ pub fn ensure_opencode_stack_running(
     let data_dir = runtime.paths.app_data_dir.join("opencode-data");
     let work_dir = data_dir.join("users").join("default");
     fs::create_dir_all(data_dir.join("users").join("default"))
-        .map_err(|error| format!("无法创建 OpenCode 用户数据目录: {error}"))?;
+        .map_err(|error| format!("无法创建消费端用户数据目录: {error}"))?;
     fs::create_dir_all(data_dir.join("wiki"))
-        .map_err(|error| format!("无法创建 OpenCode 公共 Wiki 目录: {error}"))?;
+        .map_err(|error| format!("无法创建消费端公共 Wiki 目录: {error}"))?;
     fs::create_dir_all(&work_dir)
-        .map_err(|error| format!("无法创建 OpenCode 工作目录: {error}"))?;
+        .map_err(|error| format!("无法创建消费端工作目录: {error}"))?;
 
     let opencode_port = ensure_opencode_running(
         app,
@@ -570,7 +570,7 @@ fn ensure_opencode_running(
     );
     let port = allocate_opencode_port(launch.preferred_port)?;
     fs::create_dir_all(launch.data_dir.join("users").join("default"))
-        .map_err(|error| format!("无法创建 OpenCode 用户数据目录: {error}"))?;
+        .map_err(|error| format!("无法创建消费端用户数据目录: {error}"))?;
     fs::create_dir_all(&launch.work_dir)
         .map_err(|error| format!("无法创建 OpenCode 工作目录: {error}"))?;
     write_kb_agent_instructions(&launch)?;
@@ -949,7 +949,7 @@ fn prepare_project_opencode_data(
         .join(&project.project_id);
     let users_dir = data_dir.join("users").join("default");
     fs::create_dir_all(&users_dir)
-        .map_err(|error| format!("无法创建 OpenCode 项目用户目录: {error}"))?;
+        .map_err(|error| format!("无法创建消费端项目用户目录: {error}"))?;
 
     let wiki_target = PathBuf::from(&project.folder_path).join("wiki");
     fs::create_dir_all(&wiki_target).map_err(|error| format!("无法创建项目 wiki 目录: {error}"))?;
@@ -969,30 +969,30 @@ fn mount_project_wiki(link_path: &Path, target_path: &Path) -> Result<(), String
     if let Ok(metadata) = fs::symlink_metadata(link_path) {
         if metadata.file_type().is_symlink() {
             fs::remove_file(link_path)
-                .map_err(|error| format!("无法更新 OpenCode wiki 挂载: {error}"))?;
+                .map_err(|error| format!("无法更新消费端 wiki 挂载: {error}"))?;
         } else if metadata.is_dir() {
             let mut entries = fs::read_dir(link_path)
-                .map_err(|error| format!("无法检查 OpenCode wiki 目录: {error}"))?;
+                .map_err(|error| format!("无法检查消费端 wiki 目录: {error}"))?;
             if entries.next().is_some() {
                 return Err(format!(
-                    "OpenCode wiki 目录已存在且非空: {}",
+                    "消费端 wiki 目录已存在且非空: {}",
                     link_path.display()
                 ));
             }
             fs::remove_dir(link_path)
-                .map_err(|error| format!("无法更新 OpenCode wiki 挂载: {error}"))?;
+                .map_err(|error| format!("无法更新消费端 wiki 挂载: {error}"))?;
         } else {
             fs::remove_file(link_path)
-                .map_err(|error| format!("无法更新 OpenCode wiki 挂载: {error}"))?;
+                .map_err(|error| format!("无法更新消费端 wiki 挂载: {error}"))?;
         }
     }
     if let Some(parent) = link_path.parent() {
         fs::create_dir_all(parent)
-            .map_err(|error| format!("无法创建 OpenCode 数据目录: {error}"))?;
+            .map_err(|error| format!("无法创建消费端数据目录: {error}"))?;
     }
     symlink_dir(&target, link_path).map_err(|error| {
         format!(
-            "无法挂载项目 wiki 到 OpenCode 数据目录: {error}。请确认当前系统允许创建目录符号链接"
+            "无法挂载项目 wiki 到消费端数据目录: {error}。请确认当前系统允许创建目录符号链接"
         )
     })
 }
@@ -1156,7 +1156,7 @@ fn allocate_opencode_port(preferred: Option<u16>) -> Result<u16, String> {
         if TcpListener::bind((HOST, port)).is_ok() {
             return Ok(port);
         }
-        return Err(format!("OpenCode 端口 {port} 已被占用"));
+        return Err(format!("消费端端口 {port} 已被占用"));
     }
     allocate_port(OPENCODE_START_PORT, OPENCODE_END_PORT)
 }
@@ -1263,5 +1263,54 @@ fn ensure_executable(path: &PathBuf) {
             permissions.set_mode(permissions.mode() | 0o755);
             let _ = fs::set_permissions(path, permissions);
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::net::TcpListener;
+
+    #[test]
+    fn platform_key_uses_supported_packaging_names() {
+        assert!(matches!(
+            platform_key(),
+            "darwin-arm64"
+                | "darwin-amd64"
+                | "linux-arm64"
+                | "linux-amd64"
+                | "windows-amd64"
+        ));
+    }
+
+    #[test]
+    fn executable_name_adds_windows_suffix_only_on_windows() {
+        if cfg!(windows) {
+            assert_eq!(executable_name("opencode"), "opencode.exe");
+        } else {
+            assert_eq!(executable_name("opencode"), "opencode");
+        }
+    }
+
+    #[test]
+    fn http_get_ok_checks_status_and_expected_body() {
+        let listener = TcpListener::bind((HOST, 0)).unwrap();
+        let port = listener.local_addr().unwrap().port();
+        thread::spawn(move || {
+            let (mut stream, _) = listener.accept().unwrap();
+            let mut request = [0_u8; 512];
+            let _ = stream.read(&mut request);
+            let _ = stream.write_all(
+                b"HTTP/1.1 200 OK\r\nContent-Length: 16\r\nConnection: close\r\n\r\n{\"healthy\":true}",
+            );
+        });
+        assert!(http_get_ok(port, "/global/health", Some("\"healthy\":true")));
+    }
+
+    #[test]
+    fn allocate_port_skips_ports_that_are_already_bound() {
+        let first = TcpListener::bind((HOST, 0)).unwrap();
+        let occupied = first.local_addr().unwrap().port();
+        assert!(allocate_port(occupied, occupied).is_err());
     }
 }

@@ -27,10 +27,16 @@ src-tauri/binaries/
 
 Use `.exe` suffixes on Windows.
 
-Build and copy current-platform OpenCode and LLM Wiki sidecars:
+Build and copy current-platform frpc, OpenCode, and LLM Wiki sidecars:
 
 ```bash
 npm run sidecars
+```
+
+Download current-platform `frpc` from the upstream frp release:
+
+```bash
+npm run sidecars:frpc
 ```
 
 Copy existing build outputs without rebuilding:
@@ -49,6 +55,82 @@ npm run tauri:dev
 
 The OpenCode entry requires `opencode` and `llm-wiki-server` binaries to be
 present under `src-tauri/binaries` for the current platform.
+
+## Testing
+
+Run the minimal desktop check before handoff or packaging:
+
+```bash
+npm run ci:check
+```
+
+The current check runs BearFRP backend pytest, the frontend build, validates
+required sidecar binaries for the host platform, and runs the Tauri Rust
+contract tests. To run only the BearFRP backend tests:
+
+```bash
+npm run test:backend
+```
+
+To check sidecars for a specific packaging target:
+
+```bash
+npm run ci:check -- --platform linux-amd64
+```
+
+To include fake-stack in a manual CI run:
+
+```bash
+npm run ci:check -- --include-fake-stack
+```
+
+Run browser-level desktop system tests with a mocked Tauri backend:
+
+```bash
+npm run test:system:install
+npm run test:system
+```
+
+These tests use a mocked Tauri backend and are intended to capture correct
+behavior even when the current app still has known bugs.
+
+Run real integration checks:
+
+```bash
+npm run test:integration:desktop
+```
+
+Integration tests require a conda environment named `bearfrp_test` with
+`bearfrp/requirements.txt` installed. The script starts the BearFRP backend
+with an isolated temporary config directory, checks current-platform sidecars,
+and writes logs under `test-results/integration/`.
+
+Run the fake-stack integration layer:
+
+```bash
+npm run test:integration:fake-stack
+```
+
+Fake-stack starts the real BearFRP backend, `llm-wiki-server`, and `opencode`
+sidecars, but replaces external services with local fake frps admin and
+OpenAI-compatible LLM endpoints. The fake LLM requires `Bearer fake-token`,
+validates request shape, and writes logs under `test-results/fake-stack/`.
+This layer covers BearFRP plugin/admin contracts, llm-wiki project APIs, and
+OpenCode's llm-wiki proxy routes without deploying real frps, frpc, or an LLM.
+
+Run the full local suite:
+
+```bash
+npm run test:all
+```
+
+`test:all` includes backend pytest, real integration tests, and fake-stack
+integration tests, so it requires `bearfrp_test` and current-platform sidecars.
+Known product bugs should be tracked in `tests/system/known-bugs.ts` and marked
+with Playwright `test.fail()` until the bug is fixed.
+
+GitHub Actions runs the desktop suite on Linux, macOS, and Windows. Failed runs
+upload Playwright reports and integration logs as workflow artifacts.
 
 ## Packaging
 

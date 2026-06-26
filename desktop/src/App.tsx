@@ -209,7 +209,7 @@ export default function App() {
     try {
       await invoke('set_bearfrp_backend_url', { url: backendDraft });
       await refreshServices();
-      setNotice('BearFRP backend 已保存');
+      setNotice('发布端后端已保存');
     } catch (err) {
       setError(friendlyError(err));
     } finally {
@@ -459,11 +459,11 @@ export default function App() {
         <nav className="entry-nav" aria-label="入口">
           <button className={activeEntry === 'bearfrp' ? 'active' : ''} onClick={() => setActiveEntry('bearfrp')}>
             <Server size={17} />
-            BearFRP
+            发布端
           </button>
           <button className={activeEntry === 'opencode' ? 'active' : ''} onClick={() => setActiveEntry('opencode')}>
             <TerminalSquare size={17} />
-            OpenCode
+            消费端
           </button>
         </nav>
 
@@ -493,7 +493,7 @@ export default function App() {
         <section className="entry-pane">
           <form className="backend-strip" onSubmit={saveBackendUrl}>
             <label>
-              BearFRP backend
+              发布端后端
               <input
                 value={backendDraft}
                 onChange={(event) => setBackendDraft(event.target.value)}
@@ -506,7 +506,7 @@ export default function App() {
             </button>
           </form>
           {!services?.bearfrpBackendUrl && (
-            <div className="inline-alert desktop-inline-alert">请先配置远端 BearFRP backend URL。</div>
+            <div className="inline-alert desktop-inline-alert">请先配置远端发布端后端 URL。</div>
           )}
           <BearFrpApp />
         </section>

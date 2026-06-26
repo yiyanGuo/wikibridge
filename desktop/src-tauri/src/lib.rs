@@ -17,6 +17,7 @@ mod api;
 mod frpc;
 mod local_service;
 mod sidecar;
+mod source_text;
 mod state;
 mod wiki;
 
@@ -1870,6 +1871,9 @@ pub fn run() {
             let runtime = DesktopRuntime::new(app.handle())
                 .map_err(|error| std::io::Error::new(std::io::ErrorKind::Other, error))?;
             app.manage(Mutex::new(runtime));
+            if let Ok(dir) = app.path().resource_dir() {
+                source_text::set_resource_dir_hint(dir);
+            }
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -1906,6 +1910,8 @@ pub fn run() {
             add_project_materials,
             build_project,
             link_project,
+            wiki::get_llm_wiki_llm_config,
+            wiki::set_llm_wiki_llm_config,
             wiki::get_wiki_project,
             wiki::import_wiki_sources,
             wiki::build_wiki_project,
@@ -1939,7 +1945,7 @@ fn client_from_runtime(runtime: &State<'_, SharedRuntime>) -> Result<ApiClient, 
 
 fn client_from_persisted(persisted: &PersistedState) -> Result<ApiClient, String> {
     if persisted.base_url.trim().is_empty() {
-        return Err("请先配置 BearFRP backend URL".to_string());
+        return Err("请先配置发布端后端 URL".to_string());
     }
     Ok(ApiClient::from_state(persisted))
 }
@@ -1964,6 +1970,29 @@ mod tests {
     fn project_name_rejects_path_separators() {
         assert!(normalize_project_name("foo/bar").is_err());
         assert!(normalize_project_name("foo\\bar").is_err());
+    }
+
+    #[test]
+    fn project_name_rejects_empty_dot_and_overlong_names() {
+        assert!(normalize_project_name("   ").is_err());
+        assert!(normalize_project_name(".").is_err());
+        assert!(normalize_project_name("..").is_err());
+        assert!(normalize_project_name("a".repeat(31).as_str()).is_err());
+    }
+
+    #[test]
+    fn project_root_rejects_parent_components() {
+        let err = project_root_for_create(Path::new("/tmp/wiki"), "../escape").unwrap_err();
+        assert!(err.contains("上级路径"));
+    }
+
+    #[test]
+    fn traffic_limit_accepts_only_supported_steps() {
+        for value in [10, 50, 100, 500] {
+            assert_eq!(normalize_traffic_mb(value).unwrap(), value);
+        }
+        assert!(normalize_traffic_mb(0).is_err());
+        assert!(normalize_traffic_mb(101).is_err());
     }
 
     #[test]

@@ -29,7 +29,7 @@ from backend.config import ROOT_DIR, Settings
 class FrpsManager:
     def __init__(self, settings: Settings) -> None:
         self.settings = settings
-        self.frps_dir = ROOT_DIR / "frps"
+        self.frps_dir = Path(os.getenv("BEARFRPS_FRPS_DIR", ROOT_DIR / "frps"))
         self.config_path = self.frps_dir / "frps.toml"
         self.process: asyncio.subprocess.Process | None = None
 

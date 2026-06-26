@@ -23,12 +23,12 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from backend.config import ROOT_DIR
+from backend.config import CONFIG_DIR
 from backend.models import Store, User
 from backend.sqlite_persistence import load_store_unlocked, save_store_unlocked
 
 
-_USERS_FILE = ROOT_DIR / "config" / "users.json"
+_USERS_FILE = CONFIG_DIR / "users.json"
 
 
 def load_registered_users_unlocked(store: Store) -> None:

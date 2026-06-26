@@ -1,9 +1,10 @@
 #!/usr/bin/env node
 
-import { existsSync, mkdirSync, copyFileSync, chmodSync } from "node:fs"
+import { existsSync, mkdirSync, copyFileSync, chmodSync, mkdtempSync, readdirSync, rmSync, statSync } from "node:fs"
 import path from "node:path"
 import { spawnSync } from "node:child_process"
 import { fileURLToPath } from "node:url"
+import os from "node:os"
 import {
   executableName,
   hostPlatformKey,
@@ -23,12 +24,40 @@ const args = new Set(parsed.args)
 const target = parsed.target
 const skipBuild = args.has("--skip-build")
 
-if (!["all", "opencode", "llm-wiki"].includes(target)) {
-  fail(`Unknown target "${target}". Use all, opencode, or llm-wiki.`)
+if (!["all", "frpc", "opencode", "llm-wiki", "pdfium"].includes(target)) {
+  fail(`Unknown target "${target}". Use all, frpc, opencode, llm-wiki, or pdfium.`)
 }
 
+if (target === "all" || target === "frpc") prepareFrpc()
 if (target === "all" || target === "llm-wiki") prepareLlmWiki()
 if (target === "all" || target === "opencode") prepareOpenCode()
+if (target === "all" || target === "pdfium") preparePdfium()
+
+function prepareFrpc() {
+  const executable = executableName(platform, "frpc")
+  const dest = path.join(desktopDir, "src-tauri", "binaries", "frpc", platform, executable)
+  if (skipBuild) {
+    if (existsSync(dest)) {
+      console.log(`Using existing frpc -> ${path.relative(repoRoot, dest)}`)
+      return
+    }
+    fail(`frpc binary was not found at ${dest}. Rerun without --skip-build to download it.`)
+  }
+
+  const version = process.env.FRP_VERSION || "v0.58.1"
+  const { archive, url } = frpDownloadSpec(version, platform)
+  const tempDir = mkdtempSync(path.join(os.tmpdir(), "wikibridge-frpc-"))
+  try {
+    const archivePath = path.join(tempDir, archive)
+    run("curl", ["-L", "-o", archivePath, url], repoRoot)
+    extractArchive(archivePath, tempDir)
+    const source = findFile(tempDir, executable)
+    if (!source) fail(`Downloaded ${archive}, but ${executable} was not found inside it.`)
+    copyBinary(source, dest, "frpc")
+  } finally {
+    rmSync(tempDir, { recursive: true, force: true })
+  }
+}
 
 function prepareLlmWiki() {
   const manifest = path.join(repoRoot, "llm_wiki", "src-tauri", "Cargo.toml")
@@ -68,6 +97,12 @@ function prepareOpenCode() {
   copyBinary(source, dest, "opencode")
 }
 
+function preparePdfium() {
+  const source = pdfiumSourcePath(platform)
+  const dest = path.join(desktopDir, "src-tauri", "binaries", "pdfium", platform, pdfiumDestName(platform))
+  copyBinary(source, dest, "pdfium")
+}
+
 function copyBinary(sourceCandidates, dest, label) {
   const candidates = Array.isArray(sourceCandidates) ? sourceCandidates : [sourceCandidates]
   const source = candidates.find((candidate) => existsSync(candidate))
@@ -104,7 +139,7 @@ function parseArgs(rawArgs) {
 
   const positional = parsed.args.filter((arg) => !arg.startsWith("--"))
   if (positional.length > 1) {
-    fail(`Too many targets: ${positional.join(", ")}. Use one of all, opencode, or llm-wiki.`)
+    fail(`Too many targets: ${positional.join(", ")}. Use one of all, frpc, opencode, llm-wiki, or pdfium.`)
   }
 
   return {
@@ -128,6 +163,54 @@ function opencodeSourcePaths(opencodeRoot, executable) {
   const candidates = [path.join(binDir, executable)]
   if (platform.startsWith("windows-")) candidates.push(path.join(binDir, "opencode"))
   return candidates
+}
+
+function pdfiumSourcePath(targetPlatform) {
+  const pdfiumDir = path.join(repoRoot, "llm_wiki", "src-tauri", "pdfium")
+  switch (targetPlatform) {
+    case "darwin-arm64":
+      return path.join(pdfiumDir, "libpdfium.dylib")
+    case "darwin-amd64":
+      return path.join(pdfiumDir, "libpdfium-x86_64.dylib")
+    case "linux-arm64":
+      return path.join(pdfiumDir, "libpdfium-arm64.so")
+    case "linux-amd64":
+      return path.join(pdfiumDir, "libpdfium.so")
+    case "windows-amd64":
+      return path.join(pdfiumDir, "pdfium.dll")
+    default:
+      fail(`Unsupported pdfium platform "${targetPlatform}".`)
+  }
+}
+
+function pdfiumDestName(targetPlatform) {
+  if (targetPlatform.startsWith("windows-")) return "pdfium.dll"
+  if (targetPlatform.startsWith("darwin-")) return "libpdfium.dylib"
+  return "libpdfium.so"
+}
+
+function frpDownloadSpec(version, targetPlatform) {
+  const versionNoV = version.startsWith("v") ? version.slice(1) : version
+  const [osName, arch] = targetPlatform.split("-")
+  const extension = osName === "windows" ? "zip" : "tar.gz"
+  const archive = `frp_${versionNoV}_${osName}_${arch}.${extension}`
+  return {
+    archive,
+    url: `https://github.com/fatedier/frp/releases/download/${version}/${archive}`,
+  }
+}
+
+function extractArchive(archivePath, destDir) {
+  if (archivePath.endsWith(".zip")) {
+    if (process.platform === "win32") {
+      run("powershell", ["-NoProfile", "-Command", "Expand-Archive", "-LiteralPath", archivePath, "-DestinationPath", destDir, "-Force"], repoRoot)
+      return
+    }
+    run("unzip", ["-q", archivePath, "-d", destDir], repoRoot)
+    return
+  }
+
+  run("tar", ["xzf", archivePath, "-C", destDir], repoRoot)
 }
 
 function assertNativeBuild(label) {
@@ -193,6 +276,19 @@ function findOnPath(command) {
   return pathEnv.split(path.delimiter).some((dir) =>
     extensions.some((ext) => existsSync(path.join(dir, `${command}${ext.toLowerCase()}`)) || existsSync(path.join(dir, `${command}${ext}`))),
   )
+}
+
+function findFile(root, filename) {
+  for (const entry of readdirSync(root)) {
+    const full = path.join(root, entry)
+    const stats = statSync(full)
+    if (stats.isFile() && entry === filename) return full
+    if (stats.isDirectory()) {
+      const found = findFile(full, filename)
+      if (found) return found
+    }
+  }
+  return undefined
 }
 
 function fail(message) {

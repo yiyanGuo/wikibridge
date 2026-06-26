@@ -15,6 +15,9 @@ const required = [
   ["opencode", "opencode"],
   ["llm-wiki-server", "llm-wiki-server"],
 ]
+const requiredResources = [
+  path.join(desktopDir, "src-tauri", "binaries", "pdfium", platform, pdfiumDestName(platform)),
+]
 
 const missing = []
 const notExecutable = []
@@ -31,6 +34,10 @@ for (const [group, name] of required) {
   }
 }
 
+for (const file of requiredResources) {
+  if (!existsSync(file)) missing.push(file)
+}
+
 if (missing.length > 0 || notExecutable.length > 0) {
   if (missing.length > 0) {
     console.error(`Missing sidecar binaries for ${platform}:`)
@@ -40,7 +47,7 @@ if (missing.length > 0 || notExecutable.length > 0) {
     console.error(`Sidecar binaries are not executable for ${platform}:`)
     for (const file of notExecutable) console.error(`  ${file}`)
   }
-  console.error("Run npm run sidecars for opencode/llm-wiki-server, and place frpc manually before packaging.")
+  console.error("Run npm run sidecars before packaging.")
   process.exit(1)
 }
 
@@ -64,4 +71,10 @@ function parseArgs(rawArgs) {
 function fail(message) {
   console.error(message)
   process.exit(1)
+}
+
+function pdfiumDestName(targetPlatform) {
+  if (targetPlatform.startsWith("windows-")) return "pdfium.dll"
+  if (targetPlatform.startsWith("darwin-")) return "libpdfium.dylib"
+  return "libpdfium.so"
 }

@@ -94,9 +94,9 @@ BearFrps 根项目采用 Apache License 2.0。frp 和 frp-Android 也使用 Apac
 ## 测试
 
 ```bash
-.venv/bin/python -m pytest -q
+conda run -n bearfrp_test python -m pytest -q
 node --check frontend/mock_api.js
-.venv/bin/python tools/check_comment_ratio.py
+conda run -n bearfrp_test python tools/check_comment_ratio.py
 git diff --check
 ```
 
