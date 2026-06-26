@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1
-FROM rust:1.85-bookworm AS builder
+FROM rust:1.96-bookworm AS builder
 
 # Install Tauri / GTK system dependencies required to build the Rust project.
 RUN apt-get update \
@@ -11,6 +11,8 @@ RUN apt-get update \
         libayatana-appindicator3-dev \
         librsvg2-dev \
         pkg-config \
+        protobuf-compiler \
+        libprotobuf-dev \
         nodejs \
         npm \
     && rm -rf /var/lib/apt/lists/*
