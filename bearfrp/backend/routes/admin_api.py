@@ -201,7 +201,7 @@ async def start_proxy(proxy_id: int) -> dict[str, bool]:
     """@brief 管理员恢复指定代理。
     @param proxy_id 代理 ID。
     @return ok=true 表示状态已切回 active。
-    @throws HTTPException 用户余额不足或 TCP 端口已被占用时返回 400。
+    @throws HTTPException TCP 端口已被占用时返回 400。
     @note 恢复 TCP 代理会重新预留缺失的 remotePort。
     """
 
@@ -209,9 +209,6 @@ async def start_proxy(proxy_id: int) -> dict[str, bool]:
         proxy = store.proxies.get(proxy_id)
         if proxy is None or proxy.status == ProxyStatus.DELETED:
             raise HTTPException(status_code=404, detail="proxy not found")
-        user = store.users.get(proxy.uid)
-        if user is None or user.balance_mb <= 0:
-            raise HTTPException(status_code=400, detail="余额不足")
         if proxy.proxy_type == ProxyType.TCP:
             occupied = []
             remote_ports = [mapping.remote_port for mapping in proxy.tcp_mappings]

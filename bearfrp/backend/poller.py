@@ -11,7 +11,7 @@
   TCP 多端口代理按每个 frps_name 聚合流量，避免只统计首端口。
   HTTP、STCP、XTCP 使用不同 frps admin API 列表，按代理类型更新在线状态。
   当前速度由相邻两次累计流量差除以轮询间隔得到。
-  超过代理流量上限或用户余额不足时，代理状态置为 stopped_by_admin。
+  超过代理流量上限时，代理状态置为 stopped_by_admin。
   停用后不会立刻释放端口，释放由用户删除代理或管理员删除代理完成。
 
   单轮轮询失败不终止后台任务，下一轮继续尝试，适合 frps 短暂不可用场景。
@@ -29,7 +29,7 @@
   XTCP 的 stcp fallback 用量计入对应 P2P 代理。
 
   已用流量达到 traffic_limit_mb 时停用代理。
-  用户 balance_mb 小于等于 0 时停用代理。
+  用户 balance_mb 表示尚未分配给代理的剩余额度，不影响已分配代理继续使用。
   已删除代理不再被轮询器恢复为 online。
   管理员停用代理不会释放端口，避免旧脚本端口被其他用户占用。
 
@@ -264,7 +264,7 @@ def _charge_usage(proxy: Proxy, delta: int) -> bool:
 
 
 def _apply_stop_rules(proxy: Proxy) -> bool:
-    """@brief 根据流量上限和用户余额停用代理。
+    """@brief 根据代理流量上限停用代理。
     @param proxy 待检查代理。
     @return 状态发生变化时返回 True，提示调用方保存 Store。
     @note 停用不释放 TCP 端口，端口释放仍由删除流程负责。
@@ -273,11 +273,6 @@ def _apply_stop_rules(proxy: Proxy) -> bool:
     if proxy.status != ProxyStatus.ACTIVE:
         return False
     if proxy.traffic_used_bytes >= proxy.traffic_limit_mb * 1024 * 1024:
-        proxy.status = ProxyStatus.STOPPED_BY_ADMIN
-        proxy.is_online = False
-        return True
-    user = store.users.get(proxy.uid)
-    if user is not None and user.balance_mb <= 0:
         proxy.status = ProxyStatus.STOPPED_BY_ADMIN
         proxy.is_online = False
         return True

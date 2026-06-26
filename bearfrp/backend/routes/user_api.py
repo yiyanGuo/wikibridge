@@ -486,6 +486,43 @@ async def delete_proxy(proxy_id: int, user: User = Depends(require_user)) -> dic
     return {"ok": True}
 
 
+@router.post("/api/proxies/{proxy_id}/stop")
+async def stop_proxy(proxy_id: int, user: User = Depends(require_user)) -> dict[str, bool]:
+    """@brief 停用当前用户的代理，但保留代理配置和已分配端口。
+    @param proxy_id 待停用代理 ID。
+    @param user require_user 解析出的已登录用户。
+    @return ok=true 表示状态已切换为 stopped_by_admin。
+    """
+
+    async with store.lock:
+        proxy = store.proxies.get(proxy_id)
+        if proxy is None or proxy.uid != user.uid or proxy.status == ProxyStatus.DELETED:
+            raise HTTPException(status_code=404, detail="proxy not found")
+        proxy.status = ProxyStatus.STOPPED_BY_ADMIN
+        proxy.is_online = False
+        proxy.current_speed_bps = 0
+        save_registered_users_unlocked(store)
+    return {"ok": True}
+
+
+@router.post("/api/proxies/{proxy_id}/start")
+async def start_proxy(proxy_id: int, user: User = Depends(require_user)) -> dict[str, bool]:
+    """@brief 恢复当前用户已停用的代理。
+    @param proxy_id 待恢复代理 ID。
+    @param user require_user 解析出的已登录用户。
+    @return ok=true 表示状态已切回 active。
+    @note 代理创建时已扣减并分配 traffic_limit_mb，因此恢复不再检查余额。
+    """
+
+    async with store.lock:
+        proxy = store.proxies.get(proxy_id)
+        if proxy is None or proxy.uid != user.uid or proxy.status == ProxyStatus.DELETED:
+            raise HTTPException(status_code=404, detail="proxy not found")
+        proxy.status = ProxyStatus.ACTIVE
+        save_registered_users_unlocked(store)
+    return {"ok": True}
+
+
 @router.patch("/api/proxies/{proxy_id}")
 async def update_proxy(
     proxy_id: int,

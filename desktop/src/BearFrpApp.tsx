@@ -130,6 +130,8 @@ type ProjectChatStack = {
   opencodeLogPath?: string | null;
   llmWikiLogPath?: string | null;
   projectId?: string | null;
+  sessionId?: string | null;
+  sessionUrl?: string | null;
 };
 
 type ProjectDocumentContent = {
@@ -412,8 +414,8 @@ export default function App() {
     try {
       const stack = await invoke<ProjectChatStack>('start_project_chat', { projectId: project.project_id });
       setChatStack(stack);
-      setNotice(`OpenCode Chat 已启动：${stack.opencodeUrl}`);
-      window.open(stack.opencodeUrl, '_blank');
+      setNotice(`OpenCode Chat 已创建对话：${stack.sessionUrl || stack.opencodeUrl}`);
+      window.open(stack.sessionUrl || stack.opencodeUrl, '_blank');
     } catch (err) {
       setError(friendlyError(err));
     } finally {
@@ -541,7 +543,7 @@ export default function App() {
       });
       setConnections((current) => upsertConnection(current, created));
       setConnectionProjectId('');
-      setNotice('OpenCode Chat 发布连接已创建');
+      setNotice('知识库 API 分享连接已创建');
       await refreshWorkspace();
     } catch (err) {
       setError(friendlyError(err));
@@ -579,13 +581,13 @@ export default function App() {
   }
 
   async function deleteConnection(connection: ProjectConnection) {
-    if (!window.confirm(`删除 ${connection.project_name} 的 Chat 发布连接？`)) return;
+    if (!window.confirm(`删除 ${connection.project_name} 的知识库 API 分享连接？`)) return;
     setBusy(`delete-connection-${connection.connection_id}`);
     setError('');
     try {
       await invoke('delete_connection', { connectionId: connection.connection_id });
       setConnections((current) => current.filter((item) => item.connection_id !== connection.connection_id));
-      setNotice('Chat 发布连接已删除');
+      setNotice('知识库 API 分享连接已删除');
       await refreshWorkspace();
     } catch (err) {
       setError(friendlyError(err));
@@ -734,7 +736,7 @@ export default function App() {
                 </button>
                 {chatStack?.projectId === readerProject.project_id ? (
                   <>
-                    <button className="secondary" onClick={() => window.open(chatStack.opencodeUrl, '_blank')}>
+                    <button className="secondary" onClick={() => window.open(chatStack.sessionUrl || chatStack.opencodeUrl, '_blank')}>
                       <ExternalLink size={17} />
                       打开 Chat
                     </button>
@@ -925,7 +927,7 @@ export default function App() {
             <div className="section-heading">
               <div>
                 <h1>访问连接</h1>
-                <p>选择一个知识库项目发布 OpenCode Chat。</p>
+                <p>选择一个知识库项目发布 LLM Wiki API。</p>
               </div>
               <span className="count-pill">{connections.length} 个连接</span>
             </div>
@@ -957,13 +959,13 @@ export default function App() {
               </div>
               <button className="primary" disabled={busy === 'create-connection' || !connectionProjectId}>
                 <Plus size={17} />
-                发布 Chat
+                发布 API
               </button>
             </form>
 
             <div className="connection-list">
               {connections.length === 0 ? (
-                <div className="empty-state">暂无 Chat 发布连接</div>
+                <div className="empty-state">暂无知识库 API 分享连接</div>
               ) : (
                 connections.map((connection) => (
                   <article className="connection-card" key={connection.connection_id}>
@@ -1144,8 +1146,8 @@ function statusLabel(value: string) {
 
 function connectionStatusText(connection: ProjectConnection) {
   if (connection.traffic_limit_mb > 0 && usagePercent(connection) >= 100) return '额度已用完，请创建新的访问连接。';
-  if (connection.running) return '访问已开启，可以通过访问地址使用 OpenCode Chat。';
-  if (connection.status === 'service_not_ready') return '本地 OpenCode Chat 服务正在准备中。';
+  if (connection.running) return '访问已开启，可以把这个 API 地址分享给 C 端使用。';
+  if (connection.status === 'service_not_ready') return '本地知识库 API 服务正在准备中。';
   return '访问已关闭，需要时可以重新开启。';
 }
 
@@ -1174,7 +1176,17 @@ function friendlyError(error: unknown) {
   if (text.includes('文档') || text.includes('Markdown')) return text;
   if (text.includes('可用额度') || text.includes('余额不足') || text.includes('流量额度')) return text;
   if (text.includes('BearFRP backend')) return text;
-  if (text.includes('OpenCode') || text.includes('sidecar') || text.includes('二进制') || text.includes('端口')) return text;
+  if (
+    text.includes('OpenCode') ||
+    text.includes('LLM Wiki') ||
+    text.includes('sidecar') ||
+    text.includes('二进制') ||
+    text.includes('端口') ||
+    text.includes('模型供应商') ||
+    text.includes('API Key') ||
+    text.includes('模型名称')
+  )
+    return text;
   if (text.includes('无法连接') || text.includes('network') || text.includes('后端')) {
     return '服务暂时不可用，请稍后重试';
   }
