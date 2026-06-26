@@ -447,13 +447,13 @@ fn api_auth_required(state: &dyn ApiState) -> bool {
 
 fn api_allow_unauthenticated(state: &dyn ApiState) -> bool {
     let Some(parsed) = load_app_state(state) else {
-        return false;
+        return api_token(state).is_none();
     };
     parsed
         .get("apiConfig")
         .and_then(|v| v.get("allowUnauthenticated"))
         .and_then(Value::as_bool)
-        .unwrap_or(false)
+        .unwrap_or_else(|| api_token(state).is_none())
 }
 
 /// Whether the API server should accept non-/health requests.
@@ -476,13 +476,13 @@ fn api_enabled(state: &dyn ApiState) -> bool {
 
 fn api_mcp_enabled(state: &dyn ApiState) -> bool {
     let Some(parsed) = load_app_state(state) else {
-        return false;
+        return api_token(state).is_none();
     };
     parsed
         .get("apiConfig")
         .and_then(|v| v.get("mcpEnabled"))
         .and_then(Value::as_bool)
-        .unwrap_or(false)
+        .unwrap_or_else(|| api_token(state).is_none())
 }
 
 fn constant_time_eq(left: &[u8], right: &[u8]) -> bool {
@@ -1415,6 +1415,42 @@ mod tests {
     use super::*;
     use std::time::{SystemTime, UNIX_EPOCH};
 
+    struct TestApiState {
+        data_dir: Option<PathBuf>,
+        token: Option<String>,
+    }
+
+    impl ApiState for TestApiState {
+        fn app_data_dir(&self) -> Option<PathBuf> {
+            self.data_dir.clone()
+        }
+
+        fn bind_addr(&self) -> String {
+            "127.0.0.1:0".to_string()
+        }
+
+        fn api_token_override(&self) -> Option<String> {
+            self.token.clone()
+        }
+
+        fn current_project_path(&self) -> String {
+            String::new()
+        }
+
+        fn all_projects(&self) -> Vec<(String, String)> {
+            Vec::new()
+        }
+
+        fn rescan_project_files(
+            &self,
+            _project_id: String,
+            _project_path: String,
+            _source_watch_config: Option<commands::file_sync::SourceWatchConfig>,
+        ) -> Result<commands::file_sync::FileChangeRescanResult, String> {
+            panic!("unused in api_server auth tests")
+        }
+    }
+
     fn test_project_dir() -> PathBuf {
         let id = SystemTime::now()
             .duration_since(UNIX_EPOCH)
@@ -1431,6 +1467,59 @@ mod tests {
         let root_str = root.to_string_lossy();
         assert!(safe_join(&root_str, "../secret.md").is_err());
         assert!(safe_join(&root_str, "wiki/../../secret.md").is_err());
+        let _ = fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn api_auth_defaults_to_open_when_no_token_is_configured() {
+        invalidate_config_cache();
+        let state = TestApiState {
+            data_dir: None,
+            token: None,
+        };
+
+        assert!(api_allow_unauthenticated(&state));
+        assert!(!api_auth_required(&state));
+        assert!(api_mcp_enabled(&state));
+    }
+
+    #[test]
+    fn api_auth_requires_token_when_env_token_is_configured() {
+        invalidate_config_cache();
+        let state = TestApiState {
+            data_dir: None,
+            token: Some("secret".to_string()),
+        };
+
+        assert!(!api_allow_unauthenticated(&state));
+        assert!(api_auth_required(&state));
+        assert!(!api_mcp_enabled(&state));
+    }
+
+    #[test]
+    fn api_auth_respects_explicit_allow_unauthenticated_setting() {
+        let root = test_project_dir();
+        fs::write(
+            root.join("app-state.json"),
+            json!({
+                "apiConfig": {
+                    "allowUnauthenticated": true,
+                    "mcpEnabled": true,
+                    "token": "secret"
+                }
+            })
+            .to_string(),
+        )
+        .unwrap();
+        invalidate_config_cache();
+        let state = TestApiState {
+            data_dir: Some(root.clone()),
+            token: None,
+        };
+
+        assert!(api_allow_unauthenticated(&state));
+        assert!(!api_auth_required(&state));
+        assert!(api_mcp_enabled(&state));
         let _ = fs::remove_dir_all(root);
     }
 

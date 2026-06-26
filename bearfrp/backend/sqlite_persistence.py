@@ -86,7 +86,10 @@ def save_store_unlocked(store: Store) -> None:
                 created_at, payload_json
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
-            [_proxy_row(proxy) for proxy in sorted(store.proxies.values(), key=lambda item: item.id)],
+            [
+                _proxy_row(proxy)
+                for proxy in sorted(store.proxies.values(), key=lambda item: item.id)
+            ],
         )
         mapping_rows = [
             row

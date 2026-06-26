@@ -5,6 +5,7 @@ import os from "os"
 import path from "path"
 import { Kb } from "../../src/kb/guard"
 import { kbForbidden } from "../../src/server/routes/instance/httpapi/handlers/kb-mode"
+import { sessionPath } from "../../src/session/session"
 
 let root: string
 let prevEnv: Record<string, string | undefined>
@@ -56,6 +57,19 @@ describe("Knowledge Base Mode Server & Integration", () => {
     setEnv({ OPENCODE_KB_MODE: "1" })
     const result = Effect.runSync(Effect.exit(kbForbidden("VCS is disabled")))
     expect(result._tag).toBe("Failure")
+  })
+
+  test("KB sessions do not persist a relative path", () => {
+    setEnv({ OPENCODE_KB_MODE: "1" })
+    const workspace = path.join(root, "workspace")
+    fs.mkdirSync(workspace)
+    const previousCwd = process.cwd()
+    try {
+      process.chdir(workspace)
+      expect(sessionPath("/", process.cwd())).toBeUndefined()
+    } finally {
+      process.chdir(previousCwd)
+    }
   })
 
   test("PTY blocking behaves correctly", () => {

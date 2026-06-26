@@ -239,6 +239,30 @@ impl ApiClient {
         read_empty(response).await
     }
 
+    pub async fn start_proxy(&self, proxy_id: u64) -> Result<(), String> {
+        let response = self
+            .with_auth(
+                self.client
+                    .post(self.url(&format!("/api/proxies/{proxy_id}/start"))),
+            )
+            .send()
+            .await
+            .map_err(network_error)?;
+        read_empty(response).await
+    }
+
+    pub async fn stop_proxy(&self, proxy_id: u64) -> Result<(), String> {
+        let response = self
+            .with_auth(
+                self.client
+                    .post(self.url(&format!("/api/proxies/{proxy_id}/stop"))),
+            )
+            .send()
+            .await
+            .map_err(network_error)?;
+        read_empty(response).await
+    }
+
     fn url(&self, path: &str) -> String {
         format!("{}{}", self.base_url, path)
     }
@@ -398,7 +422,10 @@ mod tests {
             "user_session=session-2; Path=/; HttpOnly".parse().unwrap(),
         );
         headers.append(SET_COOKIE, "uid=uid-2; Path=/".parse().unwrap());
-        assert_eq!(extract_cookie(&headers, "user_session"), Some("session-2".to_string()));
+        assert_eq!(
+            extract_cookie(&headers, "user_session"),
+            Some("session-2".to_string())
+        );
         assert_eq!(extract_cookie(&headers, "uid"), Some("uid-2".to_string()));
         assert_eq!(extract_cookie(&headers, "missing"), None);
     }

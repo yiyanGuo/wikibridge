@@ -12,6 +12,8 @@ use crate::{frpc::ManagedProcess, local_service::LocalServiceProcess, sidecar::O
 
 pub const FIXED_BASE_URL: &str = "https://frp.muleizh.ink";
 const DEFAULT_BASE_URL: &str = FIXED_BASE_URL;
+pub const DEFAULT_LLM_PROVIDER: &str = "deepseek";
+pub const DEFAULT_LLM_MODEL: &str = "deepseek-chat";
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct PersistedState {
@@ -26,6 +28,8 @@ pub struct PersistedState {
     pub connections: BTreeMap<String, ProjectConnection>,
     #[serde(default)]
     pub remote_knowledge_bases: BTreeMap<String, RemoteKnowledgeBase>,
+    #[serde(default)]
+    pub llm_settings: LlmSettings,
 }
 
 impl Default for PersistedState {
@@ -39,8 +43,97 @@ impl Default for PersistedState {
             projects: BTreeMap::new(),
             connections: BTreeMap::new(),
             remote_knowledge_bases: BTreeMap::new(),
+            llm_settings: LlmSettings::default(),
         }
     }
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct LlmSettings {
+    #[serde(default)]
+    pub provider: String,
+    #[serde(default = "default_llm_model")]
+    pub model: String,
+    #[serde(default)]
+    pub api_key: Option<String>,
+    #[serde(default)]
+    pub base_url: Option<String>,
+}
+
+impl Default for LlmSettings {
+    fn default() -> Self {
+        Self {
+            provider: DEFAULT_LLM_PROVIDER.to_string(),
+            model: DEFAULT_LLM_MODEL.to_string(),
+            api_key: None,
+            base_url: None,
+        }
+    }
+}
+
+impl LlmSettings {
+    pub fn normalized(mut self) -> Result<Self, String> {
+        self.provider = self.provider.trim().to_ascii_lowercase();
+        if self.provider.is_empty() {
+            self.provider = DEFAULT_LLM_PROVIDER.to_string();
+        }
+        if !is_safe_provider_id(&self.provider) {
+            return Err("模型供应商只能包含字母、数字、点、下划线和连字符".to_string());
+        }
+        self.model = self.model.trim().to_string();
+        if self.model.is_empty() {
+            self.model = DEFAULT_LLM_MODEL.to_string();
+        }
+        self.api_key = self
+            .api_key
+            .map(|key| key.trim().to_string())
+            .filter(|key| !key.is_empty());
+        self.base_url = self
+            .base_url
+            .map(|url| normalize_base_url(&url))
+            .transpose()?
+            .filter(|url| !url.is_empty());
+        Ok(self)
+    }
+
+    pub fn normalized_or_default(self) -> Self {
+        self.normalized().unwrap_or_default()
+    }
+
+    pub fn has_api_key(&self) -> bool {
+        self.api_key
+            .as_deref()
+            .map(|key| !key.trim().is_empty())
+            .unwrap_or(false)
+    }
+}
+
+fn default_llm_model() -> String {
+    DEFAULT_LLM_MODEL.to_string()
+}
+
+fn is_safe_provider_id(value: &str) -> bool {
+    value
+        .chars()
+        .all(|ch| ch.is_ascii_alphanumeric() || matches!(ch, '-' | '_' | '.'))
+}
+
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SaveLlmSettingsInput {
+    pub provider: String,
+    pub model: String,
+    pub api_key: Option<String>,
+    pub base_url: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct LlmSettingsDto {
+    pub provider: String,
+    pub model: String,
+    pub base_url: Option<String>,
+    pub has_api_key: bool,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
@@ -90,7 +183,13 @@ pub struct ProjectConnection {
     pub proxy_id: u64,
     pub local_host: String,
     pub local_port: u16,
+    #[serde(default = "default_connection_traffic_mb")]
+    pub traffic_mb: i64,
     pub created_at: u64,
+}
+
+fn default_connection_traffic_mb() -> i64 {
+    100
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
@@ -99,9 +198,36 @@ pub struct RemoteKnowledgeBase {
     pub remote_id: String,
     pub name: String,
     pub url: String,
+    #[serde(default)]
+    pub api_url: String,
     pub status: String,
+    #[serde(default)]
+    pub project_count: usize,
+    #[serde(default)]
+    pub projects: Vec<RemoteKnowledgeBaseProject>,
+    #[serde(default)]
+    pub current_project: Option<RemoteKnowledgeBaseProject>,
+    #[serde(default)]
+    pub auth_required: bool,
+    #[serde(default = "default_mcp_status")]
+    pub mcp_status: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub token: Option<String>,
     pub added_at: u64,
     pub last_opened_at: Option<u64>,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct RemoteKnowledgeBaseProject {
+    pub id: String,
+    pub name: String,
+    pub path: String,
+    pub current: bool,
+}
+
+fn default_mcp_status() -> String {
+    "not_registered".to_string()
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -140,6 +266,11 @@ impl DesktopRuntime {
         let log_dir = app_data_dir.join("logs");
         fs::create_dir_all(&proxy_dir).map_err(|error| format!("无法创建配置目录: {error}"))?;
         fs::create_dir_all(&log_dir).map_err(|error| format!("无法创建日志目录: {error}"))?;
+        let app_data_dir = app_data_dir
+            .canonicalize()
+            .map_err(|error| format!("无法解析应用数据目录: {error}"))?;
+        let proxy_dir = app_data_dir.join("proxies");
+        let log_dir = app_data_dir.join("logs");
 
         let state_path = app_data_dir.join("state.json");
         let persisted = load_persisted_state(&state_path)?;
@@ -214,6 +345,41 @@ impl DesktopRuntime {
         self.persisted.uid_cookie = None;
     }
 
+    pub fn llm_settings_dto(&self) -> LlmSettingsDto {
+        LlmSettingsDto {
+            provider: self.persisted.llm_settings.provider.clone(),
+            model: self.persisted.llm_settings.model.clone(),
+            base_url: self.persisted.llm_settings.base_url.clone(),
+            has_api_key: self.persisted.llm_settings.has_api_key(),
+        }
+    }
+
+    pub fn set_llm_settings(
+        &mut self,
+        input: SaveLlmSettingsInput,
+    ) -> Result<LlmSettingsDto, String> {
+        let previous = self.persisted.llm_settings.clone();
+        let mut settings = LlmSettings {
+            provider: input.provider,
+            model: input.model,
+            api_key: input.api_key,
+            base_url: input.base_url,
+        }
+        .normalized()?;
+        if settings.api_key.is_none() {
+            settings.api_key = previous.api_key;
+        }
+        self.persisted.llm_settings = settings;
+        self.save()?;
+        Ok(self.llm_settings_dto())
+    }
+
+    pub fn clear_llm_settings(&mut self) -> Result<LlmSettingsDto, String> {
+        self.persisted.llm_settings.api_key = None;
+        self.save()?;
+        Ok(self.llm_settings_dto())
+    }
+
     pub fn proxy_work_dir(&self, proxy_id: u64) -> PathBuf {
         self.paths.proxy_dir.join(proxy_id.to_string())
     }
@@ -279,6 +445,7 @@ fn load_persisted_state(path: &PathBuf) -> Result<PersistedState, String> {
     let mut state: PersistedState =
         serde_json::from_str(&text).map_err(|error| format!("本地状态文件格式错误: {error}"))?;
     apply_fixed_base_url(&mut state)?;
+    state.llm_settings = state.llm_settings.normalized_or_default();
     Ok(state)
 }
 
@@ -347,7 +514,7 @@ mod tests {
         let path = temp_state_path("fixed-backend");
         fs::write(
             &path,
-            r#"{"base_url":"https://bearfrp.example.test/","user_session":"session-1","uid_cookie":"uid-1","enabled_proxy_ids":[1],"last_configs":{"1":"config"},"connections":{"connection-1":{"connection_id":"connection-1","project_id":"project-1","proxy_id":1,"local_host":"127.0.0.1","local_port":9010,"created_at":1}}}"#,
+            r#"{"base_url":"https://bearfrp.example.test/","user_session":"session-1","uid_cookie":"uid-1","enabled_proxy_ids":[1],"last_configs":{"1":"config"},"connections":{"connection-1":{"connection_id":"connection-1","project_id":"project-1","proxy_id":1,"local_host":"127.0.0.1","local_port":9010,"traffic_mb":100,"created_at":1}},"llm_settings":{"provider":"deepseek","model":"deepseek-chat","api_key":"sk-test","base_url":null}}"#,
         )
         .unwrap();
         let state = load_persisted_state(&path).unwrap();
@@ -357,6 +524,8 @@ mod tests {
         assert!(state.enabled_proxy_ids.is_empty());
         assert!(state.last_configs.is_empty());
         assert!(state.connections.is_empty());
+        assert_eq!(state.llm_settings.provider, "deepseek");
+        assert!(state.llm_settings.has_api_key());
         let _ = fs::remove_dir_all(path.parent().unwrap());
     }
 

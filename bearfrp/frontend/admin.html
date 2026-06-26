@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <!--
   @file frontend/admin.html
   @brief 管理员控制台页面，用于登录、查看用户/代理、调整端口池和管理连接状态。
@@ -72,72 +72,95 @@
     最后说明停用与删除差异。
 -->
 <html lang="zh-CN">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>BearFRPs - 管理员控制台</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-  <link rel="stylesheet" href="shared.css">
-  <script src="mock_api.js"></script>
-</head>
-<body class="bg-gray-50 min-h-screen text-gray-800" x-data="adminApp()">
-
-  <header class="bg-white border-b border-gray-200 shadow-sm">
-    <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between flex-wrap gap-2">
-      <div class="flex items-center gap-4">
-        <span class="text-lg font-bold text-gray-900">BearFRPs</span>
-        <nav class="flex items-center gap-1">
-          <a href="/user" class="px-3 py-1.5 text-sm font-medium rounded-md text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors">用户端</a>
-          <a href="/admin" class="px-3 py-1.5 text-sm font-medium rounded-md bg-blue-100 text-blue-700">管理端</a>
-          <a href="/show" class="px-3 py-1.5 text-sm font-medium rounded-md text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors">展示页</a>
-        </nav>
-      </div>
-      <template x-if="loggedIn">
-        <button class="btn btn-secondary btn-sm" @click="logout()">登出</button>
-      </template>
-    </div>
-  </header>
-
-  <template x-if="!loggedIn">
-    <main class="max-w-7xl mx-auto px-4 py-12 flex items-center justify-center">
-      <div class="bg-white rounded-lg shadow-md border border-gray-200 p-8 w-full max-w-sm">
-        <h2 class="text-lg font-bold text-center mb-6">管理员登录</h2>
-        <div class="space-y-4">
-          <div>
-            <label class="block text-sm font-medium text-gray-600 mb-1">用户名</label>
-            <input class="input" x-model="loginForm.username" @keydown.enter="login()">
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-600 mb-1">密码</label>
-            <input class="input" type="password" x-model="loginForm.password" @keydown.enter="login()">
-          </div>
-          <div x-show="loginError" class="text-red-600 text-sm" x-text="loginError"></div>
-          <button class="btn btn-primary w-full justify-center" @click="login()" :disabled="loggingIn"
-                  x-text="loggingIn ? '登录中...' : '登录'"></button>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BearFRPs - 管理员控制台</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <link rel="stylesheet" href="shared.css" />
+    <script src="mock_api.js"></script>
+  </head>
+  <body class="bg-gray-50 min-h-screen text-gray-800" x-data="adminApp()">
+    <header class="bg-white border-b border-gray-200 shadow-sm">
+      <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between flex-wrap gap-2">
+        <div class="flex items-center gap-4">
+          <span class="text-lg font-bold text-gray-900">BearFRPs</span>
+          <nav class="flex items-center gap-1">
+            <a
+              href="/user"
+              class="px-3 py-1.5 text-sm font-medium rounded-md text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors"
+              >用户端</a
+            >
+            <a href="/admin" class="px-3 py-1.5 text-sm font-medium rounded-md bg-blue-100 text-blue-700">管理端</a>
+            <a
+              href="/show"
+              class="px-3 py-1.5 text-sm font-medium rounded-md text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors"
+              >展示页</a
+            >
+          </nav>
         </div>
+        <template x-if="loggedIn">
+          <button class="btn btn-secondary btn-sm" @click="logout()">登出</button>
+        </template>
       </div>
-    </main>
-  </template>
+    </header>
 
-  <template x-if="loggedIn">
-    <main class="max-w-7xl mx-auto px-4 py-4">
+    <template x-if="!loggedIn">
+      <main class="max-w-7xl mx-auto px-4 py-12 flex items-center justify-center">
+        <div class="bg-white rounded-lg shadow-md border border-gray-200 p-8 w-full max-w-sm">
+          <h2 class="text-lg font-bold text-center mb-6">管理员登录</h2>
+          <div class="space-y-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-600 mb-1">用户名</label>
+              <input class="input" x-model="loginForm.username" @keydown.enter="login()" />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-600 mb-1">密码</label>
+              <input class="input" type="password" x-model="loginForm.password" @keydown.enter="login()" />
+            </div>
+            <div x-show="loginError" class="text-red-600 text-sm" x-text="loginError"></div>
+            <button
+              class="btn btn-primary w-full justify-center"
+              @click="login()"
+              :disabled="loggingIn"
+              x-text="loggingIn ? '登录中...' : '登录'"
+            ></button>
+          </div>
+        </div>
+      </main>
+    </template>
+
+    <template x-if="loggedIn">
+      <main class="max-w-7xl mx-auto px-4 py-4">
         <div class="flex border-b border-gray-200 mb-4">
-          <button class="px-4 py-2 text-sm font-medium border-b-2 transition-colors"
-                  :class="tab === 'proxies' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'"
-                  @click="tab = 'proxies'">连接总览</button>
-          <button class="px-4 py-2 text-sm font-medium border-b-2 transition-colors"
-                  :class="tab === 'users' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'"
-                  @click="tab = 'users'">用户列表</button>
-          <button class="px-4 py-2 text-sm font-medium border-b-2 transition-colors"
-                  :class="tab === 'settings' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'"
-                  @click="tab = 'settings'; loadConfig()">系统设置</button>
+          <button
+            class="px-4 py-2 text-sm font-medium border-b-2 transition-colors"
+            :class="tab === 'proxies' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'"
+            @click="tab = 'proxies'"
+          >
+            连接总览
+          </button>
+          <button
+            class="px-4 py-2 text-sm font-medium border-b-2 transition-colors"
+            :class="tab === 'users' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'"
+            @click="tab = 'users'"
+          >
+            用户列表
+          </button>
+          <button
+            class="px-4 py-2 text-sm font-medium border-b-2 transition-colors"
+            :class="tab === 'settings' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'"
+            @click="tab = 'settings'; loadConfig()"
+          >
+            系统设置
+          </button>
         </div>
 
         <div x-show="tab === 'proxies'">
           <div class="flex items-center gap-3 mb-3 flex-wrap">
-            <input class="input" style="max-width:200px" placeholder="搜索 UID..." x-model="filterUid">
-            <select class="input" style="max-width:160px" x-model="filterStatus">
+            <input class="input" style="max-width: 200px" placeholder="搜索 UID..." x-model="filterUid" />
+            <select class="input" style="max-width: 160px" x-model="filterStatus">
               <option value="">全部状态</option>
               <option value="active">活跃</option>
               <option value="stopped_by_admin">已停用</option>
@@ -169,30 +192,40 @@
                     <td class="font-mono text-xs" x-text="p.uid"></td>
                     <td class="font-medium" x-text="p.name"></td>
                     <td>
-                      <span class="status-badge"
-                            :class="proxyTypeBadge(p)"
-                            x-text="proxyTypeLabel(p)"></span>
+                      <span class="status-badge" :class="proxyTypeBadge(p)" x-text="proxyTypeLabel(p)"></span>
                     </td>
                     <td class="font-mono text-sm max-w-[260px] truncate">
-                      <a :href="p.public_url" target="_blank" rel="noopener"
-                         class="text-blue-600 hover:text-blue-800 hover:underline transition-colors"
-                         x-show="p.public_url"
-                         x-text="publicEntry(p)"
-                         :title="mappingDetails(p) || p.public_url"></a>
+                      <a
+                        :href="p.public_url"
+                        target="_blank"
+                        rel="noopener"
+                        class="text-blue-600 hover:text-blue-800 hover:underline transition-colors"
+                        x-show="p.public_url"
+                        x-text="publicEntry(p)"
+                        :title="mappingDetails(p) || p.public_url"
+                      ></a>
                       <span x-show="!p.public_url" x-text="publicEntry(p)" :title="mappingDetails(p)"></span>
                     </td>
-                    <td class="font-mono text-xs text-gray-500 max-w-[120px] truncate" x-text="p.token" :title="p.token"></td>
+                    <td
+                      class="font-mono text-xs text-gray-500 max-w-[120px] truncate"
+                      x-text="p.token"
+                      :title="p.token"
+                    ></td>
                     <td class="font-mono text-sm" x-text="localEndpoint(p)" :title="mappingDetails(p)"></td>
                     <td class="text-sm" x-text="p.speed_limit_kbps + ' KB/s'"></td>
                     <td>
                       <div class="flex items-center gap-2">
                         <div class="progress-bar-bg flex-1">
-                          <div class="progress-bar-fill"
-                               :class="trafficPercent(p) > 90 ? 'fill-danger' : trafficPercent(p) > 70 ? 'fill-warn' : 'fill-ok'"
-                               :style="'width:' + Math.min(trafficPercent(p), 100) + '%'"></div>
+                          <div
+                            class="progress-bar-fill"
+                            :class="trafficPercent(p) > 90 ? 'fill-danger' : trafficPercent(p) > 70 ? 'fill-warn' : 'fill-ok'"
+                            :style="'width:' + Math.min(trafficPercent(p), 100) + '%'"
+                          ></div>
                         </div>
-                        <span class="text-xs text-gray-500 whitespace-nowrap"
-                              x-text="formatBytes(p.traffic_used_bytes) + ' / ' + p.traffic_limit_mb + ' MB'"></span>
+                        <span
+                          class="text-xs text-gray-500 whitespace-nowrap"
+                          x-text="formatBytes(p.traffic_used_bytes) + ' / ' + p.traffic_limit_mb + ' MB'"
+                        ></span>
                       </div>
                     </td>
                     <td class="text-sm" x-text="formatSpeed(p.current_speed_bps)"></td>
@@ -256,288 +289,330 @@
             <div class="space-y-3">
               <div class="flex items-center gap-2">
                 <label class="text-sm text-gray-600 w-16">起始端口</label>
-                <input class="input" type="number" x-model="portRangeStart">
+                <input class="input" type="number" x-model="portRangeStart" />
               </div>
               <div class="flex items-center gap-2">
                 <label class="text-sm text-gray-600 w-16">结束端口</label>
-                <input class="input" type="number" x-model="portRangeEnd">
+                <input class="input" type="number" x-model="portRangeEnd" />
               </div>
               <div class="text-sm text-gray-500">
                 可用端口数: <span class="font-mono font-medium" x-text="availablePortCount"></span>
               </div>
               <div x-show="configError" class="text-red-600 text-sm" x-text="configError"></div>
               <div x-show="configSaved" class="text-green-600 text-sm">保存成功</div>
-              <button class="btn btn-primary" @click="saveConfig()" :disabled="savingConfig"
-                      x-text="savingConfig ? '保存中...' : '保存设置'"></button>
+              <button
+                class="btn btn-primary"
+                @click="saveConfig()"
+                :disabled="savingConfig"
+                x-text="savingConfig ? '保存中...' : '保存设置'"
+              ></button>
             </div>
           </div>
         </div>
       </main>
-  </template>
+    </template>
 
-  <script>
-    function adminApp() {
-      return {
-        loggedIn: false,
-        loginForm: { username: '', password: '' },
-        loginError: '',
-        loggingIn: false,
-        tab: 'proxies',
-        proxies: [],
-        users: [],
-        filterUid: '',
-        filterStatus: '',
-        pollTimer: null,
-        portRangeStart: 50000,
-        portRangeEnd: 50100,
-        availablePortCount: 0,
-        configError: '',
-        configSaved: false,
-        savingConfig: false,
+    <script>
+      function adminApp() {
+        return {
+          loggedIn: false,
+          loginForm: { username: "", password: "" },
+          loginError: "",
+          loggingIn: false,
+          tab: "proxies",
+          proxies: [],
+          users: [],
+          filterUid: "",
+          filterStatus: "",
+          pollTimer: null,
+          portRangeStart: 50000,
+          portRangeEnd: 50100,
+          availablePortCount: 0,
+          configError: "",
+          configSaved: false,
+          savingConfig: false,
 
-        async init() {
-          this.loggedIn = false;
-        },
+          async init() {
+            this.loggedIn = false
+          },
 
-        async login() {
-          this.loginError = '';
-          this.loggingIn = true;
-          try {
-            const res = await fetch('/api/admin/login', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              credentials: 'same-origin',
-              body: JSON.stringify(this.loginForm)
-            });
-            if (!res.ok) {
-              const data = await res.json();
-              this.loginError = extractDetail(data) || '登录失败';
-              return;
-            }
-            this.loggedIn = true;
-            this.pollTimer = setInterval(() => this.refresh(), 3000);
-            await this.refresh();
-          } finally {
-            this.loggingIn = false;
-          }
-        },
-
-        async logout() {
-          await fetch('/api/admin/logout', { method: 'POST', credentials: 'same-origin' });
-          this.loggedIn = false;
-          if (this.pollTimer) clearInterval(this.pollTimer);
-        },
-
-        async refresh() {
-          if (this.tab === 'proxies') await this.loadProxies();
-          if (this.tab === 'users') await this.loadUsers();
-          if (this.tab === 'settings') await this.loadConfigCount();
-        },
-
-        async loadProxies() {
-          const res = await fetch('/api/admin/proxies', { credentials: 'same-origin' });
-          if (res.status === 401) { this.loggedIn = false; return; }
-          const data = await res.json();
-          this.proxies = data.proxies || [];
-        },
-
-        async loadUsers() {
-          const res = await fetch('/api/admin/users', { credentials: 'same-origin' });
-          if (res.status === 401) { this.loggedIn = false; return; }
-          const data = await res.json();
-          this.users = data.users || [];
-        },
-
-        get filteredProxies() {
-          return this.proxies.filter(p => {
-            if (this.filterUid && !p.uid.includes(this.filterUid)) return false;
-            if (this.filterStatus && p.status !== this.filterStatus) return false;
-            return true;
-          });
-        },
-
-        async stopProxy(p) {
-          await fetch('/api/admin/proxies/' + p.id + '/stop', { method: 'POST', credentials: 'same-origin' });
-          await this.loadProxies();
-          toast('已停用');
-        },
-
-        async startProxy(p) {
-          await fetch('/api/admin/proxies/' + p.id + '/start', { method: 'POST', credentials: 'same-origin' });
-          await this.loadProxies();
-          toast('已启用');
-        },
-
-        async deleteProxy(p) {
-          if (!confirm('确定删除 "' + p.name + '"？')) return;
-          await fetch('/api/admin/proxies/' + p.id, { method: 'DELETE', credentials: 'same-origin' });
-          await this.loadProxies();
-          toast('已删除');
-        },
-
-        async loadConfig() {
-          try {
-            const res = await fetch('/api/admin/config', { credentials: 'same-origin' });
-            if (!res.ok) {
-              if (res.status === 401) { this.loggedIn = false; }
-              return;
-            }
-            const data = await res.json();
-            if (typeof data.allocatable_port_range_start === 'number') {
-              this.portRangeStart = data.allocatable_port_range_start;
-            }
-            if (typeof data.allocatable_port_range_end === 'number') {
-              this.portRangeEnd = data.allocatable_port_range_end;
-            }
-            if (typeof data.available_port_count === 'number') {
-              this.availablePortCount = data.available_port_count;
-            }
-          } catch (e) { console.error('loadConfig', e); }
-        },
-
-        async loadConfigCount() {
-          try {
-            const res = await fetch('/api/admin/config', { credentials: 'same-origin' });
-            if (!res.ok) {
-              if (res.status === 401) { this.loggedIn = false; }
-              return;
-            }
-            const data = await res.json();
-            if (typeof data.available_port_count === 'number') {
-              this.availablePortCount = data.available_port_count;
-            }
-          } catch (e) { console.error('loadConfigCount', e); }
-        },
-
-        async saveConfig() {
-          this.configError = '';
-          this.configSaved = false;
-          this.savingConfig = true;
-          try {
-            const res = await fetch('/api/admin/config', {
-              method: 'PUT',
-              headers: { 'Content-Type': 'application/json' },
-              credentials: 'same-origin',
-              body: JSON.stringify({
-                start: Number(this.portRangeStart),
-                end: Number(this.portRangeEnd)
+          async login() {
+            this.loginError = ""
+            this.loggingIn = true
+            try {
+              const res = await fetch("/api/admin/login", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                credentials: "same-origin",
+                body: JSON.stringify(this.loginForm),
               })
-            });
-            if (!res.ok) {
-              try {
-                const data = await res.json();
-                this.configError = extractDetail(data) || '保存失败';
-              } catch {
-                this.configError = '保存失败 (' + res.status + ')';
+              if (!res.ok) {
+                const data = await res.json()
+                this.loginError = extractDetail(data) || "登录失败"
+                return
               }
-              return;
+              this.loggedIn = true
+              this.pollTimer = setInterval(() => this.refresh(), 3000)
+              await this.refresh()
+            } finally {
+              this.loggingIn = false
             }
-            this.configSaved = true;
-            await this.loadConfig();
-          } catch (e) {
-            this.configError = '网络错误';
-            console.error('saveConfig', e);
-          } finally {
-            this.savingConfig = false;
-          }
-        },
+          },
 
-        trafficPercent(p) {
-          if (!p.traffic_limit_mb) return 0;
-          return (p.traffic_used_bytes / (p.traffic_limit_mb * 1024 * 1024)) * 100;
-        },
+          async logout() {
+            await fetch("/api/admin/logout", { method: "POST", credentials: "same-origin" })
+            this.loggedIn = false
+            if (this.pollTimer) clearInterval(this.pollTimer)
+          },
 
-        proxyTypeLabel(p) {
-          if (p.proxy_type === 'http') return 'HTTP';
-          if (p.proxy_type === 'xtcp') return 'P2P';
-          return 'TCP';
-        },
+          async refresh() {
+            if (this.tab === "proxies") await this.loadProxies()
+            if (this.tab === "users") await this.loadUsers()
+            if (this.tab === "settings") await this.loadConfigCount()
+          },
 
-        proxyTypeBadge(p) {
-          if (p.proxy_type === 'http') return 'badge-online';
-          if (p.proxy_type === 'xtcp') return 'badge-disabled';
-          return 'badge-offline';
-        },
-
-        publicEntry(p) {
-          if (p.proxy_type === 'tcp') {
-            var mappings = this.tcpMappings(p);
-            if (mappings.length) {
-              var host = this.publicHost(p);
-              return host ? host + ':' + this.remotePortSummary(p) : this.remotePortSummary(p);
+          async loadProxies() {
+            const res = await fetch("/api/admin/proxies", { credentials: "same-origin" })
+            if (res.status === 401) {
+              this.loggedIn = false
+              return
             }
-            if (p.frps_remote_port != null) return String(p.frps_remote_port);
-          }
-          if (p.proxy_type === 'xtcp') return p.visitor_endpoint || '127.0.0.1:9001';
-          if (p.public_url) return p.public_url.replace(/^https?:\/\//, '').replace(/\/$/, '');
-          return '-';
-        },
+            const data = await res.json()
+            this.proxies = data.proxies || []
+          },
 
-        localEndpoint(p) {
-          var ip = p.local_ip || '127.0.0.1';
-          if (p.proxy_type === 'xtcp') return ip + ':' + p.local_port;
-          if (p.proxy_type === 'tcp') {
-            var mappings = this.tcpMappings(p);
-            if (mappings.length) return ip + ':' + this.localPortSummary(mappings);
-          }
-          var port = p.actual_local_port != null ? p.actual_local_port : p.local_port;
-          return port != null ? ip + ':' + port : ip + ':-';
-        },
+          async loadUsers() {
+            const res = await fetch("/api/admin/users", { credentials: "same-origin" })
+            if (res.status === 401) {
+              this.loggedIn = false
+              return
+            }
+            const data = await res.json()
+            this.users = data.users || []
+          },
 
-        tcpMappings(p) {
-          if (!p || p.proxy_type !== 'tcp') return [];
-          if (Array.isArray(p.tcp_mappings) && p.tcp_mappings.length) return p.tcp_mappings;
-          if (p.frps_remote_port != null) {
-            return [{ remote_port: p.frps_remote_port, local_port: p.local_port, actual_local_port: p.actual_local_port }];
-          }
-          return [];
-        },
+          get filteredProxies() {
+            return this.proxies.filter((p) => {
+              if (this.filterUid && !p.uid.includes(this.filterUid)) return false
+              if (this.filterStatus && p.status !== this.filterStatus) return false
+              return true
+            })
+          },
 
-        remotePortSummary(p) {
-          var mappings = this.tcpMappings(p);
-          return this.portSummary(mappings.map(function (m) { return m.remote_port; }));
-        },
+          async stopProxy(p) {
+            await fetch("/api/admin/proxies/" + p.id + "/stop", { method: "POST", credentials: "same-origin" })
+            await this.loadProxies()
+            toast("已停用")
+          },
 
-        localPortSummary(mappings) {
-          return this.portSummary(mappings.map(function (m) {
-            return m.actual_local_port != null ? m.actual_local_port : m.local_port;
-          }));
-        },
+          async startProxy(p) {
+            await fetch("/api/admin/proxies/" + p.id + "/start", { method: "POST", credentials: "same-origin" })
+            await this.loadProxies()
+            toast("已启用")
+          },
 
-        portSummary(ports) {
-          var nums = ports.map(Number).filter(function (n) { return n >= 1; });
-          if (!nums.length) return '-';
-          nums.sort(function (a, b) { return a - b; });
-          if (nums.length === 1) return String(nums[0]);
-          var contiguous = nums.every(function (port, idx) { return idx === 0 || port === nums[idx - 1] + 1; });
-          if (contiguous) return nums[0] + '-' + nums[nums.length - 1];
-          return nums.join(', ');
-        },
+          async deleteProxy(p) {
+            if (!confirm('确定删除 "' + p.name + '"？')) return
+            await fetch("/api/admin/proxies/" + p.id, { method: "DELETE", credentials: "same-origin" })
+            await this.loadProxies()
+            toast("已删除")
+          },
 
-        mappingDetails(p) {
-          var ip = (p && p.local_ip) || '127.0.0.1';
-          if (p && p.proxy_type === 'xtcp') return '手机端 ' + (p.visitor_endpoint || '127.0.0.1:9001') + '\n电脑端 ' + ip + ':' + p.local_port;
-          return this.tcpMappings(p).map(function (m) {
-            return m.remote_port + ' -> ' + ip + ':' + m.local_port;
-          }).join('\n');
-        },
+          async loadConfig() {
+            try {
+              const res = await fetch("/api/admin/config", { credentials: "same-origin" })
+              if (!res.ok) {
+                if (res.status === 401) {
+                  this.loggedIn = false
+                }
+                return
+              }
+              const data = await res.json()
+              if (typeof data.allocatable_port_range_start === "number") {
+                this.portRangeStart = data.allocatable_port_range_start
+              }
+              if (typeof data.allocatable_port_range_end === "number") {
+                this.portRangeEnd = data.allocatable_port_range_end
+              }
+              if (typeof data.available_port_count === "number") {
+                this.availablePortCount = data.available_port_count
+              }
+            } catch (e) {
+              console.error("loadConfig", e)
+            }
+          },
 
-        publicHost(p) {
-          if (!p || !p.public_url) return '';
-          try { return new URL(p.public_url).hostname; }
-          catch (e) { return ''; }
+          async loadConfigCount() {
+            try {
+              const res = await fetch("/api/admin/config", { credentials: "same-origin" })
+              if (!res.ok) {
+                if (res.status === 401) {
+                  this.loggedIn = false
+                }
+                return
+              }
+              const data = await res.json()
+              if (typeof data.available_port_count === "number") {
+                this.availablePortCount = data.available_port_count
+              }
+            } catch (e) {
+              console.error("loadConfigCount", e)
+            }
+          },
+
+          async saveConfig() {
+            this.configError = ""
+            this.configSaved = false
+            this.savingConfig = true
+            try {
+              const res = await fetch("/api/admin/config", {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                credentials: "same-origin",
+                body: JSON.stringify({
+                  start: Number(this.portRangeStart),
+                  end: Number(this.portRangeEnd),
+                }),
+              })
+              if (!res.ok) {
+                try {
+                  const data = await res.json()
+                  this.configError = extractDetail(data) || "保存失败"
+                } catch {
+                  this.configError = "保存失败 (" + res.status + ")"
+                }
+                return
+              }
+              this.configSaved = true
+              await this.loadConfig()
+            } catch (e) {
+              this.configError = "网络错误"
+              console.error("saveConfig", e)
+            } finally {
+              this.savingConfig = false
+            }
+          },
+
+          trafficPercent(p) {
+            if (!p.traffic_limit_mb) return 0
+            return (p.traffic_used_bytes / (p.traffic_limit_mb * 1024 * 1024)) * 100
+          },
+
+          proxyTypeLabel(p) {
+            if (p.proxy_type === "http") return "HTTP"
+            if (p.proxy_type === "xtcp") return "P2P"
+            return "TCP"
+          },
+
+          proxyTypeBadge(p) {
+            if (p.proxy_type === "http") return "badge-online"
+            if (p.proxy_type === "xtcp") return "badge-disabled"
+            return "badge-offline"
+          },
+
+          publicEntry(p) {
+            if (p.proxy_type === "tcp") {
+              var mappings = this.tcpMappings(p)
+              if (mappings.length) {
+                var host = this.publicHost(p)
+                return host ? host + ":" + this.remotePortSummary(p) : this.remotePortSummary(p)
+              }
+              if (p.frps_remote_port != null) return String(p.frps_remote_port)
+            }
+            if (p.proxy_type === "xtcp") return p.visitor_endpoint || "127.0.0.1:9001"
+            if (p.public_url) return p.public_url.replace(/^https?:\/\//, "").replace(/\/$/, "")
+            return "-"
+          },
+
+          localEndpoint(p) {
+            var ip = p.local_ip || "127.0.0.1"
+            if (p.proxy_type === "xtcp") return ip + ":" + p.local_port
+            if (p.proxy_type === "tcp") {
+              var mappings = this.tcpMappings(p)
+              if (mappings.length) return ip + ":" + this.localPortSummary(mappings)
+            }
+            var port = p.actual_local_port != null ? p.actual_local_port : p.local_port
+            return port != null ? ip + ":" + port : ip + ":-"
+          },
+
+          tcpMappings(p) {
+            if (!p || p.proxy_type !== "tcp") return []
+            if (Array.isArray(p.tcp_mappings) && p.tcp_mappings.length) return p.tcp_mappings
+            if (p.frps_remote_port != null) {
+              return [
+                { remote_port: p.frps_remote_port, local_port: p.local_port, actual_local_port: p.actual_local_port },
+              ]
+            }
+            return []
+          },
+
+          remotePortSummary(p) {
+            var mappings = this.tcpMappings(p)
+            return this.portSummary(
+              mappings.map(function (m) {
+                return m.remote_port
+              }),
+            )
+          },
+
+          localPortSummary(mappings) {
+            return this.portSummary(
+              mappings.map(function (m) {
+                return m.actual_local_port != null ? m.actual_local_port : m.local_port
+              }),
+            )
+          },
+
+          portSummary(ports) {
+            var nums = ports.map(Number).filter(function (n) {
+              return n >= 1
+            })
+            if (!nums.length) return "-"
+            nums.sort(function (a, b) {
+              return a - b
+            })
+            if (nums.length === 1) return String(nums[0])
+            var contiguous = nums.every(function (port, idx) {
+              return idx === 0 || port === nums[idx - 1] + 1
+            })
+            if (contiguous) return nums[0] + "-" + nums[nums.length - 1]
+            return nums.join(", ")
+          },
+
+          mappingDetails(p) {
+            var ip = (p && p.local_ip) || "127.0.0.1"
+            if (p && p.proxy_type === "xtcp")
+              return "手机端 " + (p.visitor_endpoint || "127.0.0.1:9001") + "\n电脑端 " + ip + ":" + p.local_port
+            return this.tcpMappings(p)
+              .map(function (m) {
+                return m.remote_port + " -> " + ip + ":" + m.local_port
+              })
+              .join("\n")
+          },
+
+          publicHost(p) {
+            if (!p || !p.public_url) return ""
+            try {
+              return new URL(p.public_url).hostname
+            } catch (e) {
+              return ""
+            }
+          },
         }
-      };
-    }
-
-    function extractDetail(data) {
-      if (!data) return '';
-      if (typeof data.detail === 'string') return data.detail;
-      if (Array.isArray(data.detail) && data.detail.length > 0) {
-        return data.detail.map(function (e) { return e.msg || String(e); }).join('; ');
       }
-      return String(data.detail || '');
-    }
-  </script>
-</body>
+
+      function extractDetail(data) {
+        if (!data) return ""
+        if (typeof data.detail === "string") return data.detail
+        if (Array.isArray(data.detail) && data.detail.length > 0) {
+          return data.detail
+            .map(function (e) {
+              return e.msg || String(e)
+            })
+            .join("; ")
+        }
+        return String(data.detail || "")
+      }
+    </script>
+  </body>
 </html>

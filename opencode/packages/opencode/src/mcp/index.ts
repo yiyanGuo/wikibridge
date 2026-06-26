@@ -329,7 +329,7 @@ export const layer = Layer.effect(
       key: string,
       mcp: ConfigMCPV1.Info & { type: "local" },
     ) {
-      if (Kb.enabled()) {
+      if (Kb.enabled() && !Kb.isWikiBridgeLlmWikiMcp(key, mcp)) {
         return {
           client: undefined,
           status: { status: "disabled" as const },

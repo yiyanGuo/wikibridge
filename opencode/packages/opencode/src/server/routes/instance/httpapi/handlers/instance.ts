@@ -52,7 +52,7 @@ export const instanceHandlers = HttpApiBuilder.group(InstanceHttpApi, "instance"
     })
 
     const getVcs = Effect.fn("InstanceHttpApi.vcs")(function* () {
-      yield* kbForbidden("VCS is disabled in knowledge base mode.")
+      if (Kb.enabled()) return {}
       const [branch, default_branch] = yield* Effect.all([vcs.branch(), vcs.defaultBranch()], {
         concurrency: "unbounded",
       })
@@ -60,19 +60,19 @@ export const instanceHandlers = HttpApiBuilder.group(InstanceHttpApi, "instance"
     })
 
     const getVcsStatus = Effect.fn("InstanceHttpApi.vcsStatus")(function* () {
-      yield* kbForbidden("VCS is disabled in knowledge base mode.")
+      if (Kb.enabled()) return []
       return yield* vcs.status()
     })
 
     const getVcsDiff = Effect.fn("InstanceHttpApi.vcsDiff")(function* (ctx: {
       query: { mode: Vcs.Mode; context?: number }
     }) {
-      yield* kbForbidden("VCS is disabled in knowledge base mode.")
+      if (Kb.enabled()) return []
       return yield* vcs.diff(ctx.query.mode, { context: ctx.query.context })
     })
 
     const getVcsDiffRaw = Effect.fn("InstanceHttpApi.vcsDiffRaw")(function* () {
-      yield* kbForbidden("VCS is disabled in knowledge base mode.")
+      if (Kb.enabled()) return ""
       return yield* vcs.diffRaw()
     })
 

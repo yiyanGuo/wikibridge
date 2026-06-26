@@ -1,2 +1,6 @@
 doc/
 .DS_Store
+.omo/
+llm_wiki/data/
+.env
+node_modules/

@@ -22,6 +22,10 @@ export function enabled(): boolean {
   return TRUTHY.has((process.env["OPENCODE_KB_MODE"] ?? "").toLowerCase())
 }
 
+export function readonly(): boolean {
+  return TRUTHY.has((process.env["OPENCODE_KB_READONLY"] ?? "").toLowerCase())
+}
+
 /** A user id must be a single path segment — never empty, `.`, `..`, or contain separators. */
 function isSafeUserId(value: string): boolean {
   if (value === "." || value === "..") return false
@@ -95,6 +99,7 @@ function within(root: string, target: string): boolean {
  */
 export function deny(target: string, action: Action): string | undefined {
   if (!enabled()) return undefined
+  if (readonly() && action === "write") return "知识库当前以严格只读模式运行，不能写入、修改或删除"
 
   const resolved = resolveSafe(target)
   const priv = resolveSafe(privateRoot())
@@ -124,6 +129,32 @@ const BLOCKED_PERMISSIONS = new Set(["bash", "shell", "terminal", "pty", "comman
 export function isBlockedPermission(permission: string): boolean {
   if (!enabled()) return false
   return BLOCKED_PERMISSIONS.has(permission.toLowerCase())
+}
+
+type LocalMcpConfig = {
+  type?: unknown
+  command?: unknown
+  environment?: unknown
+  enabled?: unknown
+}
+
+export function isWikiBridgeLlmWikiMcp(name: string, config: LocalMcpConfig): boolean {
+  if (!enabled()) return true
+  if (!/^llm-wiki-[A-Za-z0-9_-]+$/.test(name)) return false
+  if (config.type !== "local") return false
+  if (!Array.isArray(config.command) || config.command.length !== 2) return false
+  if (config.command[0] !== "node") return false
+  if (typeof config.command[1] !== "string") return false
+  const entry = config.command[1].replace(/\\/g, "/")
+  if (!entry.endsWith("/mcp-server/dist/src/index.js")) return false
+  if (config.enabled === false) return false
+  if (!config.environment || typeof config.environment !== "object" || Array.isArray(config.environment)) return false
+
+  const env = config.environment as Record<string, unknown>
+  const apiBase = env["LLM_WIKI_API_BASE_URL"]
+  if (typeof apiBase !== "string" || !/^https?:\/\/.+\/api\/v1$/.test(apiBase.trim())) return false
+  const allowed = new Set(["LLM_WIKI_API_BASE_URL", "LLM_WIKI_API_TOKEN", "LLM_WIKI_PROJECT_ID"])
+  return Object.keys(env).every((key) => allowed.has(key) && typeof env[key] === "string")
 }
 
 export * as Kb from "./guard"

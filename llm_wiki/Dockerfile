@@ -1,5 +1,6 @@
 # syntax=docker/dockerfile:1
-FROM rust:1.85-bookworm AS builder
+FROM rust:1.96-bookworm AS builder
+FROM node:20-bookworm AS node
 
 # Install Tauri / GTK system dependencies required to build the Rust project.
 RUN apt-get update \
@@ -11,9 +12,16 @@ RUN apt-get update \
         libayatana-appindicator3-dev \
         librsvg2-dev \
         pkg-config \
+        protobuf-compiler \
         nodejs \
         npm \
+        libprotobuf-dev \
     && rm -rf /var/lib/apt/lists/*
+
+COPY --from=node /usr/local/bin/node /usr/local/bin/node
+COPY --from=node /usr/local/lib/node_modules /usr/local/lib/node_modules
+RUN ln -sf ../lib/node_modules/npm/bin/npm-cli.js /usr/local/bin/npm \
+    && ln -sf ../lib/node_modules/npm/bin/npx-cli.js /usr/local/bin/npx
 
 WORKDIR /app
 
@@ -30,9 +38,13 @@ RUN cargo build --release --bin llm-wiki-server || true
 # Now copy the real source and build the headless server binary.
 WORKDIR /app
 COPY src-tauri/src ./src-tauri/src
+COPY src-tauri/build.rs ./src-tauri/
 COPY src-tauri/tauri.conf.json ./src-tauri/
+COPY src-tauri/windows-app-manifest.xml ./src-tauri/
 COPY src-tauri/capabilities ./src-tauri/capabilities
 COPY src-tauri/icons ./src-tauri/icons
+RUN mkdir -p ./src/lib
+COPY src/lib/source-watch-defaults.json ./src/lib/source-watch-defaults.json
 COPY mcp-server ./mcp-server
 
 # Build the MCP server bundle (the Rust health endpoint only needs the binary,
@@ -54,6 +66,7 @@ RUN apt-get update \
         libsoup-3.0-0 \
         libayatana-appindicator3-1 \
         librsvg2-2 \
+        wget \
     && rm -rf /var/lib/apt/lists/*
 
 RUN useradd -m -u 1000 llmwiki
@@ -62,6 +75,7 @@ WORKDIR /app
 
 COPY --from=builder /app/src-tauri/target/release/llm-wiki-server /usr/local/bin/llm-wiki-server
 COPY --from=builder /app/mcp-server/dist /app/mcp-server/dist
+COPY scripts/init-data-dir.sh /app/scripts/init-data-dir.sh
 
 # The data directory is where projects and app-state.json live.
 ENV LLM_WIKI_DATA_DIR=/data
@@ -74,4 +88,4 @@ USER llmwiki
 
 EXPOSE 19828
 
-ENTRYPOINT ["/usr/local/bin/llm-wiki-server"]
+ENTRYPOINT ["/bin/sh", "-c", "/app/scripts/init-data-dir.sh && exec /usr/local/bin/llm-wiki-server"]

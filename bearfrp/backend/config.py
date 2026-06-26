@@ -101,15 +101,11 @@ def get_settings() -> Settings:
         frps_admin_user=_env_str("FRPS_ADMIN_USER", defaults.frps_admin_user),
         frps_admin_password=_env_str("FRPS_ADMIN_PASSWORD", defaults.frps_admin_password),
         frps_auth_token=_env_str("FRPS_AUTH_TOKEN", defaults.frps_auth_token),
-        frps_vhost_http_port=_env_int(
-            "FRPS_VHOST_HTTP_PORT", defaults.frps_vhost_http_port
-        ),
+        frps_vhost_http_port=_env_int("FRPS_VHOST_HTTP_PORT", defaults.frps_vhost_http_port),
         frps_public_vhost_http_port=_env_int(
             "FRPS_PUBLIC_VHOST_HTTP_PORT", defaults.frps_public_vhost_http_port
         ),
-        frps_subdomain_host=_env_str(
-            "FRPS_SUBDOMAIN_HOST", defaults.frps_subdomain_host
-        ),
+        frps_subdomain_host=_env_str("FRPS_SUBDOMAIN_HOST", defaults.frps_subdomain_host),
         frps_nathole_analysis_data_reserve_hours=_env_int(
             "FRPS_NATHOLE_ANALYSIS_DATA_RESERVE_HOURS",
             defaults.frps_nathole_analysis_data_reserve_hours,

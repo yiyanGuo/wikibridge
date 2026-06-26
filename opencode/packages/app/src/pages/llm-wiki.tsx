@@ -142,10 +142,64 @@ function LlmWikiContent() {
   return (
     <LlmWikiGuard>
       <main class="flex min-w-0 flex-1 flex-col">
+        <LlmWikiGraphView />
         <LlmWikiSearchResults />
         <LlmWikiFileContent />
       </main>
     </LlmWikiGuard>
+  )
+}
+
+function LlmWikiGraphView() {
+  const ctx = useLlmWiki()
+  return (
+    <div class="border-b border-v2-border-border-base p-4">
+      <div class="mb-3 flex items-center justify-between">
+        <div class="text-12-semibold text-v2-text-text-muted">Graph</div>
+        <div class="text-12-regular text-v2-text-text-muted">
+          {ctx.graphNodes().length} nodes / {ctx.graphEdges().length} edges
+        </div>
+      </div>
+      <Show
+        when={!ctx.graphLoading()}
+        fallback={
+          <div class="flex justify-center p-3">
+            <Spinner />
+          </div>
+        }
+      >
+        <div class="grid gap-3 md:grid-cols-2">
+          <div>
+            <div class="mb-2 text-12-semibold text-v2-text-text-muted">Nodes</div>
+            <div class="flex flex-wrap gap-2">
+              <For each={ctx.graphNodes()}>
+                {(node) => (
+                  <button
+                    type="button"
+                    class="rounded-md border border-v2-border-border-base px-2 py-1 text-left text-12-regular text-v2-text-text-base hover:bg-v2-overlay-simple-overlay-hover"
+                    onClick={() => node.path && ctx.selectPath(node.path)}
+                  >
+                    {node.label}
+                  </button>
+                )}
+              </For>
+            </div>
+          </div>
+          <div>
+            <div class="mb-2 text-12-semibold text-v2-text-text-muted">Edges</div>
+            <div class="flex flex-col gap-1 text-12-regular text-v2-text-text-base">
+              <For each={ctx.graphEdges()}>
+                {(edge) => (
+                  <div class="rounded-md bg-v2-background-bg-layer-01 px-2 py-1">
+                    {edge.source} -> {edge.target}
+                  </div>
+                )}
+              </For>
+            </div>
+          </div>
+        </div>
+      </Show>
+    </div>
   )
 }
 

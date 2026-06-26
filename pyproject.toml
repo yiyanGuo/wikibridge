@@ -1,0 +1,15 @@
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+extend-exclude = [
+  "opencode",
+  "llm_wiki",
+  "bearfrp/static",
+  "bearfrp/WHU-Beamer",
+  "bearfrp/reference",
+]
+
+[tool.ruff.format]
+quote-style = "preserve"
+indent-style = "space"
+line-ending = "lf"

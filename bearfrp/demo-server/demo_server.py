@@ -77,7 +77,14 @@ BACKGROUND, ACCENT = random.Random(int(time.time())).choice(PALETTE)
 
 
 def page_bytes(port, nickname, message):
-    return PAGE.replace("__PORT__", str(port)).replace("__NICKNAME__", nickname).replace("__MESSAGE__", message).replace("__BG__", BACKGROUND).replace("__ACCENT__", ACCENT).encode("utf-8")
+    return (
+        PAGE.replace("__PORT__", str(port))
+        .replace("__NICKNAME__", nickname)
+        .replace("__MESSAGE__", message)
+        .replace("__BG__", BACKGROUND)
+        .replace("__ACCENT__", ACCENT)
+        .encode("utf-8")
+    )
 
 
 def json_bytes(payload):
@@ -130,11 +137,13 @@ class Handler(BaseHTTPRequestHandler):
         if len(content) > 200:
             self.send_json(400, {"error": "content too long"})
             return
-        MESSAGES.append({
-            "nickname": nickname,
-            "content": content,
-            "timestamp": time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()),
-        })
+        MESSAGES.append(
+            {
+                "nickname": nickname,
+                "content": content,
+                "timestamp": time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()),
+            }
+        )
         self.send_json(200, {"ok": True})
 
 
@@ -142,7 +151,11 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="临时留言板")
     parser.add_argument("--port", type=int, default=527)
     parser.add_argument("--nickname", type=str, default="留言板")
-    parser.add_argument("--message", type=str, default="这是一个会在进程启动时随机换背景色的临时留言板。留言只保存在内存里，刷新可见，重启即失。")
+    parser.add_argument(
+        "--message",
+        type=str,
+        default="这是一个会在进程启动时随机换背景色的临时留言板。留言只保存在内存里，刷新可见，重启即失。",
+    )
     args = parser.parse_args()
     server = HTTPServer(("0.0.0.0", args.port), Handler)
     server.NICKNAME = args.nickname

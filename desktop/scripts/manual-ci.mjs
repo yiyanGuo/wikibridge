@@ -70,7 +70,7 @@ for (const [index, step] of steps.entries()) {
     cwd: desktopDir,
     env: process.env,
     stdio: "inherit",
-    shell: false,
+    shell: process.platform === "win32",
   })
 
   if (result.error) {

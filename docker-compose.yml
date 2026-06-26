@@ -39,17 +39,23 @@ services:
       - sh
       - -c
       - |
+        set -eu
         if [ ! -d /app/node_modules/.bin ]; then
           echo "Installing dependencies..."
-          bun install --frozen-lockfile
+          bun install --no-save --ignore-scripts
         fi
         bash scripts/init-kb-data.sh
         echo "Building embedded web UI..."
         bun run --cwd packages/app build
         bun run scripts/prepare-embedded-ui.ts
-        bun run --conditions=browser ./src/index.ts web --hostname 0.0.0.0 --port 4096
+        bun run --cwd packages/opencode --conditions=browser src/index.ts serve --hostname 0.0.0.0 --port 4096
     healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:4096/global/health"]
+      test:
+        [
+          "CMD-SHELL",
+          "bun -e \"fetch('http://127.0.0.1:4096/global/health').then((r)=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))\"",
+        ]
+      start_period: 600s
       interval: 10s
       timeout: 5s
       retries: 10
@@ -108,6 +114,7 @@ services:
       - wikibridge
     healthcheck:
       test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:8000/api/show/online >/dev/null"]
+      start_period: 120s
       interval: 10s
       timeout: 5s
       retries: 10

@@ -1,7 +1,7 @@
 bindAddr = "0.0.0.0"
 bindPort = 7000
 vhostHTTPPort = 8080
-subdomainHost = "localhost"
+subdomainHost = "120.46.51.131"
 
 webServer.addr = "127.0.0.1"
 webServer.port = 7500

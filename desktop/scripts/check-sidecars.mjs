@@ -17,6 +17,7 @@ const required = [
 ]
 const requiredResources = [
   path.join(desktopDir, "src-tauri", "binaries", "pdfium", platform, pdfiumDestName(platform)),
+  path.join(desktopDir, "..", "llm_wiki", "mcp-server", "dist", "src", "index.js"),
 ]
 
 const missing = []
@@ -62,7 +63,9 @@ function parseArgs(rawArgs) {
   }
 
   if (parsedArgs.args.length > 0) {
-    fail(`Unknown option "${parsedArgs.args[0]}". Use --platform <${supportedPlatforms.join("|")}>.`)
+    fail(
+      `Unknown option "${parsedArgs.args[0]}". Use --platform <${supportedPlatforms.join("|")}>.`,
+    )
   }
 
   return parsedArgs

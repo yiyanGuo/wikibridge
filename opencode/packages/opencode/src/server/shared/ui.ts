@@ -64,8 +64,17 @@ export function upstreamURL(path: string) {
 export function embeddedUI(disableEmbeddedWebUi: boolean) {
   if (disableEmbeddedWebUi) return Promise.resolve(null)
   return (embeddedUIPromise ??=
+    // Source-mode Compose runs from packages/opencode/src, where the generated
+    // bundle is a sibling of src rather than a resolvable package specifier.
     // @ts-expect-error - generated file at build time
-    import("opencode-web-ui.gen.ts").then((module) => module.default as Record<string, string>).catch(() => null))
+    import("../../../opencode-web-ui.gen.ts")
+      .then((module) => module.default as Record<string, string>)
+      .catch(() =>
+        // Compiled binaries embed the generated module as a Bun file import.
+        // @ts-expect-error - generated file at build time
+        import("opencode-web-ui.gen.ts").then((module) => module.default as Record<string, string>),
+      )
+      .catch(() => null))
 }
 
 function notFound() {

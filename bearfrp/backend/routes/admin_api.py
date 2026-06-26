@@ -109,15 +109,9 @@ async def update_config(body: UpdateAllocatableRangeRequest) -> dict[str, bool]:
             mapping.remote_port
             for p in store.proxies.values()
             for mapping in p.tcp_mappings
-            if (
-                p.proxy_type == ProxyType.TCP
-                and p.status != ProxyStatus.DELETED
-            )
+            if (p.proxy_type == ProxyType.TCP and p.status != ProxyStatus.DELETED)
         }
-        outside = {
-            p for p in currently_allocated
-            if p < body.start or p > body.end
-        }
+        outside = {p for p in currently_allocated if p < body.start or p > body.end}
         if outside:
             raise HTTPException(
                 status_code=400,
@@ -174,7 +168,9 @@ async def list_admin_users() -> dict[str, list[dict[str, object]]]:
     """
 
     async with store.lock:
-        users = [store.user_to_dto(user) for user in sorted(store.users.values(), key=lambda u: u.uid)]
+        users = [
+            store.user_to_dto(user) for user in sorted(store.users.values(), key=lambda u: u.uid)
+        ]
     return {"users": users}
 
 
@@ -201,7 +197,7 @@ async def start_proxy(proxy_id: int) -> dict[str, bool]:
     """@brief 管理员恢复指定代理。
     @param proxy_id 代理 ID。
     @return ok=true 表示状态已切回 active。
-    @throws HTTPException 用户余额不足或 TCP 端口已被占用时返回 400。
+    @throws HTTPException TCP 端口已被占用时返回 400。
     @note 恢复 TCP 代理会重新预留缺失的 remotePort。
     """
 
@@ -209,9 +205,6 @@ async def start_proxy(proxy_id: int) -> dict[str, bool]:
         proxy = store.proxies.get(proxy_id)
         if proxy is None or proxy.status == ProxyStatus.DELETED:
             raise HTTPException(status_code=404, detail="proxy not found")
-        user = store.users.get(proxy.uid)
-        if user is None or user.balance_mb <= 0:
-            raise HTTPException(status_code=400, detail="余额不足")
         if proxy.proxy_type == ProxyType.TCP:
             occupied = []
             remote_ports = [mapping.remote_port for mapping in proxy.tcp_mappings]
@@ -225,7 +218,9 @@ async def start_proxy(proxy_id: int) -> dict[str, bool]:
             if to_reserve:
                 unavailable = port_pool.reserve_many(to_reserve)
                 if unavailable:
-                    raise HTTPException(status_code=400, detail=f"公网端口不可用: {sorted(unavailable)}")
+                    raise HTTPException(
+                        status_code=400, detail=f"公网端口不可用: {sorted(unavailable)}"
+                    )
         proxy.status = ProxyStatus.ACTIVE
     return {"ok": True}
 

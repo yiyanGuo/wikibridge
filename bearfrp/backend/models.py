@@ -291,14 +291,10 @@ class Store:
                 continue
             if proxy.frps_name == frps_name:
                 return proxy
-            if (
-                proxy.proxy_type == ProxyType.XTCP
-                and proxy.p2p_fallback_name == frps_name
-            ):
+            if proxy.proxy_type == ProxyType.XTCP and proxy.p2p_fallback_name == frps_name:
                 return proxy
-            if (
-                proxy.proxy_type == ProxyType.TCP
-                and any(mapping.frps_name == frps_name for mapping in proxy.tcp_mappings)
+            if proxy.proxy_type == ProxyType.TCP and any(
+                mapping.frps_name == frps_name for mapping in proxy.tcp_mappings
             ):
                 return proxy
         return None

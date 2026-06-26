@@ -1,0 +1,197 @@
+\documentclass[UTF8,a4paper,12pt,fontset=fandol]{ctexart}
+
+\usepackage[a4paper,top=2.7cm,bottom=2.5cm,left=2.8cm,right=2.6cm]{geometry}
+\usepackage{array}
+\usepackage{booktabs}
+\usepackage{fancyhdr}
+\usepackage{hyperref}
+\usepackage{longtable}
+\usepackage{pdfpages}
+\usepackage{setspace}
+\usepackage{tabularx}
+\usepackage{titlesec}
+
+\hypersetup{
+  colorlinks=false,
+  pdfborder={0 0 0},
+  pdftitle={WikiBridge 软件工程课程实验设计报告},
+  pdfauthor={WikiBridge 项目组},
+  pdfsubject={软件工程课程实验设计报告},
+  pdfkeywords={WikiBridge, 软件工程, 计划任务书, 需求规格说明书, 软件设计说明书, 测试说明书}
+}
+
+\pagestyle{plain}
+\setlength{\parindent}{2em}
+\setlength{\parskip}{0pt}
+\renewcommand{\arraystretch}{1.45}
+\setlength{\tabcolsep}{5pt}
+\newcolumntype{Y}{>{\raggedright\arraybackslash}X}
+
+\newcommand{\projectname}{WikiBridge 零代码本地知识库 API 分享与 OpenCode/MCP 消费平台}
+\newcommand{\groupno}{B260}
+\newcommand{\teacher}{杜 卓 敏}
+\newcommand{\reportdate}{2026 年 6 月 26 日}
+\newcommand{\blankline}[1]{\underline{\makebox[#1][l]{}}}
+
+\newcommand{\partcover}[3]{%
+  \clearpage
+  \thispagestyle{plain}
+  \vspace*{4.2cm}
+  \begin{center}
+    {\zihao{1}\bfseries #1\par}
+    \vspace{1.0cm}
+    {\zihao{1}\bfseries #2\par}
+    \vspace{0.35cm}
+    {\zihao{2}\bfseries (终 版)\par}
+  \end{center}
+  \clearpage
+}
+
+\newcommand{\historypage}{%
+  \thispagestyle{plain}
+  \begin{center}
+    {\zihao{3}\bfseries 文档变更历史记录}
+  \end{center}
+  \vspace{0.8cm}
+  \begin{table}[h]
+    \centering
+    \begin{tabular}{|>{\centering\arraybackslash}p{1.2cm}|>{\centering\arraybackslash}p{2.5cm}|>{\centering\arraybackslash}p{2.4cm}|p{5.4cm}|>{\centering\arraybackslash}p{2.1cm}|}
+      \hline
+      序号 & 变更日期 & 变更人员 & 变更内容详情描述 & 变更后的版本号 \\
+      \hline
+      1 & 2026 年 6 月 1 日 & 项目组 & 启动文档编写，形成初始项目背景、范围和阶段性内容。 & V0.1 \\
+      \hline
+      2 & 2026 年 6 月 18 日 & 项目组 & 补充核心功能、架构、测试任务和阶段性实现材料。 & V0.9 \\
+      \hline
+      3 & 2026 年 6 月 26 日 & 项目组 & 根据最终联调结果整理终版文档并纳入分组实习报告，补充测试方法、缺陷矩阵和个人贡献评分表。 & V1.0 \\
+      \hline
+    \end{tabular}
+  \end{table}
+  \clearpage
+}
+
+\begin{document}
+
+\pagenumbering{gobble}
+
+\begin{titlepage}
+  \thispagestyle{empty}
+  \begin{flushright}
+    组号：B26\blankline{2.0cm}
+  \end{flushright}
+
+  \vspace*{0.8cm}
+  \begin{center}
+    {\zihao{1}\bfseries 武汉大学计算机学院\par}
+    \vspace{0.35cm}
+    {\zihao{1}\bfseries 软件工程\par}
+    \vspace{0.35cm}
+    {\zihao{1}\bfseries 课程实验(设计)报告\par}
+  \end{center}
+
+  \vspace{0.9cm}
+  \begin{center}
+  \renewcommand{\arraystretch}{1.2}
+  \begin{tabular}{>{\zihao{4}\bfseries}r p{9.4cm}}
+    组\quad 号： & \groupno \\
+    [0.25cm]
+    项目名称： & \projectname \\
+    [0.25cm]
+    专业（班）： & \blankline{7.5cm} \\
+    [0.25cm]
+    项目组成员：组长： & （班序号、姓名、学号）\blankline{3.6cm} \\
+    [0.25cm]
+    成员： & （班序号、姓名、学号、分工） \\
+             & 张沐雷：持续集成 CI、桌面端测试/自动化相关 \\
+             & 陈明德：OpenCode + MCP 接入、跨端联调、BearFRP 相关开发 \\
+             & 郭一言：Wiki 方向、frp 模块及联调相关工作 \\
+             & 骆贝尔：LLM-Wiki 方向 \\
+             & 曾浩正：OpenCode / Chatbox 方向 \\
+             & 童济舟：OpenCode / Chatbox 方向 \\
+    [0.35cm]
+    任课教师： & \teacher \\
+  \end{tabular}
+  \end{center}
+
+  \vspace{0.7cm}
+  \begin{center}
+    {\zihao{4}\reportdate}
+  \end{center}
+\end{titlepage}
+
+\clearpage
+\thispagestyle{plain}
+\begin{center}
+  {\zihao{2}\bfseries 目\quad 录}
+\end{center}
+\vspace{1.3cm}
+\begin{center}
+\renewcommand{\arraystretch}{1.8}
+\begin{tabular}{p{4.2cm}p{6.2cm}p{2.8cm}}
+第一部分 & 计划任务书 & ……………………… \\
+第二部分 & 需求规格说明书 & ……………………… \\
+第三部分 & 软件设计说明书 & ……………………… \\
+第四部分 & 测试说明书 & ……………………… \\
+第五部分 & 个人总结报告 & ……………………… \\
+第六部分 & 小组个人贡献评分表 & ……………………… \\
+\end{tabular}
+\end{center}
+\clearpage
+
+\pagenumbering{arabic}
+
+\partcover{第一部分}{计划任务书}{1}
+\historypage
+\includepdf[pages=-,pagecommand={\thispagestyle{empty}}]{../../软件计划任务书/latex/计划任务书.pdf}
+
+\partcover{第二部分}{需求规格说明书}{4}
+\historypage
+\includepdf[pages=-,pagecommand={\thispagestyle{empty}}]{../../需求规格说明书/latex/软件需求规格说明书.pdf}
+
+\partcover{第三部分}{软件设计说明书}{7}
+\historypage
+\includepdf[pages=-,pagecommand={\thispagestyle{empty}}]{../../软件设计说明书/work/reference/wikibridge_spec.pdf}
+
+\partcover{第四部分}{测试说明书}{10}
+\historypage
+\includepdf[pages=-,pagecommand={\thispagestyle{empty}}]{../../软件测试报告/latex/测试分析报告.pdf}
+
+\partcover{第五部分}{个人总结报告}{13}
+\thispagestyle{plain}
+\vspace*{4cm}
+\begin{center}
+  {\zihao{3}此部分待插入小组成员个人总结报告。}
+\end{center}
+\clearpage
+
+\partcover{第六部分}{小组个人贡献评分表}{15}
+\thispagestyle{plain}
+\begin{center}
+  {\zihao{3}\bfseries 小组个人贡献评分表(全程)}
+\end{center}
+\vspace{0.5cm}
+组号：\groupno \hspace{2cm} 项目：\projectname
+\vspace{0.5cm}
+
+\begin{longtable}{|>{\centering\arraybackslash}p{0.8cm}|p{3.3cm}|p{1.8cm}|p{2.4cm}|>{\centering\arraybackslash}p{1.6cm}|p{4.5cm}|}
+\hline
+序号 & 班序号、学号 & 姓名 & 角色 & 贡献比 & 主要贡献 \\
+\hline
+1 & & 张沐雷 & CI 与测试负责人 & 待确认 & 负责 GitHub Actions 持续集成、桌面端系统测试、自动化测试流程、跨平台测试修正和测试文档支撑。 \\
+\hline
+2 & & 陈明德 & OpenCode + MCP 接入、跨端联调、BearFRP 开发 & 待确认 & 完成 llm-wiki MCP server、OpenCode KB 接入与远程知识库联调，参与 B/S/C 架构调整，实现 BearFRP 持久化和普通用户连接配置修改，发现并复盘关键联调缺陷。 \\
+\hline
+3 & & 郭一言 & Wiki 方向与 frp 联调 & 待确认 & 负责 Wiki 相关集成、桌面端发布侧材料、frp 与 LLM-Wiki 整合，参与发布链路联调和需求/计划材料整理。 \\
+\hline
+4 & & 骆贝尔 & LLM-Wiki 方向 & 待确认 & 负责 LLM-Wiki 知识库生成、项目文件与搜索能力相关实现和联调支撑，提供 B 端知识库服务基础能力。 \\
+\hline
+5 & & 曾浩正 & OpenCode / Chatbox 方向 & 待确认 & 负责 OpenCode / Chatbox 知识消费方向开发，参与 KB 会话、对话入口和知识消费体验联调。 \\
+\hline
+6 & & 童济舟 & OpenCode / Chatbox 方向 & 待确认 & 参与 OpenCode / Chatbox 方向开发、知识消费链路联调和相关材料整理。 \\
+\hline
+\end{longtable}
+
+\vspace{0.4cm}
+说明：贡献比待组内确认后填写；当前表格仅保留成员角色和主要方向，不作为最终贡献比例依据。班序号和学号由提交前按课程名单补齐。
+
+\end{document}

@@ -262,4 +262,52 @@ describe("instance HttpApi", () => {
       )
     }),
   )
+
+  it.live("keeps VCS read endpoints available in knowledge base mode", () =>
+    Effect.gen(function* () {
+      const previous = {
+        OPENCODE_KB_MODE: process.env["OPENCODE_KB_MODE"],
+        OPENCODE_KB_DATA_DIR: process.env["OPENCODE_KB_DATA_DIR"],
+        OPENCODE_KB_USER: process.env["OPENCODE_KB_USER"],
+      }
+      const restore = () => {
+        for (const [key, value] of Object.entries(previous)) {
+          if (value === undefined) delete process.env[key]
+          else process.env[key] = value
+        }
+      }
+      yield* Effect.addFinalizer(() => Effect.sync(restore))
+
+      const dir = yield* tmpdirScoped({ git: true })
+      process.env["OPENCODE_KB_MODE"] = "1"
+      process.env["OPENCODE_KB_DATA_DIR"] = `${dir}/kb-data`
+      process.env["OPENCODE_KB_USER"] = "default"
+
+      const [vcs, status, diff, apply] = yield* Effect.all(
+        [
+          HttpClientRequest.get(InstancePaths.vcs).pipe(directoryHeader(dir), HttpClient.execute),
+          HttpClientRequest.get(InstancePaths.vcsStatus).pipe(directoryHeader(dir), HttpClient.execute),
+          HttpClientRequest.get(InstancePaths.vcsDiff).pipe(
+            HttpClientRequest.setUrlParam("mode", "git"),
+            directoryHeader(dir),
+            HttpClient.execute,
+          ),
+          HttpClientRequest.post(InstancePaths.vcsApply).pipe(
+            directoryHeader(dir),
+            HttpClientRequest.bodyJson({ patch: "" }),
+            Effect.flatMap(HttpClient.execute),
+          ),
+        ],
+        { concurrency: "unbounded" },
+      )
+
+      expect(vcs.status).toBe(200)
+      expect(yield* vcs.json).toEqual({})
+      expect(status.status).toBe(200)
+      expect(yield* status.json).toEqual([])
+      expect(diff.status).toBe(200)
+      expect(yield* diff.json).toEqual([])
+      expect(apply.status).toBe(403)
+    }),
+  )
 })

@@ -1,6 +1,15 @@
 #!/usr/bin/env node
 
-import { existsSync, mkdirSync, copyFileSync, chmodSync, mkdtempSync, readdirSync, rmSync, statSync } from "node:fs"
+import {
+  existsSync,
+  mkdirSync,
+  copyFileSync,
+  chmodSync,
+  mkdtempSync,
+  readdirSync,
+  rmSync,
+  statSync,
+} from "node:fs"
 import path from "node:path"
 import { spawnSync } from "node:child_process"
 import { fileURLToPath } from "node:url"
@@ -74,12 +83,39 @@ function prepareLlmWiki() {
 
   if (!skipBuild) {
     assertNativeBuild("llm-wiki-server")
+    prepareLlmWikiMcpServer()
     const env = { LLM_WIKI_SKIP_TAURI_BUILD: "1", ...protocEnv() }
-    run("cargo", ["build", "--release", "--bin", "llm-wiki-server", "--manifest-path", manifest], repoRoot, {
-      ...env,
-    })
+    run(
+      "cargo",
+      ["build", "--release", "--bin", "llm-wiki-server", "--manifest-path", manifest],
+      repoRoot,
+      {
+        ...env,
+      },
+    )
+  } else {
+    assertLlmWikiMcpServerReady()
   }
   copyBinary(source, dest, "llm-wiki-server")
+}
+
+function prepareLlmWikiMcpServer() {
+  const mcpDir = path.join(repoRoot, "llm_wiki", "mcp-server")
+  run("npm", ["ci"], mcpDir)
+  run("npm", ["run", "build"], mcpDir)
+  assertLlmWikiMcpServerReady()
+}
+
+function assertLlmWikiMcpServerReady() {
+  const entry = path.join(repoRoot, "llm_wiki", "mcp-server", "dist", "src", "index.js")
+  if (existsSync(entry)) return
+  fail(
+    [
+      "LLM Wiki MCP server dist entry was not found.",
+      `Expected: ${entry}`,
+      "Run npm run sidecars:llm-wiki without --skip-build to generate llm_wiki/mcp-server/dist.",
+    ].join("\n"),
+  )
 }
 
 function prepareOpenCode() {
@@ -92,14 +128,25 @@ function prepareOpenCode() {
     assertNativeBuild("opencode")
     const bun = bunCommand()
     run(bun, ["install"], opencodeRoot)
-    run(bun, ["run", "--cwd", "packages/opencode", "build", "--single", "--skip-install"], opencodeRoot)
+    run(
+      bun,
+      ["run", "--cwd", "packages/opencode", "build", "--single", "--skip-install"],
+      opencodeRoot,
+    )
   }
   copyBinary(source, dest, "opencode")
 }
 
 function preparePdfium() {
   const source = pdfiumSourcePath(platform)
-  const dest = path.join(desktopDir, "src-tauri", "binaries", "pdfium", platform, pdfiumDestName(platform))
+  const dest = path.join(
+    desktopDir,
+    "src-tauri",
+    "binaries",
+    "pdfium",
+    platform,
+    pdfiumDestName(platform),
+  )
   copyBinary(source, dest, "pdfium")
 }
 
@@ -134,12 +181,16 @@ function parseArgs(rawArgs) {
   const allowedFlags = new Set(["--skip-build"])
   const unknownFlag = parsed.args.find((arg) => arg.startsWith("--") && !allowedFlags.has(arg))
   if (unknownFlag) {
-    fail(`Unknown option "${unknownFlag}". Use --platform <${supportedPlatforms.join("|")}> or --skip-build.`)
+    fail(
+      `Unknown option "${unknownFlag}". Use --platform <${supportedPlatforms.join("|")}> or --skip-build.`,
+    )
   }
 
   const positional = parsed.args.filter((arg) => !arg.startsWith("--"))
   if (positional.length > 1) {
-    fail(`Too many targets: ${positional.join(", ")}. Use one of all, frpc, opencode, llm-wiki, or pdfium.`)
+    fail(
+      `Too many targets: ${positional.join(", ")}. Use one of all, frpc, opencode, llm-wiki, or pdfium.`,
+    )
   }
 
   return {
@@ -153,7 +204,14 @@ function llmWikiSourcePath(executable) {
   const targetDir =
     platform === hostPlatform
       ? path.join(repoRoot, "llm_wiki", "src-tauri", "target", "release")
-      : path.join(repoRoot, "llm_wiki", "src-tauri", "target", rustTargetTriple(platform), "release")
+      : path.join(
+          repoRoot,
+          "llm_wiki",
+          "src-tauri",
+          "target",
+          rustTargetTriple(platform),
+          "release",
+        )
   return path.join(targetDir, executable)
 }
 
@@ -203,7 +261,20 @@ function frpDownloadSpec(version, targetPlatform) {
 function extractArchive(archivePath, destDir) {
   if (archivePath.endsWith(".zip")) {
     if (process.platform === "win32") {
-      run("powershell", ["-NoProfile", "-Command", "Expand-Archive", "-LiteralPath", archivePath, "-DestinationPath", destDir, "-Force"], repoRoot)
+      run(
+        "powershell",
+        [
+          "-NoProfile",
+          "-Command",
+          "Expand-Archive",
+          "-LiteralPath",
+          archivePath,
+          "-DestinationPath",
+          destDir,
+          "-Force",
+        ],
+        repoRoot,
+      )
       return
     }
     run("unzip", ["-q", archivePath, "-d", destDir], repoRoot)
@@ -238,7 +309,12 @@ function run(command, args, cwd, env = {}) {
 function protocEnv() {
   if (process.env.PROTOC) return {}
 
-  const localProtoc = path.join(desktopDir, "node_modules", ".bin", process.platform === "win32" ? "protoc.cmd" : "protoc")
+  const localProtoc = path.join(
+    desktopDir,
+    "node_modules",
+    ".bin",
+    process.platform === "win32" ? "protoc.cmd" : "protoc",
+  )
   if (existsSync(localProtoc)) return { PROTOC: localProtoc }
 
   if (findOnPath("protoc")) return {}
@@ -256,7 +332,12 @@ function protocEnv() {
 }
 
 function bunCommand() {
-  const localBun = path.join(desktopDir, "node_modules", ".bin", process.platform === "win32" ? "bun.cmd" : "bun")
+  const localBun = path.join(
+    desktopDir,
+    "node_modules",
+    ".bin",
+    process.platform === "win32" ? "bun.cmd" : "bun",
+  )
   if (existsSync(localBun)) return localBun
   if (findOnPath("bun")) return "bun"
 
@@ -271,11 +352,18 @@ function bunCommand() {
 
 function findOnPath(command) {
   const pathEnv = process.env.PATH ?? ""
-  const extensions = process.platform === "win32" ? (process.env.PATHEXT ?? ".EXE;.CMD;.BAT;.COM").split(";") : [""]
+  const extensions =
+    process.platform === "win32" ? (process.env.PATHEXT ?? ".EXE;.CMD;.BAT;.COM").split(";") : [""]
 
-  return pathEnv.split(path.delimiter).some((dir) =>
-    extensions.some((ext) => existsSync(path.join(dir, `${command}${ext.toLowerCase()}`)) || existsSync(path.join(dir, `${command}${ext}`))),
-  )
+  return pathEnv
+    .split(path.delimiter)
+    .some((dir) =>
+      extensions.some(
+        (ext) =>
+          existsSync(path.join(dir, `${command}${ext.toLowerCase()}`)) ||
+          existsSync(path.join(dir, `${command}${ext}`)),
+      ),
+    )
 }
 
 function findFile(root, filename) {

@@ -58,20 +58,22 @@ async function download(sourceUrl, targetPath) {
   }
   await new Promise((resolve, reject) => {
     const file = createWriteStream(targetPath)
-    response.body.pipeTo(
-      new WritableStream({
-        write(chunk) {
-          file.write(Buffer.from(chunk))
-        },
-        close() {
-          file.end(resolve)
-        },
-        abort(error) {
-          file.destroy(error)
-          reject(error)
-        },
-      }),
-    ).catch(reject)
+    response.body
+      .pipeTo(
+        new WritableStream({
+          write(chunk) {
+            file.write(Buffer.from(chunk))
+          },
+          close() {
+            file.end(resolve)
+          },
+          abort(error) {
+            file.destroy(error)
+            reject(error)
+          },
+        }),
+      )
+      .catch(reject)
   })
 }
 
@@ -100,7 +102,11 @@ function walk(root) {
     const entries = spawnSync(
       process.platform === "win32" ? "powershell.exe" : "find",
       process.platform === "win32"
-        ? ["-NoProfile", "-Command", `Get-ChildItem -LiteralPath '${dir.replace(/'/g, "''")}' -Recurse -File | ForEach-Object { $_.FullName }`]
+        ? [
+            "-NoProfile",
+            "-Command",
+            `Get-ChildItem -LiteralPath '${dir.replace(/'/g, "''")}' -Recurse -File | ForEach-Object { $_.FullName }`,
+          ]
         : [dir, "-type", "f"],
       { encoding: "utf8" },
     )
@@ -113,10 +119,14 @@ function walk(root) {
 }
 
 function copy(source, target) {
-  const result = spawnSync(process.platform === "win32" ? "cmd.exe" : "cp", process.platform === "win32" ? ["/c", "copy", "/Y", source, target] : [source, target], {
-    stdio: "inherit",
-    shell: false,
-  })
+  const result = spawnSync(
+    process.platform === "win32" ? "cmd.exe" : "cp",
+    process.platform === "win32" ? ["/c", "copy", "/Y", source, target] : [source, target],
+    {
+      stdio: "inherit",
+      shell: false,
+    },
+  )
   if (result.error) fail(`Failed to copy frpc: ${result.error.message}`)
   if (result.status !== 0) fail(`copy exited with status ${result.status}`)
   if (!platform.startsWith("windows-")) {
