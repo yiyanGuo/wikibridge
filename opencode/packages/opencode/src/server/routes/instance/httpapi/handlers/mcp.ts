@@ -1,4 +1,5 @@
 import { MCP } from "@/mcp"
+import { Kb } from "@/kb/guard"
 import { Effect, Schema } from "effect"
 import { HttpApiBuilder, HttpApiError } from "effect/unstable/httpapi"
 import { InstanceHttpApi } from "../api"
@@ -15,7 +16,9 @@ export const mcpHandlers = HttpApiBuilder.group(InstanceHttpApi, "mcp", (handler
     })
 
     const add = Effect.fn("McpHttpApi.add")(function* (ctx: { payload: typeof AddPayload.Type }) {
-      yield* kbForbidden("Adding MCP servers is disabled in knowledge base mode.")
+      if (!Kb.isWikiBridgeLlmWikiMcp(ctx.payload.name, ctx.payload.config)) {
+        yield* kbForbidden("Adding MCP servers is disabled in knowledge base mode.")
+      }
       const result = (yield* mcp.add(ctx.payload.name, ctx.payload.config)).status
       return yield* Schema.decodeUnknownEffect(StatusMap)(
         "status" in result ? { [ctx.payload.name]: result } : result,

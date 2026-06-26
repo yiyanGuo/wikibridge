@@ -1,10 +1,12 @@
-import { FormEvent, useCallback, useEffect, useMemo, useState } from 'react';
+import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import {
   BookOpen,
   ExternalLink,
   Globe2,
+  Play,
   Plus,
+  Power,
   RefreshCcw,
   Save,
   Server,
@@ -14,49 +16,137 @@ import {
 import BearFrpApp from './BearFrpApp';
 
 type Entry = 'bearfrp' | 'opencode';
+type LlmMode = 'openai' | 'deepseek' | 'relay';
+
+const DEEPSEEK_BASE_URL = 'https://api.deepseek.com';
+
+type SidecarState = {
+  running: boolean;
+  healthy: boolean;
+  url?: string | null;
+  port?: number | null;
+  logPath?: string | null;
+  projectId?: string | null;
+};
 
 type DesktopServicesState = {
   bearfrpBackendUrl: string;
+  appDataDir: string;
+  opencode: SidecarState;
+  llmWiki: SidecarState;
+};
+
+type LlmSettings = {
+  provider: string;
+  model: string;
+  baseUrl?: string | null;
+  hasApiKey: boolean;
+};
+
+type OpenCodeStack = {
+  opencodeUrl: string;
+  llmWikiUrl: string;
+  opencodePort: number;
+  llmWikiPort?: number | null;
+  projectId?: string | null;
+  mcpServerName?: string | null;
+  mcpStatus?: string | null;
+  sessionId?: string | null;
+  sessionUrl?: string | null;
+};
+
+type RemoteProject = {
+  id: string;
+  name: string;
+  path: string;
+  current: boolean;
 };
 
 type RemoteKnowledgeBase = {
   remoteId: string;
   name: string;
   url: string;
+  apiUrl: string;
   status: string;
+  projectCount: number;
+  projects?: RemoteProject[];
+  currentProject?: RemoteProject | null;
+  authRequired: boolean;
+  mcpStatus: string;
   addedAt: number;
   lastOpenedAt?: number | null;
 };
 
 type RemoteKnowledgeBaseCheck = {
   url: string;
+  apiUrl: string;
   ok: boolean;
   status: string;
   message: string;
-  opencodeHealthy: boolean;
   llmWikiHealthy: boolean;
-  kbMode?: boolean | null;
+  projectCount: number;
+  projects?: RemoteProject[];
+  currentProject?: RemoteProject | null;
+  authRequired: boolean;
+  mcpStatus?: string | null;
+};
+
+type RemoteKnowledgeBaseConnect = {
+  stack: OpenCodeStack;
+  remote: RemoteKnowledgeBase;
+  session: OpenCodeSession;
+};
+
+type OpenCodeSession = {
+  sessionId: string;
+  directory: string;
+  url: string;
 };
 
 export default function App() {
   const [activeEntry, setActiveEntry] = useState<Entry>('bearfrp');
   const [services, setServices] = useState<DesktopServicesState | null>(null);
+  const [llmSettings, setLlmSettings] = useState<LlmSettings | null>(null);
+  const [llmModeDraft, setLlmModeDraft] = useState<LlmMode>('deepseek');
+  const [relayProviderDraft, setRelayProviderDraft] = useState('openai');
+  const [llmModelDraft, setLlmModelDraft] = useState(defaultModelForMode('deepseek'));
+  const [llmBaseUrlDraft, setLlmBaseUrlDraft] = useState(DEEPSEEK_BASE_URL);
+  const [llmApiKeyDraft, setLlmApiKeyDraft] = useState('');
   const [backendDraft, setBackendDraft] = useState('');
   const [remoteKnowledgeBases, setRemoteKnowledgeBases] = useState<RemoteKnowledgeBase[]>([]);
   const [remoteName, setRemoteName] = useState('');
   const [remoteUrl, setRemoteUrl] = useState('');
+  const [remoteToken, setRemoteToken] = useState('');
   const [activeRemoteId, setActiveRemoteId] = useState('');
+  const [viewerMode, setViewerMode] = useState<'local' | 'remote'>('local');
+  const [sessionViewerUrl, setSessionViewerUrl] = useState('');
+  const [showAdvancedModel, setShowAdvancedModel] = useState(false);
   const [frameKey, setFrameKey] = useState(0);
   const [busy, setBusy] = useState('');
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
+  const autoStartAttempted = useRef(false);
 
   const activeRemote = useMemo(
     () => remoteKnowledgeBases.find((item) => item.remoteId === activeRemoteId) || null,
     [activeRemoteId, remoteKnowledgeBases]
   );
-  const viewerUrl = openCodeKnowledgeUrl(activeRemote?.url || '');
-  const viewerTitle = activeRemote?.name || '远程知识库';
+  const viewerUrl = sessionViewerUrl;
+  const viewerTitle = viewerMode === 'remote' && activeRemote ? `${activeRemote.name} · 本地 OpenCode` : '本地 OpenCode';
+  const viewerPlaceholder = services?.opencode.running
+    ? '本地 OpenCode 已启动，点击“进入对话”创建聊天会话'
+    : activeRemote
+      ? '正在准备本地 OpenCode'
+      : '请先保存模型设置并启动本地 OpenCode';
+
+  const applyLlmSettingsToDraft = useCallback((settings: LlmSettings) => {
+    const mode = inferLlmMode(settings);
+    setLlmSettings(settings);
+    setLlmModeDraft(mode);
+    setRelayProviderDraft(mode === 'relay' ? settings.provider || 'openai' : 'openai');
+    setLlmModelDraft(settings.model || defaultModelForMode(mode));
+    setLlmBaseUrlDraft(mode === 'relay' ? settings.baseUrl || '' : mode === 'deepseek' ? DEEPSEEK_BASE_URL : '');
+  }, []);
 
   const refreshServices = useCallback(async () => {
     const next = await invoke<DesktopServicesState>('get_desktop_services_state');
@@ -71,9 +161,46 @@ export default function App() {
     return items;
   }, []);
 
+  const refreshLlmSettings = useCallback(async () => {
+    const next = await invoke<LlmSettings>('get_llm_settings');
+    applyLlmSettingsToDraft(next);
+    setLlmApiKeyDraft('');
+    return next;
+  }, [applyLlmSettingsToDraft]);
+
   useEffect(() => {
-    Promise.all([refreshServices(), refreshRemoteKnowledgeBases()]).catch((err) => setError(friendlyError(err)));
-  }, [refreshRemoteKnowledgeBases, refreshServices]);
+    let cancelled = false;
+    async function load() {
+      try {
+        await Promise.all([
+          refreshServices(),
+          refreshRemoteKnowledgeBases(),
+          refreshLlmSettings()
+        ]);
+        if (cancelled) return;
+      } catch (err) {
+        if (!cancelled) setError(friendlyError(err));
+      }
+    }
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, [refreshLlmSettings, refreshRemoteKnowledgeBases, refreshServices]);
+
+  useEffect(() => {
+    if (activeEntry !== 'opencode') return;
+    if (!llmSettings?.hasApiKey) return;
+    if (!services?.opencode.running || !services.opencode.healthy) return;
+    if (sessionViewerUrl || busy) return;
+    if (autoStartAttempted.current) return;
+
+    autoStartAttempted.current = true;
+    createOpenCodeSession().catch((err) => {
+      autoStartAttempted.current = false;
+      setError(friendlyError(err));
+    });
+  }, [activeEntry, busy, llmSettings?.hasApiKey, services?.opencode.healthy, services?.opencode.running, sessionViewerUrl]);
 
   async function saveBackendUrl(event: FormEvent) {
     event.preventDefault();
@@ -96,11 +223,12 @@ export default function App() {
     setError('');
     try {
       const remote = await invoke<RemoteKnowledgeBase>('add_remote_knowledge_base', {
-        input: { name: remoteName || null, url: remoteUrl }
+        input: { name: remoteName || null, url: remoteUrl, token: remoteToken || null }
       });
       setRemoteKnowledgeBases((items) => sortRemoteKnowledgeBases(upsertRemoteKnowledgeBase(items, remote)));
       setRemoteName('');
       setRemoteUrl('');
+      setRemoteToken('');
       setActiveRemoteId(remote.remoteId);
       setNotice(remote.status === 'ready' ? '远程知识库已添加' : `远程知识库已添加：${remoteStatusLabel(remote.status)}`);
     } catch (err) {
@@ -111,15 +239,114 @@ export default function App() {
   }
 
   async function openRemoteKnowledgeBase(remote: RemoteKnowledgeBase) {
+    if (!llmSettings?.hasApiKey) {
+      setError('请先保存模型供应商和 API Key，然后再打开远程知识库。');
+      return;
+    }
     setActiveRemoteId(remote.remoteId);
     setActiveEntry('opencode');
-    setFrameKey((key) => key + 1);
+    setViewerMode('remote');
+    setBusy(`remote-open-${remote.remoteId}`);
+    setError('');
     try {
-      const updated = await invoke<RemoteKnowledgeBase>('touch_remote_knowledge_base', { remoteId: remote.remoteId });
-      setRemoteKnowledgeBases((items) => sortRemoteKnowledgeBases(upsertRemoteKnowledgeBase(items, updated)));
-    } catch {
-      // The viewer can still open even if the timestamp update fails.
+      const result = await invoke<RemoteKnowledgeBaseConnect>('ensure_opencode_for_remote', { remoteId: remote.remoteId });
+      await refreshServices();
+      setRemoteKnowledgeBases((items) => sortRemoteKnowledgeBases(upsertRemoteKnowledgeBase(items, result.remote)));
+      setSessionViewerUrl(result.session.url);
+      setFrameKey((key) => key + 1);
+      const mcp = result.stack.mcpStatus ? `，MCP ${mcpStatusLabel(result.stack.mcpStatus)}` : '';
+      setNotice(`本地 OpenCode 已连接远程知识库并创建对话${mcp}`);
+    } catch (err) {
+      setError(friendlyError(err));
+    } finally {
+      setBusy('');
     }
+  }
+
+  async function saveLlmSettings(event: FormEvent) {
+    event.preventDefault();
+    setBusy('llm-settings');
+    setError('');
+    try {
+      const payload = llmSettingsPayload(llmModeDraft, relayProviderDraft, llmModelDraft, llmBaseUrlDraft, llmApiKeyDraft);
+      const next = await invoke<LlmSettings>('save_llm_settings', {
+        input: payload
+      });
+      applyLlmSettingsToDraft(next);
+      setLlmApiKeyDraft('');
+      setNotice('模型设置已保存');
+    } catch (err) {
+      setError(friendlyError(err));
+    } finally {
+      setBusy('');
+    }
+  }
+
+  async function clearLlmSettings() {
+    setBusy('llm-clear');
+    setError('');
+    try {
+      const next = await invoke<LlmSettings>('clear_llm_settings');
+      applyLlmSettingsToDraft(next);
+      setLlmApiKeyDraft('');
+      await refreshServices();
+      setNotice('API Key 已清除');
+    } catch (err) {
+      setError(friendlyError(err));
+    } finally {
+      setBusy('');
+    }
+  }
+
+  async function startLocalOpenCode(options: { auto?: boolean } = {}) {
+    setBusy('opencode-start');
+    if (!options.auto) setError('');
+    try {
+      const stack = await invoke<OpenCodeStack>('ensure_opencode_stack_running');
+      await refreshServices();
+      if (stack.sessionUrl) {
+        setSessionViewerUrl(stack.sessionUrl);
+        setFrameKey((key) => key + 1);
+      } else {
+        await openNewOpenCodeSession();
+      }
+      setViewerMode('local');
+      setActiveRemoteId('');
+      setNotice(options.auto ? `本地 OpenCode 已自动启动并创建对话：${stack.opencodeUrl}` : `本地 OpenCode 已启动并创建对话：${stack.opencodeUrl}`);
+    } catch (err) {
+      if (options.auto) {
+        setNotice('');
+      }
+      setError(friendlyError(err));
+    } finally {
+      setBusy('');
+    }
+  }
+
+  async function stopLocalOpenCode() {
+    setBusy('opencode-stop');
+    setError('');
+    try {
+      await invoke('stop_opencode_stack');
+      await refreshServices();
+      setSessionViewerUrl('');
+      setNotice('本地 OpenCode 已停止');
+    } catch (err) {
+      setError(friendlyError(err));
+    } finally {
+      setBusy('');
+    }
+  }
+
+  function changeLlmMode(mode: LlmMode) {
+    const previousDefault = defaultModelForMode(llmModeDraft);
+    setLlmModeDraft(mode);
+    if (mode === 'openai') setLlmBaseUrlDraft('');
+    if (mode === 'deepseek') setLlmBaseUrlDraft(DEEPSEEK_BASE_URL);
+    setLlmModelDraft((current) => {
+      if (!current || current === previousDefault) return defaultModelForMode(mode);
+      return current;
+    });
   }
 
   async function removeRemoteKnowledgeBase(remote: RemoteKnowledgeBase) {
@@ -160,6 +387,62 @@ export default function App() {
     } finally {
       setBusy('');
     }
+  }
+
+  async function selectRemoteProject(remote: RemoteKnowledgeBase, projectId: string) {
+    setBusy(`remote-project-${remote.remoteId}`);
+    setError('');
+    try {
+      const updated = await invoke<RemoteKnowledgeBase>('select_remote_knowledge_base_project', {
+        remoteId: remote.remoteId,
+        projectId
+      });
+      setRemoteKnowledgeBases((items) => sortRemoteKnowledgeBases(upsertRemoteKnowledgeBase(items, updated)));
+      setNotice(`已选择知识库项目：${updated.currentProject?.name || projectId}`);
+    } catch (err) {
+      setError(friendlyError(err));
+    } finally {
+      setBusy('');
+    }
+  }
+
+  async function createOpenCodeSession(options: { forceLocal?: boolean } = {}) {
+    setBusy('opencode-session');
+    setError('');
+    try {
+      if (!options.forceLocal && viewerMode === 'remote' && activeRemote) {
+        const result = await invoke<RemoteKnowledgeBaseConnect>('ensure_opencode_for_remote', { remoteId: activeRemote.remoteId });
+        await refreshServices();
+        setRemoteKnowledgeBases((items) => sortRemoteKnowledgeBases(upsertRemoteKnowledgeBase(items, result.remote)));
+        setSessionViewerUrl(result.session.url);
+        setFrameKey((key) => key + 1);
+        const mcp = result.stack.mcpStatus ? `，MCP ${mcpStatusLabel(result.stack.mcpStatus)}` : '';
+        setNotice(`OpenCode 远程知识库对话已创建${mcp}`);
+        return;
+      }
+      const stack = await invoke<OpenCodeStack>('ensure_opencode_stack_running');
+      await refreshServices();
+      if (stack.sessionUrl) {
+        setSessionViewerUrl(stack.sessionUrl);
+        setFrameKey((key) => key + 1);
+      } else {
+        await openNewOpenCodeSession();
+      }
+      setViewerMode('local');
+      setActiveRemoteId('');
+      setNotice('OpenCode 对话已创建');
+    } catch (err) {
+      setError(friendlyError(err));
+    } finally {
+      setBusy('');
+    }
+  }
+
+  async function openNewOpenCodeSession() {
+    const session = await invoke<OpenCodeSession>('create_opencode_session');
+    setSessionViewerUrl(session.url);
+    setFrameKey((key) => key + 1);
+    return session;
   }
 
   return (
@@ -234,8 +517,158 @@ export default function App() {
               <section className="opencode-section">
                 <div className="section-heading compact">
                   <div>
+                    <h2>模型设置</h2>
+                    <p>{llmSettings?.hasApiKey ? `${modelProviderLabel(llmSettings.provider)} / ${llmSettings.model}` : '默认 DeepSeek，只需保存 API Key'}</p>
+                  </div>
+                  {llmSettings?.hasApiKey && (
+                    <span className="remote-status" data-status="ready">
+                      已配置
+                    </span>
+                  )}
+                </div>
+                <form className="llm-form" onSubmit={saveLlmSettings}>
+                  <label>
+                    {modelProviderLabel(currentProviderId(llmModeDraft, relayProviderDraft))} API Key
+                    <input
+                      value={llmApiKeyDraft}
+                      onChange={(event) => setLlmApiKeyDraft(event.target.value)}
+                      placeholder={llmSettings?.hasApiKey ? '留空则保留当前 Key' : '粘贴 API Key'}
+                      type="password"
+                      autoComplete="off"
+                    />
+                  </label>
+                  <button
+                    type="button"
+                    className="text-button"
+                    onClick={() => setShowAdvancedModel((value) => !value)}
+                  >
+                    {showAdvancedModel ? '收起高级模型设置' : '高级模型设置'}
+                  </button>
+                  {showAdvancedModel && (
+                    <div className="advanced-model-panel">
+                      <div className="provider-tabs" role="tablist" aria-label="模型供应商">
+                        <button
+                          type="button"
+                          className={llmModeDraft === 'openai' ? 'active' : ''}
+                          onClick={() => changeLlmMode('openai')}
+                        >
+                          OpenAI
+                        </button>
+                        <button
+                          type="button"
+                          className={llmModeDraft === 'deepseek' ? 'active' : ''}
+                          onClick={() => changeLlmMode('deepseek')}
+                        >
+                          DeepSeek
+                        </button>
+                        <button
+                          type="button"
+                          className={llmModeDraft === 'relay' ? 'active' : ''}
+                          onClick={() => changeLlmMode('relay')}
+                        >
+                          中转站
+                        </button>
+                      </div>
+                      {llmModeDraft === 'relay' && (
+                        <label>
+                          Provider ID
+                          <input
+                            value={relayProviderDraft}
+                            onChange={(event) => setRelayProviderDraft(event.target.value)}
+                            placeholder="默认 openai，可填 openrouter / custom-openai"
+                          />
+                        </label>
+                      )}
+                      <label>
+                        模型
+                        <input
+                          value={llmModelDraft}
+                          onChange={(event) => setLlmModelDraft(event.target.value)}
+                          placeholder={defaultModelForMode(llmModeDraft)}
+                        />
+                      </label>
+                      {llmModeDraft === 'relay' && (
+                        <label>
+                          Base URL
+                          <input
+                            value={llmBaseUrlDraft}
+                            onChange={(event) => setLlmBaseUrlDraft(event.target.value)}
+                            placeholder="https://example.com/v1"
+                          />
+                        </label>
+                      )}
+                    </div>
+                  )}
+                  <div className="card-actions compact-actions">
+                    <button className="primary" disabled={busy === 'llm-settings'}>
+                      <Save size={17} />
+                      保存
+                    </button>
+                    <button
+                      type="button"
+                      className="secondary"
+                      onClick={clearLlmSettings}
+                      disabled={!llmSettings?.hasApiKey || busy === 'llm-clear'}
+                    >
+                      <Trash2 size={17} />
+                      清除 Key
+                    </button>
+                  </div>
+                </form>
+              </section>
+
+              <section className="opencode-section">
+                <div className="section-heading compact">
+                  <div>
+                    <h2>本地 OpenCode</h2>
+                    <p>{services?.opencode.running ? services.opencode.url : '用于本机知识库联调'}</p>
+                  </div>
+                  <span className="remote-status" data-status={services?.opencode.healthy ? 'ready' : 'unreachable'}>
+                    {services?.opencode.healthy ? '运行中' : '未启动'}
+                  </span>
+                </div>
+                {!llmSettings?.hasApiKey && (
+                  <div className="inline-alert opencode-config-alert">
+                    请先保存模型供应商和 API Key，然后再启动本地 OpenCode。
+                  </div>
+                )}
+                <div className="card-actions compact-actions">
+	                  <button
+	                    className="primary"
+	                    onClick={() => startLocalOpenCode()}
+	                    disabled={!llmSettings?.hasApiKey || busy === 'opencode-start'}
+	                  >
+                    <Play size={17} />
+                    启动
+                  </button>
+	                  <button
+	                    className="secondary"
+	                    onClick={() => createOpenCodeSession({ forceLocal: true })}
+	                    disabled={!llmSettings?.hasApiKey || busy === 'opencode-session'}
+	                  >
+	                    <TerminalSquare size={17} />
+	                    进入对话
+	                  </button>
+                  <button
+                    className="secondary"
+                    onClick={stopLocalOpenCode}
+                    disabled={!services?.opencode.running || busy === 'opencode-stop'}
+                  >
+                    <Power size={17} />
+                    停止
+                  </button>
+                </div>
+                <div className="service-log-list">
+                  <span>OpenCode：{serviceLabel(services?.opencode)}</span>
+                  <span>LLM Wiki：{serviceLabel(services?.llmWiki)}</span>
+                </div>
+              </section>
+
+              <section className="opencode-section">
+                <div className="section-heading compact">
+                  <div>
                     <h2>添加远程知识库</h2>
-                    <p>粘贴别人分享的 OpenCode 公网地址。</p>
+                    <p>粘贴分享方提供的 LLM Wiki API 地址。</p>
                   </div>
                 </div>
                 <form className="remote-form" onSubmit={addRemoteKnowledgeBase}>
@@ -244,11 +677,21 @@ export default function App() {
                     <input value={remoteName} onChange={(event) => setRemoteName(event.target.value)} placeholder="可留空" />
                   </label>
                   <label>
-                    分享链接
+                    API 地址
                     <input
                       value={remoteUrl}
                       onChange={(event) => setRemoteUrl(event.target.value)}
-                      placeholder="https://wiki.example.com"
+                      placeholder="https://wiki.example.com 或 /api/v1"
+                    />
+                  </label>
+                  <label>
+                    Token
+                    <input
+                      value={remoteToken}
+                      onChange={(event) => setRemoteToken(event.target.value)}
+                      placeholder="可选"
+                      type="password"
+                      autoComplete="off"
                     />
                   </label>
                   <button className="primary" disabled={busy === 'remote-add' || !remoteUrl.trim()}>
@@ -262,7 +705,7 @@ export default function App() {
                 <div className="section-heading compact">
                   <div>
                     <h2>远程知识库</h2>
-                    <p>{remoteKnowledgeBases.length ? `${remoteKnowledgeBases.length} 个分享链接` : '还没有添加远程链接'}</p>
+                    <p>{remoteKnowledgeBases.length ? `${remoteKnowledgeBases.length} 个 API 分享` : '还没有添加远程 API'}</p>
                   </div>
                   <button className="icon-button" title="刷新列表" onClick={() => refreshRemoteKnowledgeBases()} disabled={Boolean(busy)}>
                     <RefreshCcw size={17} aria-hidden="true" />
@@ -278,16 +721,41 @@ export default function App() {
                         <div className="remote-card-heading">
                           <div>
                             <strong>{remote.name}</strong>
-                            <span>{remote.url}</span>
+                            <span>{remote.apiUrl || remote.url}</span>
                           </div>
                           <span className="remote-status" data-status={remote.status}>
                             {remoteStatusLabel(remote.status)}
                           </span>
                         </div>
+                        <div className="remote-card-meta">
+                          <span>项目：{remote.projectCount || 0}</span>
+                          <span>当前：{remote.currentProject?.name || '未选择'}</span>
+                          <span>MCP：{mcpStatusLabel(remote.mcpStatus)}</span>
+                        </div>
+                        {remote.projects?.length ? (
+                          <label className="remote-project-select">
+                            选择知识库
+                            <select
+                              value={remote.currentProject?.id || remote.projects[0]?.id || ''}
+                              onChange={(event) => selectRemoteProject(remote, event.target.value)}
+                              disabled={busy === `remote-project-${remote.remoteId}` || busy === `remote-open-${remote.remoteId}`}
+                            >
+                              {remote.projects.map((project) => (
+                                <option key={project.id} value={project.id}>
+                                  {project.name || project.id}
+                                </option>
+                              ))}
+                            </select>
+                          </label>
+                        ) : null}
                         <div className="card-actions">
-                          <button className="secondary compact" onClick={() => openRemoteKnowledgeBase(remote)}>
+                          <button
+                            className="secondary compact"
+                            onClick={() => openRemoteKnowledgeBase(remote)}
+                            disabled={!llmSettings?.hasApiKey || busy === `remote-open-${remote.remoteId}`}
+                          >
                             <Globe2 size={15} />
-                            打开
+                            连接
                           </button>
                           <button
                             className="secondary compact"
@@ -310,7 +778,7 @@ export default function App() {
                     ))}
                   </div>
                 ) : (
-                  <div className="empty-state compact">添加 OpenCode 公网地址后可在 App 内查看。</div>
+                  <div className="empty-state compact">添加 LLM Wiki API 地址后可连接到本地 OpenCode。</div>
                 )}
               </section>
             </aside>
@@ -319,9 +787,19 @@ export default function App() {
               <div className="viewer-toolbar">
                 <div>
                   <strong>{viewerTitle}</strong>
-                  <span>{viewerUrl || '请选择或添加别人分享的 OpenCode 公网地址'}</span>
+                  <span>
+                    {viewerUrl || viewerPlaceholder}
+                  </span>
                 </div>
                 <div className="card-actions">
+                  <button
+                    className="primary"
+                    onClick={() => createOpenCodeSession()}
+                    disabled={!llmSettings?.hasApiKey || busy === 'opencode-session' || busy === 'opencode-start'}
+                  >
+                    <Plus size={17} />
+                    {viewerUrl ? '新建对话' : '启动并进入'}
+                  </button>
                   {viewerUrl && (
                     <button className="secondary" onClick={() => setFrameKey((key) => key + 1)}>
                       <RefreshCcw size={17} />
@@ -337,12 +815,35 @@ export default function App() {
                 </div>
               </div>
               {viewerUrl ? (
-                <iframe className="opencode-frame" src={viewerUrl} title={viewerTitle} key={`${viewerUrl}-${frameKey}`} />
+                <div className="opencode-frame-wrap">
+                  <iframe className="opencode-frame" src={viewerUrl} title={viewerTitle} key={`${viewerUrl}-${frameKey}`} />
+                  <div className="opencode-frame-hint">
+                    <span>如果当前页没有输入框，请使用外层“新建对话”创建会话。</span>
+                    <button
+                      className="secondary compact"
+                      onClick={() => createOpenCodeSession()}
+                      disabled={!llmSettings?.hasApiKey || busy === 'opencode-session' || busy === 'opencode-start'}
+                    >
+                      <Plus size={15} />
+                      新建对话
+                    </button>
+                  </div>
+                </div>
               ) : (
                 <div className="remote-empty-panel">
-                  <Globe2 size={32} aria-hidden="true" />
-                  <h1>远程知识库</h1>
-                  <p>添加别人分享的 OpenCode 公网地址后，就可以在这里向对方的知识库提问。</p>
+                  <TerminalSquare size={32} aria-hidden="true" />
+                  <h1>本地 OpenCode</h1>
+                  <p>
+                    保存模型设置后，可在这里通过本地 OpenCode 提问。
+                  </p>
+                  <button
+                    className="primary"
+                    onClick={() => (services?.opencode.running ? createOpenCodeSession({ forceLocal: true }) : startLocalOpenCode())}
+                    disabled={!llmSettings?.hasApiKey || busy === 'opencode-session' || busy === 'opencode-start'}
+                  >
+                    <TerminalSquare size={17} />
+                    {services?.opencode.running ? '进入对话' : '启动并进入'}
+                  </button>
                 </div>
               )}
             </div>
@@ -353,9 +854,48 @@ export default function App() {
   );
 }
 
-function openCodeKnowledgeUrl(url: string) {
-  const base = url.trim().replace(/\/+$/, '');
-  return base;
+function inferLlmMode(settings: LlmSettings): LlmMode {
+  const provider = settings.provider.trim().toLowerCase();
+  const baseUrl = (settings.baseUrl || '').trim().replace(/\/+$/, '');
+  if (provider === 'deepseek' && (!baseUrl || baseUrl === DEEPSEEK_BASE_URL)) return 'deepseek';
+  if (provider === 'openai' && !baseUrl) return 'openai';
+  return 'relay';
+}
+
+function llmSettingsPayload(mode: LlmMode, relayProvider: string, model: string, baseUrl: string, apiKey: string) {
+  const provider = currentProviderId(mode, relayProvider);
+  if (mode === 'openai') return { provider, model, apiKey: apiKey.trim() || null, baseUrl: null };
+  if (mode === 'deepseek') return { provider, model, apiKey: apiKey.trim() || null, baseUrl: DEEPSEEK_BASE_URL };
+  return {
+    provider,
+    model,
+    apiKey: apiKey.trim() || null,
+    baseUrl: baseUrl.trim() || null
+  };
+}
+
+function currentProviderId(mode: LlmMode, relayProvider: string) {
+  if (mode === 'openai') return 'openai';
+  if (mode === 'deepseek') return 'deepseek';
+  return relayProvider.trim() || 'openai';
+}
+
+function defaultModelForMode(mode: LlmMode) {
+  if (mode === 'deepseek') return 'deepseek-chat';
+  return 'gpt-5';
+}
+
+function modelProviderLabel(provider: string) {
+  const normalized = provider.trim().toLowerCase();
+  if (normalized === 'deepseek') return 'DeepSeek';
+  if (normalized === 'openai') return 'OpenAI';
+  return provider || '自定义';
+}
+
+function serviceLabel(service?: SidecarState | null) {
+  if (!service?.running) return '未启动';
+  if (service.healthy) return service.url || '运行中';
+  return service.url ? `${service.url}（启动中）` : '启动中';
 }
 
 function sortRemoteKnowledgeBases(items: RemoteKnowledgeBase[]) {
@@ -376,16 +916,29 @@ function remoteStatusLabel(status: string) {
   const labels: Record<string, string> = {
     ready: '可用',
     llm_wiki_unavailable: '知识库异常',
-    auth_required: '需登录',
+    auth_required: '需 Token',
     unreachable: '不可达',
-    not_opencode: '非 OpenCode'
+    not_llm_wiki: '非知识库 API',
+    no_projects: '无项目'
   };
   return labels[status] || status;
+}
+
+function mcpStatusLabel(status?: string | null) {
+  const labels: Record<string, string> = {
+    connected: '已注册',
+    registered: '已注册',
+    disabled: '未启用',
+    failed: '失败',
+    not_registered: '未注册'
+  };
+  return labels[status || 'not_registered'] || status || '未注册';
 }
 
 function friendlyError(error: unknown) {
   const text = error instanceof Error ? error.message : typeof error === 'string' ? error : '操作失败';
   if (text.includes('二进制') || text.includes('启动') || text.includes('端口')) return text;
+  if (text.includes('模型供应商') || text.includes('API Key') || text.includes('模型名称')) return text;
   if (text.includes('后端地址') || text.includes('backend')) return text;
   if (text.includes('OpenCode') || text.includes('分享链接') || text.includes('远程知识库')) return text;
   return '操作未完成，请稍后重试';

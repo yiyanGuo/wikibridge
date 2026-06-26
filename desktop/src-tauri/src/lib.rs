@@ -7,7 +7,9 @@ use std::{
     time::{Duration, SystemTime, UNIX_EPOCH},
 };
 
+use reqwest::header::{HeaderMap, HeaderValue, AUTHORIZATION};
 use serde::Serialize;
+use serde_json::Value;
 use tauri::{AppHandle, Manager, State};
 use url::Url;
 
@@ -23,8 +25,9 @@ use api::{
 };
 use frpc::ProcessStateDto;
 use state::{
-    AppSnapshot, BuildStatus, DesktopRuntime, KnowledgeProject, LinkStatus, PersistedState,
-    ProjectConnection, ProjectMaterial, RemoteKnowledgeBase,
+    AppSnapshot, BuildStatus, DesktopRuntime, KnowledgeProject, LinkStatus, LlmSettingsDto,
+    PersistedState, ProjectConnection, ProjectMaterial, RemoteKnowledgeBase,
+    RemoteKnowledgeBaseProject, SaveLlmSettingsInput,
 };
 
 type SharedRuntime = Mutex<DesktopRuntime>;
@@ -55,6 +58,8 @@ pub struct CreateConnectionInput {
 pub struct AddRemoteKnowledgeBaseInput {
     pub name: Option<String>,
     pub url: String,
+    #[serde(default)]
+    pub token: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -89,12 +94,24 @@ pub struct ProjectAssetDto {
 #[serde(rename_all = "camelCase")]
 pub struct RemoteKnowledgeBaseCheckDto {
     pub url: String,
+    pub api_url: String,
     pub ok: bool,
     pub status: String,
     pub message: String,
-    pub opencode_healthy: bool,
     pub llm_wiki_healthy: bool,
-    pub kb_mode: Option<bool>,
+    pub project_count: usize,
+    pub projects: Vec<RemoteKnowledgeBaseProject>,
+    pub current_project: Option<RemoteKnowledgeBaseProject>,
+    pub auth_required: bool,
+    pub mcp_status: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct RemoteKnowledgeBaseConnectDto {
+    pub stack: sidecar::OpenCodeStackDto,
+    pub remote: RemoteKnowledgeBase,
+    pub session: sidecar::OpenCodeSessionDto,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -154,6 +171,28 @@ fn set_bearfrp_backend_url(
 }
 
 #[tauri::command]
+fn get_llm_settings(runtime: State<'_, SharedRuntime>) -> Result<LlmSettingsDto, String> {
+    let runtime = runtime.lock().map_err(lock_error)?;
+    Ok(runtime.llm_settings_dto())
+}
+
+#[tauri::command]
+fn save_llm_settings(
+    runtime: State<'_, SharedRuntime>,
+    input: SaveLlmSettingsInput,
+) -> Result<LlmSettingsDto, String> {
+    let mut runtime = runtime.lock().map_err(lock_error)?;
+    runtime.set_llm_settings(input)
+}
+
+#[tauri::command]
+fn clear_llm_settings(runtime: State<'_, SharedRuntime>) -> Result<LlmSettingsDto, String> {
+    let mut runtime = runtime.lock().map_err(lock_error)?;
+    sidecar::stop_opencode_stack(&mut runtime);
+    runtime.clear_llm_settings()
+}
+
+#[tauri::command]
 fn ensure_opencode_stack_running(
     app: AppHandle,
     runtime: State<'_, SharedRuntime>,
@@ -167,6 +206,14 @@ fn stop_opencode_stack(runtime: State<'_, SharedRuntime>) -> Result<(), String> 
     let mut runtime = runtime.lock().map_err(lock_error)?;
     sidecar::stop_opencode_stack(&mut runtime);
     Ok(())
+}
+
+#[tauri::command]
+fn create_opencode_session(
+    runtime: State<'_, SharedRuntime>,
+) -> Result<sidecar::OpenCodeSessionDto, String> {
+    let mut runtime = runtime.lock().map_err(lock_error)?;
+    sidecar::create_opencode_session(&mut runtime)
 }
 
 #[tauri::command]
@@ -211,17 +258,18 @@ async fn add_remote_knowledge_base(
     runtime: State<'_, SharedRuntime>,
     input: AddRemoteKnowledgeBaseInput,
 ) -> Result<RemoteKnowledgeBase, String> {
-    let check = probe_remote_knowledge_base_url(&input.url).await?;
+    let token = normalize_optional_token(input.token);
+    let check = probe_remote_knowledge_base_url(&input.url, token.as_deref()).await?;
     if !check.ok {
         return Err(check.message);
     }
-    let name = normalize_remote_name(input.name.as_deref(), &check.url)?;
+    let name = normalize_remote_name(input.name.as_deref(), &check.api_url)?;
     let mut runtime = runtime.lock().map_err(lock_error)?;
     if let Some(remote_id) = runtime
         .persisted
         .remote_knowledge_bases
         .values()
-        .find(|item| item.url == check.url)
+        .find(|item| item.api_url == check.api_url || item.url == check.url)
         .map(|item| item.remote_id.clone())
     {
         let remote = runtime
@@ -230,17 +278,35 @@ async fn add_remote_knowledge_base(
             .get_mut(&remote_id)
             .ok_or_else(|| "远程知识库不存在".to_string())?;
         remote.name = name;
+        remote.url = check.url.clone();
+        remote.api_url = check.api_url.clone();
         remote.status = check.status;
+        remote.project_count = check.project_count;
+        let (projects, current_project) =
+            merge_remote_project_selection(check.projects, check.current_project, remote.current_project.as_ref());
+        remote.projects = projects;
+        remote.current_project = current_project;
+        remote.auth_required = check.auth_required;
+        remote.token = token;
         remote.last_opened_at = Some(unix_timestamp());
         let updated = remote.clone();
         runtime.save()?;
         return Ok(updated);
     }
+    let (projects, current_project) =
+        merge_remote_project_selection(check.projects, check.current_project, None);
     let remote = RemoteKnowledgeBase {
         remote_id: new_id("remote"),
         name,
         url: check.url,
+        api_url: check.api_url,
         status: check.status,
+        project_count: check.project_count,
+        projects,
+        current_project,
+        auth_required: check.auth_required,
+        mcp_status: "not_registered".to_string(),
+        token,
         added_at: unix_timestamp(),
         last_opened_at: Some(unix_timestamp()),
     };
@@ -280,26 +346,147 @@ fn touch_remote_knowledge_base(
 }
 
 #[tauri::command]
+fn select_remote_knowledge_base_project(
+    runtime: State<'_, SharedRuntime>,
+    remote_id: String,
+    project_id: String,
+) -> Result<RemoteKnowledgeBase, String> {
+    let mut runtime = runtime.lock().map_err(lock_error)?;
+    let remote = runtime
+        .persisted
+        .remote_knowledge_bases
+        .get_mut(&remote_id)
+        .ok_or_else(|| "远程知识库不存在".to_string())?;
+    let project = remote
+        .projects
+        .iter()
+        .find(|project| project.id == project_id)
+        .cloned()
+        .ok_or_else(|| "所选知识库项目不存在，请先重新检测远程知识库".to_string())?;
+    remote.projects = remote
+        .projects
+        .iter()
+        .cloned()
+        .map(|mut item| {
+            item.current = item.id == project.id;
+            item
+        })
+        .collect();
+    let mut selected = project;
+    selected.current = true;
+    remote.current_project = Some(selected);
+    remote.mcp_status = "not_registered".to_string();
+    let updated = remote.clone();
+    runtime.save()?;
+    Ok(updated)
+}
+
+#[tauri::command]
 async fn check_remote_knowledge_base(
     runtime: State<'_, SharedRuntime>,
     url: String,
 ) -> Result<RemoteKnowledgeBaseCheckDto, String> {
-    let check = probe_remote_knowledge_base_url(&url).await?;
+    let token = {
+        let runtime = runtime.lock().map_err(lock_error)?;
+        runtime
+            .persisted
+            .remote_knowledge_bases
+            .values()
+            .find(|item| item.url == url || item.api_url == url)
+            .and_then(|item| item.token.clone())
+    };
+    let check = probe_remote_knowledge_base_url(&url, token.as_deref()).await?;
     let mut runtime = runtime.lock().map_err(lock_error)?;
     if let Some(remote_id) = runtime
         .persisted
         .remote_knowledge_bases
         .values()
-        .find(|item| item.url == check.url || item.url == url)
+        .find(|item| item.url == check.url || item.api_url == check.api_url || item.url == url)
         .map(|item| item.remote_id.clone())
     {
         if let Some(remote) = runtime.persisted.remote_knowledge_bases.get_mut(&remote_id) {
             remote.url = check.url.clone();
+            remote.api_url = check.api_url.clone();
             remote.status = check.status.clone();
+            remote.project_count = check.project_count;
+            let (projects, current_project) = merge_remote_project_selection(
+                check.projects.clone(),
+                check.current_project.clone(),
+                remote.current_project.as_ref(),
+            );
+            remote.projects = projects;
+            remote.current_project = current_project;
+            remote.auth_required = check.auth_required;
         }
         runtime.save()?;
     }
     Ok(check)
+}
+
+#[tauri::command]
+async fn probe_remote_llm_wiki(
+    url: String,
+    token: Option<String>,
+) -> Result<RemoteKnowledgeBaseCheckDto, String> {
+    probe_remote_knowledge_base_url(&url, normalize_optional_token(token).as_deref()).await
+}
+
+#[tauri::command]
+async fn ensure_opencode_for_remote(
+    app: AppHandle,
+    runtime: State<'_, SharedRuntime>,
+    remote_id: String,
+) -> Result<RemoteKnowledgeBaseConnectDto, String> {
+    let remote = {
+        let runtime = runtime.lock().map_err(lock_error)?;
+        runtime
+            .persisted
+            .remote_knowledge_bases
+            .get(&remote_id)
+            .cloned()
+            .ok_or_else(|| "远程知识库不存在".to_string())?
+    };
+    let probe_url = if remote.api_url.trim().is_empty() {
+        remote.url.as_str()
+    } else {
+        remote.api_url.as_str()
+    };
+    let check = probe_remote_knowledge_base_url(probe_url, remote.token.as_deref()).await?;
+    if !check.ok {
+        return Err(check.message);
+    }
+
+    let mut runtime = runtime.lock().map_err(lock_error)?;
+    let mut remote = runtime
+        .persisted
+        .remote_knowledge_bases
+        .get(&remote_id)
+        .cloned()
+        .ok_or_else(|| "远程知识库不存在".to_string())?;
+    remote.url = check.url;
+    remote.api_url = check.api_url;
+    remote.status = check.status;
+    remote.project_count = check.project_count;
+    let (projects, current_project) =
+        merge_remote_project_selection(check.projects, check.current_project, remote.current_project.as_ref());
+    remote.projects = projects;
+    remote.current_project = current_project;
+    remote.auth_required = check.auth_required;
+    remote.last_opened_at = Some(unix_timestamp());
+
+    let mut stack = sidecar::ensure_opencode_for_remote(&app, &mut runtime, &remote)?;
+    let session = sidecar::create_opencode_session(&mut runtime)?;
+    stack.session_id = Some(session.session_id.clone());
+    stack.session_url = Some(session.url.clone());
+    if let Some(status) = stack.mcp_status.clone() {
+        remote.mcp_status = status;
+    }
+    runtime
+        .persisted
+        .remote_knowledge_bases
+        .insert(remote.remote_id.clone(), remote.clone());
+    runtime.save()?;
+    Ok(RemoteKnowledgeBaseConnectDto { stack, remote, session })
 }
 
 #[tauri::command]
@@ -627,9 +814,10 @@ async fn create_connection(
         proxy_id: 0,
         local_host: local_service::SERVICE_HOST.to_string(),
         local_port,
+        traffic_mb,
         created_at: unix_timestamp(),
     };
-    ensure_project_chat_service(&app, &runtime, &project, Some(local_port))?;
+    ensure_project_api_service(&app, &runtime, &project, local_port)?;
     let proxy = match create_connection_proxy(
         &client,
         &user,
@@ -642,7 +830,7 @@ async fn create_connection(
         Ok(proxy) => proxy,
         Err(error) => {
             let mut runtime = runtime.lock().map_err(lock_error)?;
-            sidecar::stop_project_chat(&mut runtime, &input.project_id);
+            sidecar::stop_project_llm_wiki_server(&mut runtime, &input.project_id);
             return Err(error);
         }
     };
@@ -673,9 +861,10 @@ async fn start_connection(
     connection_id: String,
 ) -> Result<ProjectConnectionDto, String> {
     let client = client_from_runtime(&runtime)?;
-    let connection = get_connection(&runtime, &connection_id)?;
+    let mut connection = get_connection(&runtime, &connection_id)?;
     let project = get_project(&runtime, &connection.project_id)?;
-    ensure_project_chat_service(&app, &runtime, &project, Some(connection.local_port))?;
+    connection = ensure_connection_proxy_active(&runtime, &client, &project, connection).await?;
+    ensure_project_api_service(&app, &runtime, &project, connection.local_port)?;
     let scripts = client.get_proxy_scripts(connection.proxy_id).await?;
     {
         let mut runtime = runtime.lock().map_err(lock_error)?;
@@ -696,10 +885,11 @@ async fn stop_connection(
 ) -> Result<ProjectConnectionDto, String> {
     let client = client_from_runtime(&runtime)?;
     let connection = get_connection(&runtime, &connection_id)?;
+    let _ = client.stop_proxy(connection.proxy_id).await;
     {
         let mut runtime = runtime.lock().map_err(lock_error)?;
         frpc::stop_frpc(&mut runtime, connection.proxy_id, true)?;
-        sidecar::stop_project_chat(&mut runtime, &connection.project_id);
+        sidecar::stop_project_llm_wiki_server(&mut runtime, &connection.project_id);
     }
     connection_dto(&runtime, &client, &connection).await
 }
@@ -759,26 +949,34 @@ fn check_local_port(host: String, port: u16) -> Result<bool, String> {
     Ok(false)
 }
 
-async fn probe_remote_knowledge_base_url(url: &str) -> Result<RemoteKnowledgeBaseCheckDto, String> {
-    let normalized = normalize_remote_opencode_url(url)?;
+async fn probe_remote_knowledge_base_url(
+    url: &str,
+    token: Option<&str>,
+) -> Result<RemoteKnowledgeBaseCheckDto, String> {
+    let normalized = normalize_remote_llm_wiki_url(url)?;
+    let api_url = normalize_remote_llm_wiki_api_url(&normalized)?;
     let client = reqwest::Client::builder()
         .timeout(Duration::from_secs(4))
         .redirect(reqwest::redirect::Policy::limited(5))
         .build()
         .map_err(|error| format!("无法创建远程探测客户端: {error}"))?;
 
-    let health = fetch_text(&client, &format!("{normalized}/global/health")).await;
+    let health = fetch_json_with_token(&client, &format!("{api_url}/health"), token).await;
     let (health_status, health_body) = match health {
         Ok(value) => value,
         Err(error) => {
             return Ok(RemoteKnowledgeBaseCheckDto {
                 url: normalized,
+                api_url,
                 ok: false,
                 status: "unreachable".to_string(),
-                message: format!("无法连接远程 OpenCode: {error}"),
-                opencode_healthy: false,
+                message: format!("无法连接远程知识库 API: {error}"),
                 llm_wiki_healthy: false,
-                kb_mode: None,
+                project_count: 0,
+                projects: Vec::new(),
+                current_project: None,
+                auth_required: false,
+                mcp_status: None,
             });
         }
     };
@@ -788,88 +986,287 @@ async fn probe_remote_knowledge_base_url(url: &str) -> Result<RemoteKnowledgeBas
     {
         return Ok(RemoteKnowledgeBaseCheckDto {
             url: normalized,
-            ok: true,
+            api_url,
+            ok: false,
             status: "auth_required".to_string(),
-            message: "远程 OpenCode 需要登录，打开后由 OpenCode 页面处理认证".to_string(),
-            opencode_healthy: false,
+            message: "远程知识库 API 需要 token，请填写分享方提供的 token".to_string(),
             llm_wiki_healthy: false,
-            kb_mode: None,
+            project_count: 0,
+            projects: Vec::new(),
+            current_project: None,
+            auth_required: true,
+            mcp_status: None,
         });
     }
 
-    if !health_status.is_success() || !health_body.contains("\"healthy\":true") {
+    if !health_status.is_success() {
         return Ok(RemoteKnowledgeBaseCheckDto {
             url: normalized,
+            api_url,
             ok: false,
-            status: "not_opencode".to_string(),
-            message: "该地址没有返回 OpenCode 健康检查，请确认分享的是 OpenCode Web 地址"
-                .to_string(),
-            opencode_healthy: false,
+            status: "not_llm_wiki".to_string(),
+            message: format!("该地址没有返回可用的知识库 API 健康检查（HTTP {health_status}）"),
             llm_wiki_healthy: false,
-            kb_mode: None,
+            project_count: 0,
+            projects: Vec::new(),
+            current_project: None,
+            auth_required: false,
+            mcp_status: None,
         });
     }
 
-    let llm_wiki_healthy = fetch_text(&client, &format!("{normalized}/instance/llm-wiki/health"))
-        .await
-        .map(|(status, _)| status.is_success())
+    if health_body.get("ok").and_then(Value::as_bool) != Some(true) {
+        return Ok(RemoteKnowledgeBaseCheckDto {
+            url: normalized,
+            api_url,
+            ok: false,
+            status: "llm_wiki_unavailable".to_string(),
+            message: "远程知识库 API 健康检查未返回 ok=true".to_string(),
+            llm_wiki_healthy: false,
+            project_count: 0,
+            projects: Vec::new(),
+            current_project: None,
+            auth_required: health_body
+                .get("authRequired")
+                .and_then(Value::as_bool)
+                .unwrap_or(false),
+            mcp_status: None,
+        });
+    }
+
+    let auth_required = health_body
+        .get("authRequired")
+        .and_then(Value::as_bool)
         .unwrap_or(false);
-
-    let kb_mode = fetch_text(&client, &normalized)
-        .await
-        .ok()
-        .and_then(|(status, body)| status.is_success().then(|| parse_kb_mode_meta(&body)))
-        .flatten();
-
-    let (status, message) = if llm_wiki_healthy {
-        (
-            "ready".to_string(),
-            "远程 OpenCode 和知识库服务可用".to_string(),
-        )
-    } else {
-        (
-            "llm_wiki_unavailable".to_string(),
-            "远程 OpenCode 可用，但它暂时无法连接知识库服务".to_string(),
-        )
+    let projects = fetch_json_with_token(&client, &format!("{api_url}/projects"), token).await;
+    let (projects_status, projects_body) = match projects {
+        Ok(value) => value,
+        Err(error) => {
+            return Ok(RemoteKnowledgeBaseCheckDto {
+                url: normalized,
+                api_url,
+                ok: false,
+                status: "llm_wiki_unavailable".to_string(),
+                message: format!("知识库 API 健康检查通过，但项目列表不可用: {error}"),
+                llm_wiki_healthy: true,
+                project_count: 0,
+                projects: Vec::new(),
+                current_project: None,
+                auth_required,
+                mcp_status: None,
+            });
+        }
     };
+    if projects_status == reqwest::StatusCode::UNAUTHORIZED
+        || projects_status == reqwest::StatusCode::FORBIDDEN
+    {
+        return Ok(RemoteKnowledgeBaseCheckDto {
+            url: normalized,
+            api_url,
+            ok: false,
+            status: "auth_required".to_string(),
+            message: "远程知识库 API 需要 token，请填写分享方提供的 token".to_string(),
+            llm_wiki_healthy: true,
+            project_count: 0,
+            projects: Vec::new(),
+            current_project: None,
+            auth_required: true,
+            mcp_status: None,
+        });
+    }
+    if !projects_status.is_success() {
+        return Ok(RemoteKnowledgeBaseCheckDto {
+            url: normalized,
+            api_url,
+            ok: false,
+            status: "llm_wiki_unavailable".to_string(),
+            message: format!("知识库项目列表不可用（HTTP {projects_status}）"),
+            llm_wiki_healthy: true,
+            project_count: 0,
+            projects: Vec::new(),
+            current_project: None,
+            auth_required,
+            mcp_status: None,
+        });
+    }
+    let project_list = projects_body
+        .get("projects")
+        .and_then(Value::as_array)
+        .cloned()
+        .unwrap_or_default();
+    let projects = project_list
+        .iter()
+        .filter_map(parse_remote_project)
+        .collect::<Vec<_>>();
+    let current_project = projects_body
+        .get("currentProject")
+        .and_then(parse_remote_project)
+        .or_else(|| projects.first().cloned())
+        .map(|mut selected| {
+            selected.current = true;
+            selected
+        });
+    let projects = projects
+        .into_iter()
+        .map(|mut project| {
+            project.current = current_project
+                .as_ref()
+                .map(|current| current.id == project.id)
+                .unwrap_or(project.current);
+            project
+        })
+        .collect::<Vec<_>>();
+    let project_count = projects.len();
 
     Ok(RemoteKnowledgeBaseCheckDto {
         url: normalized,
-        ok: true,
-        status,
-        message,
-        opencode_healthy: true,
-        llm_wiki_healthy,
-        kb_mode,
+        api_url,
+        ok: project_count > 0,
+        status: if project_count > 0 {
+            "ready".to_string()
+        } else {
+            "no_projects".to_string()
+        },
+        message: if project_count > 0 {
+            format!("远程知识库 API 可用，发现 {project_count} 个项目")
+        } else {
+            "远程知识库 API 可用，但没有发现项目".to_string()
+        },
+        llm_wiki_healthy: true,
+        project_count,
+        projects,
+        current_project,
+        auth_required,
+        mcp_status: None,
     })
 }
 
-async fn fetch_text(
+async fn fetch_json_with_token(
     client: &reqwest::Client,
     url: &str,
-) -> Result<(reqwest::StatusCode, String), reqwest::Error> {
-    let response = client.get(url).send().await?;
+    token: Option<&str>,
+) -> Result<(reqwest::StatusCode, Value), String> {
+    let mut headers = HeaderMap::new();
+    headers.insert("Accept", HeaderValue::from_static("application/json"));
+    if let Some(token) = token.map(str::trim).filter(|token| !token.is_empty()) {
+        let bearer = format!("Bearer {token}");
+        if let Ok(value) = HeaderValue::from_str(&bearer) {
+            headers.insert(AUTHORIZATION, value);
+        }
+        if let Ok(value) = HeaderValue::from_str(token) {
+            headers.insert("X-LLM-Wiki-Token", value);
+        }
+    }
+    let response = client
+        .get(url)
+        .headers(headers)
+        .send()
+        .await
+        .map_err(|error| error.to_string())?;
     let status = response.status();
-    let body = response.text().await.unwrap_or_default();
-    Ok((status, body))
+    let body = response.text().await.map_err(|error| error.to_string())?;
+    if body.trim().is_empty() {
+        return Ok((status, Value::Null));
+    }
+    let json = serde_json::from_str::<Value>(&body)
+        .map_err(|error| format!("远程知识库 API 返回非 JSON 响应: {error}"))?;
+    Ok((status, json))
 }
 
-fn normalize_remote_opencode_url(value: &str) -> Result<String, String> {
+fn normalize_remote_llm_wiki_url(value: &str) -> Result<String, String> {
     let trimmed = value.trim().trim_end_matches('/');
     if trimmed.is_empty() {
-        return Err("请输入远程 OpenCode 分享链接".to_string());
+        return Err("请输入远程知识库 API 分享链接".to_string());
     }
     let mut parsed =
-        Url::parse(trimmed).map_err(|_| "分享链接必须是完整的 http(s) URL".to_string())?;
+        Url::parse(trimmed).map_err(|_| "知识库 API 分享链接必须是完整的 http(s) URL".to_string())?;
     if parsed.scheme() != "http" && parsed.scheme() != "https" {
-        return Err("分享链接只支持 http 或 https".to_string());
+        return Err("知识库 API 分享链接只支持 http 或 https".to_string());
     }
     if parsed.host_str().is_none() {
-        return Err("分享链接必须包含主机名".to_string());
+        return Err("知识库 API 分享链接必须包含主机名".to_string());
     }
     parsed.set_query(None);
     parsed.set_fragment(None);
     Ok(parsed.as_str().trim_end_matches('/').to_string())
+}
+
+fn normalize_remote_llm_wiki_api_url(value: &str) -> Result<String, String> {
+    let normalized = normalize_remote_llm_wiki_url(value)?;
+    if normalized.ends_with("/api/v1") {
+        return Ok(normalized);
+    }
+    if let Some(root) = normalized.strip_suffix("/api") {
+        return Ok(format!("{root}/api/v1"));
+    }
+    Ok(format!("{normalized}/api/v1"))
+}
+
+fn parse_remote_project(value: &Value) -> Option<RemoteKnowledgeBaseProject> {
+    let object = value.as_object()?;
+    Some(RemoteKnowledgeBaseProject {
+        id: object.get("id")?.as_str()?.to_string(),
+        name: object
+            .get("name")
+            .and_then(Value::as_str)
+            .unwrap_or("知识库项目")
+            .to_string(),
+        path: object
+            .get("path")
+            .and_then(Value::as_str)
+            .unwrap_or_default()
+            .to_string(),
+        current: object
+            .get("current")
+            .and_then(Value::as_bool)
+            .unwrap_or(false),
+    })
+}
+
+fn merge_remote_project_selection(
+    projects: Vec<RemoteKnowledgeBaseProject>,
+    probed_current: Option<RemoteKnowledgeBaseProject>,
+    preferred_current: Option<&RemoteKnowledgeBaseProject>,
+) -> (Vec<RemoteKnowledgeBaseProject>, Option<RemoteKnowledgeBaseProject>) {
+    let selected_id = preferred_current
+        .and_then(|project| {
+            projects
+                .iter()
+                .find(|candidate| candidate.id == project.id)
+                .map(|candidate| candidate.id.clone())
+        })
+        .or_else(|| {
+            probed_current.as_ref().and_then(|project| {
+                projects
+                    .iter()
+                    .find(|candidate| candidate.id == project.id)
+                    .map(|candidate| candidate.id.clone())
+            })
+        })
+        .or_else(|| projects.first().map(|project| project.id.clone()));
+
+    let mut current_project = None;
+    let projects = projects
+        .into_iter()
+        .map(|mut project| {
+            project.current = selected_id
+                .as_ref()
+                .map(|id| id == &project.id)
+                .unwrap_or(false);
+            if project.current {
+                current_project = Some(project.clone());
+            }
+            project
+        })
+        .collect::<Vec<_>>();
+
+    (projects, current_project)
+}
+
+fn normalize_optional_token(value: Option<String>) -> Option<String> {
+    value
+        .map(|token| token.trim().to_string())
+        .filter(|token| !token.is_empty())
 }
 
 fn normalize_remote_name(value: Option<&str>, url: &str) -> Result<String, String> {
@@ -891,29 +1288,6 @@ fn remote_name_from_url(url: &str) -> String {
         .and_then(|parsed| parsed.host_str().map(str::to_string))
         .filter(|host| !host.trim().is_empty())
         .unwrap_or_else(|| "远程知识库".to_string())
-}
-
-fn parse_kb_mode_meta(html: &str) -> Option<bool> {
-    let lower = html.to_ascii_lowercase();
-    if !lower.contains("opencode-kb-mode") {
-        return None;
-    }
-    if lower.contains("opencode-kb-mode")
-        && (lower.contains("content=\"true\"")
-            || lower.contains("content='true'")
-            || lower.contains("content=\"1\"")
-            || lower.contains("content='1'"))
-    {
-        return Some(true);
-    }
-    if lower.contains("content=\"false\"")
-        || lower.contains("content='false'")
-        || lower.contains("content=\"0\"")
-        || lower.contains("content='0'")
-    {
-        return Some(false);
-    }
-    None
 }
 
 fn update_project_status(
@@ -961,7 +1335,7 @@ async fn connection_dto(
         .as_ref()
         .and_then(|proxy| proxy.traffic_used_bytes)
         .unwrap_or(0);
-    let service_ready = local_service::is_ready(connection.local_port).unwrap_or(false);
+    let service_ready = sidecar::is_llm_wiki_server_ready(connection.local_port);
     let (running, enabled) = {
         let mut runtime = runtime.lock().map_err(lock_error)?;
         runtime.reap_exited();
@@ -1025,6 +1399,52 @@ async fn create_connection_proxy(
     Err("暂时无法创建访问连接".to_string())
 }
 
+async fn ensure_connection_proxy_active(
+    runtime: &State<'_, SharedRuntime>,
+    client: &ApiClient,
+    project: &KnowledgeProject,
+    mut connection: ProjectConnection,
+) -> Result<ProjectConnection, String> {
+    if let Ok(proxies) = client.list_http_proxies().await {
+        if let Some(proxy) = proxies
+            .proxies
+            .iter()
+            .find(|proxy| proxy.id == connection.proxy_id)
+        {
+            if proxy.status == "active" {
+                return Ok(connection);
+            }
+        }
+    }
+
+    match client.start_proxy(connection.proxy_id).await {
+        Ok(()) => return Ok(connection),
+        Err(error) if error.contains("404") || error.contains("Not Found") => {}
+        Err(error) => return Err(error),
+    }
+
+    let _ = client.delete_proxy(connection.proxy_id).await;
+    let user = client.me().await?;
+    let proxy = create_connection_proxy(
+        client,
+        &user,
+        project,
+        &connection,
+        normalize_traffic_mb(connection.traffic_mb).unwrap_or(100),
+    )
+    .await?;
+    connection.proxy_id = proxy.id;
+    {
+        let mut runtime = runtime.lock().map_err(lock_error)?;
+        runtime
+            .persisted
+            .connections
+            .insert(connection.connection_id.clone(), connection.clone());
+        runtime.save()?;
+    }
+    Ok(connection)
+}
+
 async fn delete_connection_internal(
     runtime: &State<'_, SharedRuntime>,
     client: &ApiClient,
@@ -1035,21 +1455,21 @@ async fn delete_connection_internal(
     let mut runtime = runtime.lock().map_err(lock_error)?;
     let _ = frpc::stop_frpc(&mut runtime, connection.proxy_id, true);
     stop_mask_service_locked(&mut runtime, connection_id);
-    sidecar::stop_project_chat(&mut runtime, &connection.project_id);
+    sidecar::stop_project_llm_wiki_server(&mut runtime, &connection.project_id);
     runtime.remove_proxy_files(connection.proxy_id);
     runtime.persisted.connections.remove(connection_id);
     runtime.save()
 }
 
-fn ensure_project_chat_service(
+fn ensure_project_api_service(
     app: &AppHandle,
     runtime: &State<'_, SharedRuntime>,
     project: &KnowledgeProject,
-    preferred_port: Option<u16>,
-) -> Result<sidecar::OpenCodeStackDto, String> {
+    preferred_port: u16,
+) -> Result<String, String> {
     let mut runtime = runtime.lock().map_err(lock_error)?;
-    let wiki_project = wiki::ensure_wiki_project(&mut runtime, &project.project_id)?;
-    sidecar::start_project_chat(app, &mut runtime, project, &wiki_project.id, preferred_port)
+    let _ = wiki::ensure_wiki_project(&mut runtime, &project.project_id)?;
+    sidecar::start_project_llm_wiki_server(app, &mut runtime, project, preferred_port)
 }
 
 fn stop_mask_service_locked(runtime: &mut DesktopRuntime, connection_id: &str) {
@@ -1457,8 +1877,12 @@ pub fn run() {
             save_settings,
             get_desktop_services_state,
             set_bearfrp_backend_url,
+            get_llm_settings,
+            save_llm_settings,
+            clear_llm_settings,
             ensure_opencode_stack_running,
             stop_opencode_stack,
+            create_opencode_session,
             start_project_chat,
             stop_project_chat,
             list_remote_knowledge_bases,
@@ -1466,6 +1890,9 @@ pub fn run() {
             remove_remote_knowledge_base,
             touch_remote_knowledge_base,
             check_remote_knowledge_base,
+            probe_remote_llm_wiki,
+            select_remote_knowledge_base_project,
+            ensure_opencode_for_remote,
             register_user,
             login_user,
             logout_user,
@@ -1540,29 +1967,24 @@ mod tests {
     }
 
     #[test]
-    fn remote_opencode_url_strips_query_fragment_and_trailing_slash() {
-        let url = normalize_remote_opencode_url("https://example.com/opencode/?x=1#top").unwrap();
-        assert_eq!(url, "https://example.com/opencode");
+    fn remote_llm_wiki_url_strips_query_fragment_and_trailing_slash() {
+        let url = normalize_remote_llm_wiki_url("https://example.com/wiki/?x=1#top").unwrap();
+        assert_eq!(url, "https://example.com/wiki");
     }
 
     #[test]
-    fn kb_mode_meta_detects_true_false_and_missing() {
+    fn remote_llm_wiki_api_url_normalizes_api_base() {
         assert_eq!(
-            parse_kb_mode_meta(r#"<meta name="opencode-kb-mode" content="true">"#),
-            Some(true)
+            normalize_remote_llm_wiki_api_url("https://example.com").unwrap(),
+            "https://example.com/api/v1"
         );
         assert_eq!(
-            parse_kb_mode_meta(r#"<meta name="opencode-kb-mode" content="1">"#),
-            Some(true)
+            normalize_remote_llm_wiki_api_url("https://example.com/api").unwrap(),
+            "https://example.com/api/v1"
         );
         assert_eq!(
-            parse_kb_mode_meta(r#"<meta name="opencode-kb-mode" content="false">"#),
-            Some(false)
+            normalize_remote_llm_wiki_api_url("https://example.com/api/v1").unwrap(),
+            "https://example.com/api/v1"
         );
-        assert_eq!(
-            parse_kb_mode_meta(r#"<meta name="opencode-kb-mode" content="0">"#),
-            Some(false)
-        );
-        assert_eq!(parse_kb_mode_meta("<html></html>"), None);
     }
 }

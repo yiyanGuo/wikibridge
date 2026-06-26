@@ -45,6 +45,7 @@ import { NonNegativeInt, optionalOmitUndefined } from "@opencode-ai/core/schema"
 import { RuntimeFlags } from "@/effect/runtime-flags"
 import { ProviderV2 } from "@opencode-ai/core/provider"
 import { ModelV2 } from "@opencode-ai/core/model"
+import { Kb } from "@/kb/guard"
 
 const runtime = makeRuntime(Database.Service, Database.defaultLayer)
 
@@ -157,7 +158,8 @@ function getForkedTitle(title: string): string {
   return `${title} (fork #1)`
 }
 
-function sessionPath(worktree: string, cwd: string) {
+export function sessionPath(worktree: string, cwd: string) {
+  if (Kb.enabled()) return undefined
   return path.relative(path.resolve(worktree), cwd).replaceAll("\\", "/")
 }
 

@@ -17,7 +17,7 @@ import {
 } from "./api-client.js"
 import { VERSION } from "./version.js"
 
-const DEFAULT_PROJECT_ID = "current"
+const DEFAULT_PROJECT_ID = process.env.LLM_WIKI_PROJECT_ID?.trim() || "current"
 const MAX_TEXT_BYTES = 120_000
 
 const client = new LlmWikiApiClient()

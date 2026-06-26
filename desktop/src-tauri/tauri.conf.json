@@ -36,7 +36,10 @@
     "resources": [
       "binaries/frpc/**/*",
       "binaries/opencode/**/*",
-      "binaries/llm-wiki-server/**/*"
+      "binaries/llm-wiki-server/**/*",
+      "../../llm_wiki/mcp-server/package.json",
+      "../../llm_wiki/mcp-server/dist/**/*",
+      "../../llm_wiki/mcp-server/node_modules/**/*"
     ]
   }
 }
