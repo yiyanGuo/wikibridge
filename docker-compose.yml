@@ -47,7 +47,7 @@ services:
         echo "Building embedded web UI..."
         bun run --cwd packages/app build
         bun run scripts/prepare-embedded-ui.ts
-        bun run --conditions=browser ./src/index.ts web --hostname 0.0.0.0 --port 4096
+        bun run --cwd packages/opencode --conditions=browser ./src/index.ts web --hostname 0.0.0.0 --port 4096
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://127.0.0.1:4096/global/health"]
       interval: 10s
