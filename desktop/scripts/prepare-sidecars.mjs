@@ -74,12 +74,34 @@ function prepareLlmWiki() {
 
   if (!skipBuild) {
     assertNativeBuild("llm-wiki-server")
+    prepareLlmWikiMcpServer()
     const env = { LLM_WIKI_SKIP_TAURI_BUILD: "1", ...protocEnv() }
     run("cargo", ["build", "--release", "--bin", "llm-wiki-server", "--manifest-path", manifest], repoRoot, {
       ...env,
     })
+  } else {
+    assertLlmWikiMcpServerReady()
   }
   copyBinary(source, dest, "llm-wiki-server")
+}
+
+function prepareLlmWikiMcpServer() {
+  const mcpDir = path.join(repoRoot, "llm_wiki", "mcp-server")
+  run("npm", ["ci"], mcpDir)
+  run("npm", ["run", "build"], mcpDir)
+  assertLlmWikiMcpServerReady()
+}
+
+function assertLlmWikiMcpServerReady() {
+  const entry = path.join(repoRoot, "llm_wiki", "mcp-server", "dist", "src", "index.js")
+  if (existsSync(entry)) return
+  fail(
+    [
+      "LLM Wiki MCP server dist entry was not found.",
+      `Expected: ${entry}`,
+      "Run npm run sidecars:llm-wiki without --skip-build to generate llm_wiki/mcp-server/dist.",
+    ].join("\n"),
+  )
 }
 
 function prepareOpenCode() {

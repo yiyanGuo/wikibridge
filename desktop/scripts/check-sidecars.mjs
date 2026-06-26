@@ -17,6 +17,7 @@ const required = [
 ]
 const requiredResources = [
   path.join(desktopDir, "src-tauri", "binaries", "pdfium", platform, pdfiumDestName(platform)),
+  path.join(desktopDir, "..", "llm_wiki", "mcp-server", "dist", "src", "index.js"),
 ]
 
 const missing = []
