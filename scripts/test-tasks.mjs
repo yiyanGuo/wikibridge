@@ -10,6 +10,9 @@ const __dirname = dirname(fileURLToPath(import.meta.url))
 const repoRoot = resolve(__dirname, "..")
 const sampleProjectId = "sample-wiki"
 const sampleProjectName = "Sample Wiki"
+const condaBin = process.platform === "win32" ? "conda.exe" : "conda"
+const condaEnvName = process.env.BEARFRP_CONDA_ENV || "bearfrp_test"
+const localBun = resolve(repoRoot, "desktop", "node_modules", ".bin", process.platform === "win32" ? "bun.cmd" : "bun")
 
 const options = parseArgs(process.argv.slice(2))
 const startedAt = Date.now()
@@ -104,9 +107,8 @@ const taskDefinitions = [
     id: "T-03",
     name: "OpenCode KB permissions",
     whitebox: [
-      commandStep("OpenCode KB guard tests", "bun", ["test", "test/kb/guard.test.ts", "test/kb/server.test.ts"], {
+      commandStep("OpenCode KB guard tests", bunCommand(), ["test", "test/kb/guard.test.ts", "test/kb/server.test.ts"], {
         cwd: "opencode/packages/opencode",
-        requiredBinary: "bun",
       }),
     ],
     blackbox: [
@@ -114,10 +116,12 @@ const taskDefinitions = [
         expectStatus: 200,
         expectJson: (body) => body && body.healthy === true,
       }),
-      httpCheck("OpenCode KB blocks VCS in KB mode", `${options.baseUrl}/vcs?directory=..%2F`, {
+      httpCheck("OpenCode KB blocks terminal shells in KB mode", `${options.baseUrl}/pty/shells`, {
         expectStatus: 403,
       }),
-      httpCheck("OpenCode KB blocks VCS diff in KB mode", `${options.baseUrl}/vcs/diff?directory=..%2F&mode=git`, {
+      httpCheck("OpenCode KB blocks VCS apply in KB mode", `${options.baseUrl}/vcs/apply`, {
+        method: "POST",
+        json: { patch: "" },
         expectStatus: 403,
       }),
     ],
@@ -126,7 +130,7 @@ const taskDefinitions = [
     id: "T-04",
     name: "BearFRP users and proxies",
     whitebox: [
-      commandStep("BearFRP pytest API coverage", pythonCommand(), ["-m", "pytest", "-q", "tests/test_api.py"], {
+      commandStep("BearFRP pytest API coverage", pythonCommand(), pythonArgs(["-m", "pytest", "-q", "tests/test_api.py"]), {
         cwd: "bearfrp",
       }),
     ],
@@ -135,7 +139,7 @@ const taskDefinitions = [
     id: "T-05",
     name: "frps plugin authorization",
     whitebox: [
-      commandStep("BearFRP plugin and poller tests", pythonCommand(), ["-m", "pytest", "-q", "tests/test_plugin_and_poller.py"], {
+      commandStep("BearFRP plugin and poller tests", pythonCommand(), pythonArgs(["-m", "pytest", "-q", "tests/test_plugin_and_poller.py"]), {
         cwd: "bearfrp",
       }),
     ],
@@ -144,10 +148,10 @@ const taskDefinitions = [
     id: "T-06",
     name: "auto-publish sidecar",
     whitebox: [
-      commandStep("sidecar Python syntax", pythonCommand(), [
+      commandStep("sidecar Python syntax", pythonCommand(), pythonArgs([
         "-c",
         "import ast, pathlib; ast.parse(pathlib.Path('docker/bearfrp-wikibridge-frpc/start.py').read_text(encoding='utf-8'))",
-      ]),
+      ])),
       commandStep("sidecar image build", "docker", ["compose", "build", "bearfrp-wikibridge-frpc"], {
         runWhen: () => options.full && options.docker,
       }),
@@ -175,7 +179,7 @@ const taskDefinitions = [
     id: "T-08",
     name: "exception and security boundaries",
     whitebox: [
-      commandStep("BearFRP pytest security/error coverage", pythonCommand(), ["-m", "pytest", "-q", "tests/test_api.py", "tests/test_plugin_and_poller.py"], {
+      commandStep("BearFRP pytest security/error coverage", pythonCommand(), pythonArgs(["-m", "pytest", "-q", "tests/test_api.py", "tests/test_plugin_and_poller.py"]), {
         cwd: "bearfrp",
       }),
     ],
@@ -298,7 +302,7 @@ function commandStep(name, command, args, config = {}) {
       cwd,
       env: { ...process.env, CI: process.env.CI ?? "1", ...(config.env ?? {}) },
       stdio: "inherit",
-      shell: false,
+      shell: process.platform === "win32",
     })
 
     if (result.error) {
@@ -934,7 +938,17 @@ function shellQuote(value) {
 }
 
 function pythonCommand() {
-  return process.env.PYTHON ?? "python3"
+  return process.env.PYTHON ?? condaBin
+}
+
+function pythonArgs(args) {
+  if (process.env.PYTHON) return args
+  return ["run", "-n", condaEnvName, "python", ...args]
+}
+
+function bunCommand() {
+  if (existsSync(localBun)) return localBun
+  return "bun"
 }
 
 function processListIncludes(needle) {

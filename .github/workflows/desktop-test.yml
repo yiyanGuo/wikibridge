@@ -11,7 +11,7 @@ jobs:
   desktop-linux:
     name: desktop linux full
     runs-on: ubuntu-latest
-    timeout-minutes: 90
+    timeout-minutes: 120
 
     defaults:
       run:
@@ -33,7 +33,9 @@ jobs:
         with:
           node-version: 24
           cache: npm
-          cache-dependency-path: desktop/package-lock.json
+          cache-dependency-path: |
+            desktop/package-lock.json
+            llm_wiki/package-lock.json
 
       - uses: dtolnay/rust-toolchain@stable
 
@@ -58,6 +60,10 @@ jobs:
         working-directory: desktop
         run: npm ci
 
+      - name: Install LLM Wiki dependencies
+        working-directory: llm_wiki
+        run: npm ci
+
       - name: Install Playwright browser
         working-directory: desktop
         run: npm run test:system:install
@@ -71,6 +77,9 @@ jobs:
       - name: Run full desktop suite
         working-directory: desktop
         run: npm run ci:check -- --include-system --include-integration --include-fake-stack
+
+      - name: Run course test task suite
+        run: node scripts/test-tasks.mjs --full --docker
 
       - name: Upload Playwright report
         if: always()
@@ -87,6 +96,52 @@ jobs:
           name: desktop-test-results-ubuntu-latest
           path: desktop/test-results
           if-no-files-found: ignore
+
+  course-compose:
+    name: course compose black-box
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+
+    defaults:
+      run:
+        shell: bash -l {0}
+
+    env:
+      WIKIBRIDGE_HTTP_PORT: 18080
+      BEARFRP_BACKEND_PORT: 18081
+      BEARFRP_BIND_PORT: 17000
+      BEARFRP_HTTP_VHOST_PORT: 18082
+      BEARFRP_TCP_PORT_START: 52600
+      BEARFRP_TCP_PORT_END: 52600
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Start Compose smoke stack
+        run: docker compose -p wikibridge-ci up --build --wait -d
+
+      - name: Run course black-box HTTP checks
+        run: >
+          node scripts/test-tasks.mjs
+          --blackbox
+          --no-whitebox
+          --base-url http://127.0.0.1:18080
+          --bearfrp-url http://127.0.0.1:18081
+          --http-timeout 30
+
+      - name: Upload Compose logs
+        if: always()
+        run: |
+          mkdir -p desktop/test-results/compose
+          docker compose -p wikibridge-ci logs --no-color > desktop/test-results/compose/docker-compose.log
+
+      - name: Stop Compose smoke stack
+        if: always()
+        run: docker compose -p wikibridge-ci down --volumes --remove-orphans
 
   desktop-native:
     name: desktop native (${{ matrix.os }})
