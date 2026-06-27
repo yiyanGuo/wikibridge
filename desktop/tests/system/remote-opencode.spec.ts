@@ -1,33 +1,51 @@
 import { expect, test } from "@playwright/test"
 import { prepareSystemTestPage, setConfirmResult } from "./test-utils"
 
-test("adds and connects a remote LLM Wiki knowledge base", async ({ page }) => {
+test("adds a remote knowledge base and enters it from the central button", async ({ page }) => {
   await prepareSystemTestPage(page)
 
   await page.getByRole("button", { name: /消费端/ }).click()
-  await expect(page.getByText("添加 LLM Wiki API 地址后可连接到本地 OpenCode。")).toBeVisible()
+  await expect(page.getByText("添加远程知识库 URL 后可进入本地 OpenCode。")).toBeVisible()
 
-  await page.getByLabel("名称").fill("团队知识库")
-  await page.getByLabel("API 地址").fill("https://wiki.example.test/share/")
+  await page.getByLabel("URL 地址").fill("https://wiki.example.test/share/")
   await page.getByRole("button", { name: "添加" }).click()
 
   await expect(page.getByText("远程知识库已添加")).toBeVisible()
-  const card = page.locator(".remote-card").filter({ hasText: "团队知识库" })
+  const card = page.locator(".remote-card").filter({ hasText: "gyy的知识库" })
   await expect(card).toBeVisible()
   await expect(card).toContainText("https://wiki.example.test/share/api/v1")
-  await expect(card).toContainText("项目：1")
 
-  await card.getByRole("button", { name: "连接" }).click()
-  await expect(page.getByText("本地 OpenCode 已连接远程知识库并创建对话，MCP 已注册")).toBeVisible()
+  await page.locator(".remote-empty-panel").getByRole("button", { name: "启动并进入" }).click()
+  await expect(page.getByText("OpenCode 远程知识库对话已创建")).toBeVisible()
   await expect(page.locator("iframe.opencode-frame")).toHaveAttribute(
     "src",
     /^http:\/\/127\.0\.0\.1:9010\/mock\/session\/session-/,
   )
 })
 
-test("normalizes duplicate remote LLM Wiki links and updates the existing card", async ({
-  page,
-}) => {
+test("prompts for a password only when the remote requires one", async ({ page }) => {
+  await prepareSystemTestPage(page)
+
+  await page.getByRole("button", { name: /消费端/ }).click()
+  await page.getByLabel("URL 地址").fill("https://protected.example.test/share/")
+  await page.getByRole("button", { name: "添加" }).click()
+
+  await expect(page.getByText("该知识库需要访问密码")).toBeVisible()
+  await expect(page.getByLabel("访问密码")).toBeVisible()
+
+  await page.getByLabel("访问密码").fill("wrong")
+  await page.getByRole("button", { name: "验证并添加" }).click()
+  await expect(page.getByText("密码不正确或已失效")).toBeVisible()
+  await expect(page.getByText("密码不正确或已失效")).toBeHidden({ timeout: 4000 })
+  await expect(page.getByLabel("访问密码")).toBeVisible()
+
+  await page.getByLabel("访问密码").fill("secret")
+  await page.getByRole("button", { name: "验证并添加" }).click()
+  await expect(page.getByText("远程知识库已添加")).toBeVisible()
+  await expect(page.locator(".remote-card").filter({ hasText: "gyy的知识库" })).toBeVisible()
+})
+
+test("normalizes duplicate remote links and updates the existing card", async ({ page }) => {
   await prepareSystemTestPage(page, {
     remoteKnowledgeBases: [
       {
@@ -55,47 +73,24 @@ test("normalizes duplicate remote LLM Wiki links and updates the existing card",
   })
 
   await page.getByRole("button", { name: /消费端/ }).click()
-  await page.getByLabel("名称").fill("新名称")
-  await page.getByLabel("API 地址").fill("https://wiki.example.test/share/")
+  await page.getByLabel("URL 地址").fill("https://wiki.example.test/share/")
   await page.getByRole("button", { name: "添加" }).click()
 
   await expect(page.locator(".remote-card")).toHaveCount(1)
-  await expect(page.locator(".remote-card").filter({ hasText: "新名称" })).toBeVisible()
+  await expect(page.locator(".remote-card").filter({ hasText: "gyy的知识库" })).toBeVisible()
   await expect(page.locator(".remote-card")).toContainText("https://wiki.example.test/share/api/v1")
 })
 
-test("reports remote check failure without removing the saved item", async ({ page }) => {
-  await prepareSystemTestPage(page, {
-    remoteKnowledgeBases: [
-      {
-        remoteId: "remote-down",
-        name: "故障知识库",
-        url: "https://down.example.test",
-        apiUrl: "https://down.example.test/api/v1",
-        status: "ready",
-        projectCount: 1,
-        projects: [
-          { id: "remote-project-1", name: "团队项目", path: "/remote/team", current: true },
-        ],
-        currentProject: {
-          id: "remote-project-1",
-          name: "团队项目",
-          path: "/remote/team",
-          current: true,
-        },
-        authRequired: false,
-        mcpStatus: "not_registered",
-        addedAt: 1,
-        lastOpenedAt: 1,
-      },
-    ],
-  })
+test("reports add failure without saving the remote", async ({ page }) => {
+  await prepareSystemTestPage(page)
 
   await page.getByRole("button", { name: /消费端/ }).click()
-  await page.getByRole("button", { name: "检测" }).click()
+  await page.getByLabel("URL 地址").fill("https://down.example.test")
+  await page.getByRole("button", { name: "添加" }).click()
 
   await expect(page.getByText("远程知识库不可达")).toBeVisible()
-  await expect(page.getByText("故障知识库")).toBeVisible()
+  await expect(page.getByText("远程知识库不可达")).toBeHidden({ timeout: 4000 })
+  await expect(page.locator(".remote-card")).toHaveCount(0)
 })
 
 test("requires confirmation before removing a remote knowledge base", async ({ page }) => {

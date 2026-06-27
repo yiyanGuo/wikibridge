@@ -6,6 +6,7 @@ export type SystemTestState = {
   }
   authenticated?: boolean
   user?: { username: string; balance_mb: number } | null
+  llmConfig?: Record<string, unknown>
   projects?: Array<Record<string, unknown>>
   connections?: Array<Record<string, unknown>>
   remoteKnowledgeBases?: Array<Record<string, unknown>>

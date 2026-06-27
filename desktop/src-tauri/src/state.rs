@@ -13,7 +13,7 @@ use crate::{frpc::ManagedProcess, local_service::LocalServiceProcess, sidecar::O
 pub const FIXED_BASE_URL: &str = "https://frp.muleizh.ink";
 const DEFAULT_BASE_URL: &str = FIXED_BASE_URL;
 pub const DEFAULT_LLM_PROVIDER: &str = "deepseek";
-pub const DEFAULT_LLM_MODEL: &str = "deepseek-chat";
+pub const DEFAULT_LLM_MODEL: &str = "deepseek-v4-flash";
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct PersistedState {
@@ -133,6 +133,7 @@ pub struct LlmSettingsDto {
     pub provider: String,
     pub model: String,
     pub base_url: Option<String>,
+    pub api_key: Option<String>,
     pub has_api_key: bool,
 }
 
@@ -183,6 +184,8 @@ pub struct ProjectConnection {
     pub proxy_id: u64,
     pub local_host: String,
     pub local_port: u16,
+    #[serde(default)]
+    pub access_token: Option<String>,
     #[serde(default = "default_connection_traffic_mb")]
     pub traffic_mb: i64,
     pub created_at: u64,
@@ -350,6 +353,7 @@ impl DesktopRuntime {
             provider: self.persisted.llm_settings.provider.clone(),
             model: self.persisted.llm_settings.model.clone(),
             base_url: self.persisted.llm_settings.base_url.clone(),
+            api_key: self.persisted.llm_settings.api_key.clone(),
             has_api_key: self.persisted.llm_settings.has_api_key(),
         }
     }

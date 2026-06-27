@@ -18,7 +18,6 @@ import {
   Link2,
   LogIn,
   LogOut,
-  MessageSquare,
   Play,
   Plus,
   Power,
@@ -140,19 +139,8 @@ type ProjectConnection = {
   service_ready: boolean
   traffic_limit_mb: number
   traffic_used_bytes: number
+  access_protected: boolean
   status: "running" | "stopped" | "service_not_ready" | string
-}
-
-type ProjectChatStack = {
-  opencodeUrl: string
-  llmWikiUrl: string
-  opencodePort: number
-  llmWikiPort: number
-  opencodeLogPath?: string | null
-  llmWikiLogPath?: string | null
-  projectId?: string | null
-  sessionId?: string | null
-  sessionUrl?: string | null
 }
 
 type ProjectDocumentContent = {
@@ -190,21 +178,22 @@ export default function App() {
   const [user, setUser] = useState<UserDto | null>(null)
   const [projects, setProjects] = useState<KnowledgeProject[]>([])
   const [connections, setConnections] = useState<ProjectConnection[]>([])
-  const [projectName, setProjectName] = useState("知识库")
+  const [projectName, setProjectName] = useState("")
   const [projectFolder, setProjectFolder] = useState("")
   const [connectionProjectId, setConnectionProjectId] = useState("")
   const [connectionTrafficMb, setConnectionTrafficMb] = useState(100)
+  const [connectionAccessToken, setConnectionAccessToken] = useState("")
+  const [showConnectionDialog, setShowConnectionDialog] = useState(false)
   const [readerProjectId, setReaderProjectId] = useState("")
   const [readerTree, setReaderTree] = useState<ProjectTreeNode | null>(null)
   const [readerContent, setReaderContent] = useState<ProjectDocumentContent | null>(null)
   const [wikiProjectState, setWikiProjectState] = useState<WikiProjectState | null>(null)
-  const [wikiGraph, setWikiGraph] = useState<WikiGraphResult | null>(null)
-  const [chatStack, setChatStack] = useState<ProjectChatStack | null>(null)
   const [readerError, setReaderError] = useState("")
   const [busy, setBusy] = useState("")
   const [error, setError] = useState("")
   const [notice, setNotice] = useState("")
   const [llmConfigDraft, setLlmConfigDraft] = useState<LlmWikiLlmConfig>(DEFAULT_LLM_WIKI_CONFIG)
+  const [showLlmAdvanced, setShowLlmAdvanced] = useState(false)
 
   const isWorking = Boolean(busy)
   const connectedProjectIds = useMemo(
@@ -301,6 +290,12 @@ export default function App() {
   }, [loadSession, refreshLlmConfig])
 
   useEffect(() => {
+    if (!error) return
+    const timer = window.setTimeout(() => setError(""), 3000)
+    return () => window.clearTimeout(timer)
+  }, [error])
+
+  useEffect(() => {
     if (!user) return
     const timer = window.setInterval(() => {
       refreshWorkspace().catch(() => undefined)
@@ -375,15 +370,17 @@ export default function App() {
 
   async function createProject(event: FormEvent) {
     event.preventDefault()
+    const name = projectName.trim()
+    if (!name) return
     setBusy("create-project")
     setError("")
     try {
       const project = await invoke<KnowledgeProject>("create_project", {
-        input: { name: projectName, folderPath: projectFolder },
+        input: { name, folderPath: projectFolder },
       })
       setProjects((current) => upsertProject(current, project))
       setConnectionProjectId((current) => current || project.project_id)
-      setProjectName("知识库")
+      setProjectName("")
       setProjectFolder("")
       setNotice("项目已创建")
     } catch (err) {
@@ -401,14 +398,14 @@ export default function App() {
       const saved = await invoke<LlmWikiLlmConfig>("set_llm_wiki_llm_config", {
         input: {
           provider: "deepseek",
-          apiKey: llmConfigDraft.apiKey,
+          apiKey: llmConfigDraft.apiKey.trim() || null,
           model: llmConfigDraft.model,
           baseUrl: llmConfigDraft.baseUrl,
           maxContextSize: llmConfigDraft.maxContextSize || DEFAULT_LLM_WIKI_CONFIG.maxContextSize,
         },
       })
       setLlmConfigDraft(saved)
-      setNotice("LLM Wiki 配置已保存")
+      setNotice("知识库构建模型已保存")
     } catch (err) {
       setError(friendlyError(err))
     } finally {
@@ -485,6 +482,13 @@ export default function App() {
       if (readerProjectId === project.project_id) {
         await refreshReaderDocuments(project.project_id, readerContent?.document_id)
       }
+      try {
+        await invoke<WikiGraphResult>("refresh_wiki_graph", {
+          projectId: project.project_id,
+        })
+      } catch {
+        // Graph refresh is an internal cleanup step after Build.
+      }
       if (result.failedCount > 0) {
         setNotice(
           `构建完成：生成 ${result.writtenPaths.length} 个 Wiki 文件，失败 ${result.failedCount} 个 source`,
@@ -496,57 +500,10 @@ export default function App() {
       } else {
         setNotice(
           result.enqueuedCount > 0
-            ? `已加入构建队列：${result.enqueuedCount} 个 source`
+            ? `Build 已准备处理 ${result.enqueuedCount} 个 source`
             : "没有新的 source 需要构建",
         )
       }
-    } catch (err) {
-      setError(friendlyError(err))
-    } finally {
-      setBusy("")
-    }
-  }
-
-  async function linkProject(project: KnowledgeProject) {
-    setBusy(`link-${project.project_id}`)
-    setError("")
-    try {
-      const graph = await invoke<WikiGraphResult>("refresh_wiki_graph", {
-        projectId: project.project_id,
-      })
-      setWikiGraph(graph)
-      setNotice(`Graph 已刷新：${graph.nodes.length} 个节点，${graph.edges.length} 条边`)
-    } catch (err) {
-      setError(friendlyError(err))
-    } finally {
-      setBusy("")
-    }
-  }
-
-  async function startProjectChat(project: KnowledgeProject) {
-    setBusy(`chat-${project.project_id}`)
-    setError("")
-    try {
-      const stack = await invoke<ProjectChatStack>("start_project_chat", {
-        projectId: project.project_id,
-      })
-      setChatStack(stack)
-      setNotice(`OpenCode Chat 已创建对话：${stack.sessionUrl || stack.opencodeUrl}`)
-      window.open(stack.sessionUrl || stack.opencodeUrl, "_blank")
-    } catch (err) {
-      setError(friendlyError(err))
-    } finally {
-      setBusy("")
-    }
-  }
-
-  async function stopProjectChat(project: KnowledgeProject) {
-    setBusy(`stop-chat-${project.project_id}`)
-    setError("")
-    try {
-      await invoke("stop_project_chat", { projectId: project.project_id })
-      setChatStack((current) => (current?.projectId === project.project_id ? null : current))
-      setNotice("消费端 Chat 已停止")
     } catch (err) {
       setError(friendlyError(err))
     } finally {
@@ -562,7 +519,6 @@ export default function App() {
     setReaderTree(null)
     setReaderContent(null)
     setWikiProjectState(null)
-    setWikiGraph(null)
     try {
       await loadWikiProjectState(project.project_id)
       await refreshReaderDocuments(project.project_id)
@@ -629,7 +585,6 @@ export default function App() {
     setReaderTree(null)
     setReaderContent(null)
     setWikiProjectState(null)
-    setWikiGraph(null)
     setReaderError("")
   }
 
@@ -658,10 +613,16 @@ export default function App() {
     setError("")
     try {
       const created = await invoke<ProjectConnection>("create_connection", {
-        input: { projectId: connectionProjectId, trafficMb: connectionTrafficMb },
+        input: {
+          projectId: connectionProjectId,
+          trafficMb: connectionTrafficMb,
+          accessToken: connectionAccessToken.trim() || null,
+        },
       })
       setConnections((current) => upsertConnection(current, created))
       setConnectionProjectId("")
+      setConnectionAccessToken("")
+      setShowConnectionDialog(false)
       setNotice("知识库 API 分享连接已创建")
       await refreshWorkspace()
     } catch (err) {
@@ -865,12 +826,7 @@ export default function App() {
             <div className="project-toolbar">
               <div className="toolbar-status-stack">
                 <div className="status-row">
-                  <span>队列：{queueLabel(wikiProjectState?.queue)}</span>
-                  <span>Sources：{wikiProjectState?.sourceCount ?? 0}</span>
-                  <span>
-                    Graph：
-                    {wikiGraph ? `${wikiGraph.nodes.length}/${wikiGraph.edges.length}` : "未刷新"}
-                  </span>
+                  <span>已处理文件 {processedFileLabel(wikiProjectState?.queue)}</span>
                 </div>
                 {latestWikiFailure && (
                   <div className="inline-alert reader-failure-alert">
@@ -902,46 +858,8 @@ export default function App() {
                   disabled={busy === `build-${readerProject.project_id}`}
                 >
                   <Hammer size={17} />
-                  构建
+                  Build
                 </button>
-                <button
-                  className="secondary"
-                  onClick={() => linkProject(readerProject)}
-                  disabled={busy === `link-${readerProject.project_id}`}
-                >
-                  <Link2 size={17} />
-                  Link
-                </button>
-                {chatStack?.projectId === readerProject.project_id ? (
-                  <>
-                    <button
-                      className="secondary"
-                      onClick={() =>
-                        window.open(chatStack.sessionUrl || chatStack.opencodeUrl, "_blank")
-                      }
-                    >
-                      <ExternalLink size={17} />
-                      打开 Chat
-                    </button>
-                    <button
-                      className="secondary"
-                      onClick={() => stopProjectChat(readerProject)}
-                      disabled={busy === `stop-chat-${readerProject.project_id}`}
-                    >
-                      <Power size={17} />
-                      停止 Chat
-                    </button>
-                  </>
-                ) : (
-                  <button
-                    className="primary"
-                    onClick={() => startProjectChat(readerProject)}
-                    disabled={busy === `chat-${readerProject.project_id}`}
-                  >
-                    <MessageSquare size={17} />
-                    启动 Chat
-                  </button>
-                )}
                 <button
                   className="secondary"
                   onClick={() => refreshReaderProject(readerProject)}
@@ -986,26 +904,6 @@ export default function App() {
                     </div>
                   )}
                 </div>
-                <div className="reader-sidebar-section graph-sidebar-section">
-                  <div className="reader-list-heading">
-                    <Link2 size={17} />
-                    Graph
-                  </div>
-                  {!wikiGraph ? (
-                    <div className="toc-empty compact">未刷新</div>
-                  ) : wikiGraph.nodes.length === 0 ? (
-                    <div className="toc-empty compact">暂无 wikilinks</div>
-                  ) : (
-                    <div className="graph-list">
-                      {wikiGraph.nodes.slice(0, 8).map((node) => (
-                        <div className="graph-row" key={node.id}>
-                          <span>{node.label}</span>
-                          <strong>{node.linkCount}</strong>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
               </aside>
 
               <article className="reader-content">
@@ -1013,8 +911,8 @@ export default function App() {
                 {readableFileCount === 0 ? (
                   <div className="empty-state">
                     {(wikiProjectState?.sourceCount ?? 0) > 0
-                      ? "暂无 Wiki 文档，构建后刷新。"
-                      : "请先 Add source，再构建。"}
+                      ? "暂无 Wiki 文档，Build 后刷新。"
+                      : "请先 Add source，再 Build。"}
                   </div>
                 ) : readerContent ? (
                   <>
@@ -1058,17 +956,17 @@ export default function App() {
                   <div>
                     <span className="llm-config-title">
                       <KeyRound size={17} />
-                      DeepSeek
+                      知识库构建模型
                     </span>
-                    <p>LLM Wiki 构建配置</p>
+                    <p>默认使用 DeepSeek，普通构建只需要填写 API Key。</p>
                   </div>
                   <span className="status-pill" data-running={llmConfigDraft.configured}>
                     {llmConfigDraft.configured ? "已配置" : "未配置"}
                   </span>
                 </div>
-                <div className="llm-config-grid">
+                <div className="llm-config-grid compact">
                   <label>
-                    API Key
+                    DeepSeek API Key
                     <input
                       value={llmConfigDraft.apiKey}
                       type="password"
@@ -1079,34 +977,11 @@ export default function App() {
                       }
                     />
                   </label>
-                  <label>
-                    Model
-                    <input
-                      value={llmConfigDraft.model}
-                      placeholder={DEFAULT_LLM_WIKI_CONFIG.model}
-                      onChange={(event) =>
-                        setLlmConfigDraft((current) => ({ ...current, model: event.target.value }))
-                      }
-                    />
-                  </label>
-                  <label>
-                    Base URL
-                    <input
-                      value={llmConfigDraft.baseUrl}
-                      placeholder={DEFAULT_LLM_WIKI_CONFIG.baseUrl}
-                      onChange={(event) =>
-                        setLlmConfigDraft((current) => ({
-                          ...current,
-                          baseUrl: event.target.value,
-                        }))
-                      }
-                    />
-                  </label>
                   <button
                     className="primary"
                     disabled={
                       busy === "llm-config" ||
-                      !llmConfigDraft.apiKey.trim() ||
+                      (!llmConfigDraft.configured && !llmConfigDraft.apiKey.trim()) ||
                       !llmConfigDraft.model.trim() ||
                       !llmConfigDraft.baseUrl.trim()
                     }
@@ -1115,6 +990,60 @@ export default function App() {
                     保存
                   </button>
                 </div>
+                <button
+                  className="text-button llm-advanced-toggle"
+                  onClick={() => setShowLlmAdvanced((value) => !value)}
+                  type="button"
+                >
+                  {showLlmAdvanced ? "收起高级模型设置" : "高级模型设置"}
+                </button>
+                {showLlmAdvanced && (
+                  <div className="llm-advanced-panel">
+                    <label>
+                      Model
+                      <input
+                        value={llmConfigDraft.model}
+                        placeholder={DEFAULT_LLM_WIKI_CONFIG.model}
+                        onChange={(event) =>
+                          setLlmConfigDraft((current) => ({
+                            ...current,
+                            model: event.target.value,
+                          }))
+                        }
+                      />
+                    </label>
+                    <label>
+                      Base URL
+                      <input
+                        value={llmConfigDraft.baseUrl}
+                        placeholder={DEFAULT_LLM_WIKI_CONFIG.baseUrl}
+                        onChange={(event) =>
+                          setLlmConfigDraft((current) => ({
+                            ...current,
+                            baseUrl: event.target.value,
+                          }))
+                        }
+                      />
+                    </label>
+                    <label>
+                      maxContextSize
+                      <input
+                        value={llmConfigDraft.maxContextSize}
+                        min={4000}
+                        step={1000}
+                        type="number"
+                        onChange={(event) =>
+                          setLlmConfigDraft((current) => ({
+                            ...current,
+                            maxContextSize:
+                              Number(event.target.value) ||
+                              DEFAULT_LLM_WIKI_CONFIG.maxContextSize,
+                          }))
+                        }
+                      />
+                    </label>
+                  </div>
+                )}
               </form>
 
               <form className="project-form" onSubmit={createProject}>
@@ -1137,7 +1066,10 @@ export default function App() {
                     选择
                   </button>
                 </div>
-                <button className="primary" disabled={busy === "create-project"}>
+                <button
+                  className="primary"
+                  disabled={busy === "create-project" || !projectName.trim()}
+                >
                   <Plus size={17} />
                   创建项目
                 </button>
@@ -1165,7 +1097,6 @@ export default function App() {
                       </div>
                       <div className="status-row">
                         <span>构建：{statusLabel(project.build_status)}</span>
-                        <span>链接：{statusLabel(project.link_status)}</span>
                         <span>素材：{project.materials.length}</span>
                       </div>
                       <div className="card-actions">
@@ -1176,14 +1107,6 @@ export default function App() {
                         >
                           <BookOpen size={17} />
                           进入项目
-                        </button>
-                        <button
-                          className="secondary"
-                          onClick={() => startProjectChat(project)}
-                          disabled={busy === `chat-${project.project_id}`}
-                        >
-                          <MessageSquare size={17} />
-                          Chat
                         </button>
                       </div>
                     </article>
@@ -1196,44 +1119,91 @@ export default function App() {
               <div className="section-heading">
                 <div>
                   <h1>访问连接</h1>
-                  <p>选择一个知识库项目发布 LLM Wiki API。</p>
+                  <p>为知识库生成可分享的访问地址。</p>
                 </div>
                 <span className="count-pill">{connections.length} 个连接</span>
               </div>
 
-              <form className="connection-form" onSubmit={createConnection}>
-                <select
-                  value={connectionProjectId}
-                  onChange={(event) => setConnectionProjectId(event.target.value)}
-                  aria-label="选择知识库项目"
-                >
-                  <option value="">选择项目</option>
-                  {connectableProjects.map((project) => (
-                    <option value={project.project_id} key={project.project_id}>
-                      {project.name}
-                    </option>
-                  ))}
-                </select>
-                <div className="traffic-options" role="group" aria-label="选择流量额度">
-                  {[10, 50, 100, 500].map((value) => (
-                    <button
-                      type="button"
-                      className={connectionTrafficMb === value ? "active" : ""}
-                      key={value}
-                      onClick={() => setConnectionTrafficMb(value)}
-                    >
-                      {value} MB
-                    </button>
-                  ))}
-                </div>
+              <div className="connection-launch-row">
                 <button
                   className="primary"
-                  disabled={busy === "create-connection" || !connectionProjectId}
+                  disabled={busy === "create-connection" || connectableProjects.length === 0}
+                  onClick={() => setShowConnectionDialog(true)}
+                  type="button"
                 >
-                  <Plus size={17} />
+                  <Plus size={17} aria-hidden="true" />
                   发布 API
                 </button>
-              </form>
+              </div>
+
+              {showConnectionDialog && (
+                <div className="dialog-backdrop" role="presentation">
+                  <form className="publish-dialog" onSubmit={createConnection}>
+                    <div className="dialog-heading">
+                      <div>
+                        <h2>发布 API</h2>
+                        <p>创建一个可分享的知识库访问地址。</p>
+                      </div>
+                    </div>
+                    <label>
+                      项目
+                      <select
+                        value={connectionProjectId}
+                        onChange={(event) => setConnectionProjectId(event.target.value)}
+                        aria-label="选择知识库项目"
+                      >
+                        <option value="">选择项目</option>
+                        {connectableProjects.map((project) => (
+                          <option value={project.project_id} key={project.project_id}>
+                            {project.name}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    <div className="dialog-field">
+                      <span>流量额度</span>
+                      <div className="traffic-options" role="group" aria-label="选择流量额度">
+                        {[10, 50, 100, 500].map((value) => (
+                          <button
+                            type="button"
+                            className={connectionTrafficMb === value ? "active" : ""}
+                            key={value}
+                            onClick={() => setConnectionTrafficMb(value)}
+                          >
+                            {value} MB
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    <label>
+                      访问密码
+                      <input
+                        value={connectionAccessToken}
+                        onChange={(event) => setConnectionAccessToken(event.target.value)}
+                        placeholder="可留空"
+                        type="password"
+                        autoComplete="off"
+                      />
+                    </label>
+                    <div className="card-actions">
+                      <button
+                        className="secondary"
+                        onClick={() => setShowConnectionDialog(false)}
+                        type="button"
+                      >
+                        取消
+                      </button>
+                      <button
+                        className="primary"
+                        disabled={busy === "create-connection" || !connectionProjectId}
+                      >
+                        <Plus size={17} />
+                        发布
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              )}
 
               <div className="connection-list">
                 {connections.length === 0 ? (
@@ -1276,6 +1246,7 @@ export default function App() {
                       <div className="usage-block">
                         <div className="usage-meta">
                           <span>{usageText(connection)}</span>
+                          <span>{connection.access_protected ? "已设置访问密码" : "无访问密码"}</span>
                           <span>{usagePercent(connection).toFixed(0)}%</span>
                         </div>
                         <div className="usage-bar">
@@ -1418,15 +1389,8 @@ function countReadableFiles(node: ProjectTreeNode | null): number {
   return current + node.children.reduce((total, child) => total + countReadableFiles(child), 0)
 }
 
-function queueLabel(queue?: WikiQueueSummary | null) {
-  if (!queue || queue.total === 0) return "空"
-  const parts = [
-    queue.pending ? `pending ${queue.pending}` : "",
-    queue.processing ? `processing ${queue.processing}` : "",
-    queue.failed ? `failed ${queue.failed}` : "",
-    queue.completed ? `completed ${queue.completed}` : "",
-  ].filter(Boolean)
-  return parts.join(" / ") || "空"
+function processedFileLabel(queue?: WikiQueueSummary | null) {
+  return `${queue?.completed ?? 0}/${queue?.total ?? 0}`
 }
 
 function statusLabel(value: string) {
@@ -1445,7 +1409,7 @@ function statusLabel(value: string) {
 function connectionStatusText(connection: ProjectConnection) {
   if (connection.traffic_limit_mb > 0 && usagePercent(connection) >= 100)
     return "额度已用完，请创建新的访问连接。"
-  if (connection.running) return "访问已开启，可以把这个 API 地址分享给 C 端使用。"
+  if (connection.running) return "访问已开启，可以把这个访问地址分享给使用者。"
   if (connection.status === "service_not_ready") return "本地知识库 API 服务正在准备中。"
   return "访问已关闭，需要时可以重新开启。"
 }

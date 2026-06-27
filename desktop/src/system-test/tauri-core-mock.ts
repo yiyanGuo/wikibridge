@@ -44,6 +44,7 @@ type ProjectConnection = {
   service_ready: boolean
   traffic_limit_mb: number
   traffic_used_bytes: number
+  access_protected: boolean
   status: string
 }
 
@@ -67,6 +68,7 @@ type LlmSettings = {
   provider: string
   model: string
   baseUrl?: string | null
+  apiKey: string
   hasApiKey: boolean
 }
 
@@ -198,12 +200,15 @@ export async function invoke<T = unknown>(command: string, args?: unknown): Prom
       return clone(state.llmConfig) as T
     case "set_llm_wiki_llm_config":
       return saveLlmWikiConfig(args) as T
+    case "clear_llm_wiki_llm_config_key":
+      state.llmConfig = { ...state.llmConfig, apiKey: "", configured: false }
+      return clone(state.llmConfig) as T
     case "get_llm_settings":
       return clone(state.llmSettings) as T
     case "save_llm_settings":
       return saveLlmSettings(args) as T
     case "clear_llm_settings":
-      state.llmSettings = { ...state.llmSettings, hasApiKey: false }
+      state.llmSettings = { ...state.llmSettings, apiKey: "", hasApiKey: false }
       state.services.opencode = stoppedSidecar()
       state.services.llmWiki = stoppedSidecar()
       return clone(state.llmSettings) as T
@@ -228,6 +233,8 @@ export async function invoke<T = unknown>(command: string, args?: unknown): Prom
       return undefined as T
     case "check_remote_knowledge_base":
       return checkRemoteKnowledgeBase(readStringArg(args, "url")) as T
+    case "probe_remote_llm_wiki":
+      return probeRemoteKnowledgeBase(args) as T
     case "select_remote_knowledge_base_project":
       return selectRemoteKnowledgeBaseProject(
         readStringArg(args, "remoteId"),
@@ -322,8 +329,9 @@ function createState(overrides: Partial<SystemTestState> = {}): SystemTestState 
     },
     llmSettings: {
       provider: "deepseek",
-      model: "deepseek-chat",
-      baseUrl: "https://api.deepseek.com",
+      model: "deepseek-v4-flash",
+      baseUrl: "https://api.deepseek.com/v1",
+      apiKey: "sk-system-test",
       hasApiKey: true,
     },
     llmConfig: {
@@ -379,35 +387,39 @@ function addRemoteKnowledgeBase(args: unknown): RemoteKnowledgeBase {
   const input = readInput(args)
   const url = normalizeRemoteUrl(String(input.url || ""))
   const apiUrl = normalizeRemoteApiUrl(url)
+  const token = typeof input.token === "string" && input.token.trim() ? input.token.trim() : null
+  if (remoteRequiresPassword(url) && token !== "secret") {
+    throw new Error("远程知识库需要密码，请填写分享方提供的密码")
+  }
   const existing = state.remoteKnowledgeBases.find(
     (item) => item.apiUrl === apiUrl || item.url === url,
   )
   const projects = sampleRemoteProjects()
   const currentProject = projects.find((project) => project.current) || projects[0] || null
   if (existing) {
-    existing.name = String(input.name || "") || new URL(url).host
+    existing.name = String(input.name || "") || currentProject?.name || new URL(url).host
     existing.url = url
     existing.apiUrl = apiUrl
     existing.status = "ready"
     existing.projectCount = projects.length
     existing.projects = projects
     existing.currentProject = currentProject
-    existing.authRequired = false
+    existing.authRequired = remoteRequiresPassword(url)
     existing.lastOpenedAt = Date.now()
     return clone(existing)
   }
   const remote: RemoteKnowledgeBase = {
     remoteId: `remote-${state.nextId++}`,
-    name: String(input.name || "") || new URL(url).host,
+    name: String(input.name || "") || currentProject?.name || new URL(url).host,
     url,
     apiUrl,
     status: "ready",
     projectCount: projects.length,
     projects,
     currentProject,
-    authRequired: false,
+    authRequired: remoteRequiresPassword(url),
     mcpStatus: "not_registered",
-    token: typeof input.token === "string" && input.token.trim() ? input.token.trim() : null,
+    token,
     addedAt: Date.now(),
     lastOpenedAt: Date.now(),
   }
@@ -426,9 +438,27 @@ function touchRemoteKnowledgeBase(remoteId: string): RemoteKnowledgeBase {
 }
 
 function checkRemoteKnowledgeBase(url: string) {
+  return probeRemoteKnowledgeBase({ url })
+}
+
+function probeRemoteKnowledgeBase(args: unknown) {
+  const url =
+    isRecord(args) && typeof args.url === "string"
+      ? args.url
+      : isRecord(args) && isRecord(args.input) && typeof args.input.url === "string"
+        ? args.input.url
+        : ""
+  const token =
+    isRecord(args) && typeof args.token === "string"
+      ? args.token.trim()
+      : isRecord(args) && isRecord(args.input) && typeof args.input.token === "string"
+        ? args.input.token.trim()
+        : ""
   const normalized = normalizeRemoteUrl(url)
   const apiUrl = normalizeRemoteApiUrl(normalized)
-  const ok = !normalized.includes("down")
+  const protectedRemote = remoteRequiresPassword(normalized)
+  const ok = !normalized.includes("down") && (!protectedRemote || token === "secret")
+  const authRequired = protectedRemote && token !== "secret"
   const projects = ok ? sampleRemoteProjects() : []
   const currentProject = projects.find((project) => project.current) || projects[0] || null
   const existing = state.remoteKnowledgeBases.find(
@@ -437,23 +467,27 @@ function checkRemoteKnowledgeBase(url: string) {
   if (existing) {
     existing.url = normalized
     existing.apiUrl = apiUrl
-    existing.status = ok ? "ready" : "unreachable"
+    existing.status = ok ? "ready" : authRequired ? "auth_required" : "unreachable"
     existing.projectCount = projects.length
     existing.projects = projects
     existing.currentProject = currentProject
-    existing.authRequired = false
+    existing.authRequired = protectedRemote
   }
   return {
     url: normalized,
     apiUrl,
     ok,
-    status: ok ? "ready" : "unreachable",
-    message: ok ? `远程知识库 API 可用，发现 ${projects.length} 个项目` : "远程知识库不可达",
+    status: ok ? "ready" : authRequired ? "auth_required" : "unreachable",
+    message: ok
+      ? `远程知识库 API 可用，发现 ${projects.length} 个项目`
+      : authRequired
+        ? "远程知识库需要密码，请填写分享方提供的密码"
+        : "远程知识库不可达",
     llmWikiHealthy: ok,
     projectCount: projects.length,
     projects,
     currentProject,
-    authRequired: false,
+    authRequired,
     mcpStatus: existing?.mcpStatus || "not_registered",
   }
 }
@@ -553,7 +587,8 @@ function createOpenCodeSession() {
 
 function createProject(args: unknown): KnowledgeProject {
   const input = readInput(args)
-  const name = String(input.name || "知识库")
+  const name = String(input.name || "").trim()
+  if (!name) throw new Error("请输入项目名称")
   const folderPath = String(input.folderPath || input.folder_path || "/tmp/wikibridge-project")
   const project: KnowledgeProject = {
     project_id: `project-${state.nextId++}`,
@@ -586,13 +621,16 @@ function ensureWikiProject(projectId: string): WikiProjectState {
 
 function saveLlmWikiConfig(args: unknown): LlmWikiLlmConfig {
   const input = readInput(args)
+  const rawApiKey = typeof input.apiKey === "string" ? input.apiKey.trim() : ""
+  const clearApiKey = Boolean(input.clearApiKey)
+  const retainedApiKey = clearApiKey ? "" : rawApiKey || state.llmConfig.apiKey
   const next: LlmWikiLlmConfig = {
     provider: String(input.provider || "deepseek"),
-    apiKey: String(input.apiKey || ""),
+    apiKey: retainedApiKey,
     model: String(input.model || "deepseek-v4-flash"),
     baseUrl: String(input.baseUrl || "https://api.deepseek.com/v1"),
     maxContextSize: Number(input.maxContextSize || 64000),
-    configured: Boolean(String(input.apiKey || "").trim()),
+    configured: Boolean(retainedApiKey || (!clearApiKey && state.llmConfig.configured)),
   }
   state.llmConfig = next
   return clone(next)
@@ -601,14 +639,16 @@ function saveLlmWikiConfig(args: unknown): LlmWikiLlmConfig {
 function saveLlmSettings(args: unknown): LlmSettings {
   const input = readInput(args)
   const provider = String(input.provider || "deepseek")
-  const model = String(input.model || "deepseek-chat")
+  const model = String(input.model || "deepseek-v4-flash")
   const baseUrl = typeof input.baseUrl === "string" ? input.baseUrl : null
   const apiKey = typeof input.apiKey === "string" ? input.apiKey.trim() : ""
+  const retainedApiKey = apiKey || state.llmSettings.apiKey
   state.llmSettings = {
     provider,
     model,
     baseUrl,
-    hasApiKey: apiKey ? true : state.llmSettings.hasApiKey,
+    apiKey: retainedApiKey,
+    hasApiKey: Boolean(retainedApiKey),
   }
   return clone(state.llmSettings)
 }
@@ -639,13 +679,20 @@ function importWikiSources(args: unknown) {
 }
 
 function buildWikiProject(projectId: string) {
+  if (!state.llmConfig.configured) {
+    throw new Error("请先配置 DeepSeek API Key，再构建知识库。")
+  }
   const project = ensureWikiProject(projectId)
-  project.queue = { pending: 1, processing: 0, failed: 0, completed: 0, total: 1 }
+  project.queue = { pending: 0, processing: 0, failed: 0, completed: 1, total: 1 }
   state.wikiProjects[projectId] = project
   return {
     project: project.project,
     queue: project.queue,
+    failedTasks: [],
     enqueuedCount: 1,
+    processedCount: 1,
+    failedCount: 0,
+    writtenPaths: ["wiki/intro.md"],
   }
 }
 
@@ -665,6 +712,7 @@ function createConnection(args: unknown): ProjectConnection {
     service_ready: true,
     traffic_limit_mb: Number(input.trafficMb || 100),
     traffic_used_bytes: 0,
+    access_protected: typeof input.accessToken === "string" && Boolean(input.accessToken.trim()),
     status: "stopped",
   }
   state.connections = [connection, ...state.connections]
@@ -702,11 +750,15 @@ function sampleRemoteProjects(): RemoteProject[] {
   return [
     {
       id: "remote-project-1",
-      name: "团队项目",
+      name: "gyy的知识库",
       path: "/remote/team",
       current: true,
     },
   ]
+}
+
+function remoteRequiresPassword(url: string) {
+  return normalizeRemoteUrl(url).includes("protected")
 }
 
 function stoppedSidecar(): SidecarState {

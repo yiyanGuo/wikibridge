@@ -160,7 +160,7 @@ button {
 
 .opencode-sidebar {
   display: grid;
-  grid-template-rows: auto auto auto minmax(0, 1fr);
+  grid-template-rows: auto auto minmax(0, 1fr);
   gap: 12px;
   overflow: auto;
 }
@@ -267,6 +267,7 @@ button {
   border: 1px solid #d8e0e8;
   border-radius: 8px;
   background: #f8fafc;
+  cursor: pointer;
 }
 
 .remote-card.active {
@@ -826,6 +827,24 @@ button:disabled {
   gap: 10px;
 }
 
+.llm-config-grid.compact {
+  grid-template-columns: minmax(220px, 1fr) auto auto;
+}
+
+.llm-advanced-toggle {
+  margin-top: -2px;
+}
+
+.llm-advanced-panel {
+  display: grid;
+  grid-template-columns: minmax(160px, 0.9fr) minmax(220px, 1.2fr) minmax(150px, 0.7fr);
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid #d8e0e8;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
 .reader-config-alert {
   margin: 12px 0 0;
 }
@@ -866,6 +885,51 @@ button:disabled {
 .connection-form > .primary {
   min-width: 128px;
   justify-self: end;
+}
+
+.connection-launch-row {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 16px;
+}
+
+.dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(15, 23, 42, 0.32);
+}
+
+.publish-dialog {
+  width: min(480px, 100%);
+  display: grid;
+  gap: 14px;
+  padding: 18px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: #ffffff;
+  box-shadow: 0 20px 50px rgba(15, 23, 42, 0.22);
+}
+
+.dialog-heading h2 {
+  margin: 0 0 6px;
+  font-size: 20px;
+}
+
+.dialog-heading p {
+  margin: 0;
+  color: #64748b;
+  font-size: 13px;
+}
+
+.dialog-field {
+  display: grid;
+  gap: 6px;
+  color: #475569;
+  font-size: 13px;
 }
 
 .folder-input {
@@ -1171,40 +1235,6 @@ button:disabled {
   font-size: 13px;
 }
 
-.graph-sidebar-section {
-  min-height: 0;
-}
-
-.graph-list {
-  display: grid;
-  gap: 6px;
-  overflow: auto;
-}
-
-.graph-row {
-  min-height: 32px;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 8px;
-  padding: 0 8px;
-  border-radius: 6px;
-  color: #475569;
-  background: #f8fafc;
-  font-size: 13px;
-}
-
-.graph-row span {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.graph-row strong {
-  color: #1d4ed8;
-}
-
 .reader-content {
   min-width: 0;
   min-height: 0;
@@ -1446,7 +1476,9 @@ button:disabled {
 
   .project-form,
   .connection-form,
-  .llm-config-grid {
+  .llm-config-grid,
+  .llm-config-grid.compact,
+  .llm-advanced-panel {
     grid-template-columns: 1fr;
   }
 

@@ -3,10 +3,7 @@ import { invoke } from "@tauri-apps/api/core"
 import {
   BookOpen,
   ExternalLink,
-  Globe2,
-  Play,
   Plus,
-  Power,
   RefreshCcw,
   Save,
   Server,
@@ -18,7 +15,7 @@ import BearFrpApp from "./BearFrpApp"
 type Entry = "bearfrp" | "opencode"
 type LlmMode = "openai" | "deepseek" | "relay"
 
-const DEEPSEEK_BASE_URL = "https://api.deepseek.com"
+const DEEPSEEK_BASE_URL = "https://api.deepseek.com/v1"
 
 type SidecarState = {
   running: boolean
@@ -40,6 +37,7 @@ type LlmSettings = {
   provider: string
   model: string
   baseUrl?: string | null
+  apiKey?: string | null
   hasApiKey: boolean
 }
 
@@ -113,9 +111,9 @@ export default function App() {
   const [llmBaseUrlDraft, setLlmBaseUrlDraft] = useState(DEEPSEEK_BASE_URL)
   const [llmApiKeyDraft, setLlmApiKeyDraft] = useState("")
   const [remoteKnowledgeBases, setRemoteKnowledgeBases] = useState<RemoteKnowledgeBase[]>([])
-  const [remoteName, setRemoteName] = useState("")
   const [remoteUrl, setRemoteUrl] = useState("")
-  const [remoteToken, setRemoteToken] = useState("")
+  const [remotePassword, setRemotePassword] = useState("")
+  const [remoteNeedsPassword, setRemoteNeedsPassword] = useState(false)
   const [activeRemoteId, setActiveRemoteId] = useState("")
   const [viewerMode, setViewerMode] = useState<"local" | "remote">("local")
   const [sessionViewerUrl, setSessionViewerUrl] = useState("")
@@ -150,6 +148,7 @@ export default function App() {
     setLlmBaseUrlDraft(
       mode === "relay" ? settings.baseUrl || "" : mode === "deepseek" ? DEEPSEEK_BASE_URL : "",
     )
+    setLlmApiKeyDraft(settings.apiKey || "")
   }, [])
 
   const refreshServices = useCallback(async () => {
@@ -167,9 +166,14 @@ export default function App() {
   const refreshLlmSettings = useCallback(async () => {
     const next = await invoke<LlmSettings>("get_llm_settings")
     applyLlmSettingsToDraft(next)
-    setLlmApiKeyDraft("")
     return next
   }, [applyLlmSettingsToDraft])
+
+  useEffect(() => {
+    if (!error) return
+    const timer = window.setTimeout(() => setError(""), 3000)
+    return () => window.clearTimeout(timer)
+  }, [error])
 
   useEffect(() => {
     let cancelled = false
@@ -213,23 +217,40 @@ export default function App() {
     setBusy("remote-add")
     setError("")
     try {
+      const url = remoteUrl.trim()
+      if (!remoteNeedsPassword) {
+        const check = await invoke<RemoteKnowledgeBaseCheck>("probe_remote_llm_wiki", {
+          url,
+          token: null,
+        })
+        if (!check.ok && check.authRequired) {
+          setRemoteNeedsPassword(true)
+          setNotice("该知识库需要访问密码")
+          return
+        }
+        if (!check.ok) {
+          throw new Error(check.message)
+        }
+      }
       const remote = await invoke<RemoteKnowledgeBase>("add_remote_knowledge_base", {
-        input: { name: remoteName || null, url: remoteUrl, token: remoteToken || null },
+        input: { name: null, url, token: remoteNeedsPassword ? remotePassword || null : null },
       })
       setRemoteKnowledgeBases((items) =>
         sortRemoteKnowledgeBases(upsertRemoteKnowledgeBase(items, remote)),
       )
-      setRemoteName("")
       setRemoteUrl("")
-      setRemoteToken("")
+      setRemotePassword("")
+      setRemoteNeedsPassword(false)
       setActiveRemoteId(remote.remoteId)
+      setViewerMode("remote")
       setNotice(
         remote.status === "ready"
           ? "远程知识库已添加"
           : `远程知识库已添加：${remoteStatusLabel(remote.status)}`,
       )
     } catch (err) {
-      setError(friendlyError(err))
+      const message = friendlyError(err)
+      setError(remoteNeedsPassword && message.includes("密码") ? "密码不正确或已失效" : message)
     } finally {
       setBusy("")
     }
@@ -255,8 +276,7 @@ export default function App() {
       )
       setSessionViewerUrl(result.session.url)
       setFrameKey((key) => key + 1)
-      const mcp = result.stack.mcpStatus ? `，MCP ${mcpStatusLabel(result.stack.mcpStatus)}` : ""
-      setNotice(`本地 OpenCode 已连接远程知识库并创建对话${mcp}`)
+      setNotice("本地 OpenCode 已连接远程知识库并创建对话")
     } catch (err) {
       setError(friendlyError(err))
     } finally {
@@ -280,24 +300,7 @@ export default function App() {
         input: payload,
       })
       applyLlmSettingsToDraft(next)
-      setLlmApiKeyDraft("")
       setNotice("模型设置已保存")
-    } catch (err) {
-      setError(friendlyError(err))
-    } finally {
-      setBusy("")
-    }
-  }
-
-  async function clearLlmSettings() {
-    setBusy("llm-clear")
-    setError("")
-    try {
-      const next = await invoke<LlmSettings>("clear_llm_settings")
-      applyLlmSettingsToDraft(next)
-      setLlmApiKeyDraft("")
-      await refreshServices()
-      setNotice("API Key 已清除")
     } catch (err) {
       setError(friendlyError(err))
     } finally {
@@ -439,8 +442,7 @@ export default function App() {
         )
         setSessionViewerUrl(result.session.url)
         setFrameKey((key) => key + 1)
-        const mcp = result.stack.mcpStatus ? `，MCP ${mcpStatusLabel(result.stack.mcpStatus)}` : ""
-        setNotice(`OpenCode 远程知识库对话已创建${mcp}`)
+        setNotice("OpenCode 远程知识库对话已创建")
         return
       }
       const stack = await invoke<OpenCodeStack>("ensure_opencode_stack_running")
@@ -549,7 +551,7 @@ export default function App() {
                     <input
                       value={llmApiKeyDraft}
                       onChange={(event) => setLlmApiKeyDraft(event.target.value)}
-                      placeholder={llmSettings?.hasApiKey ? "留空则保留当前 Key" : "粘贴 API Key"}
+                      placeholder="粘贴 API Key"
                       type="password"
                       autoComplete="off"
                     />
@@ -621,15 +623,6 @@ export default function App() {
                       <Save size={17} />
                       保存
                     </button>
-                    <button
-                      type="button"
-                      className="secondary"
-                      onClick={clearLlmSettings}
-                      disabled={!llmSettings?.hasApiKey || busy === "llm-clear"}
-                    >
-                      <Trash2 size={17} />
-                      清除 Key
-                    </button>
                   </div>
                 </form>
               </section>
@@ -637,92 +630,38 @@ export default function App() {
               <section className="opencode-section">
                 <div className="section-heading compact">
                   <div>
-                    <h2>本地 OpenCode</h2>
-                    <p>
-                      {services?.opencode.running ? services.opencode.url : "用于本机知识库联调"}
-                    </p>
-                  </div>
-                  <span
-                    className="remote-status"
-                    data-status={services?.opencode.healthy ? "ready" : "unreachable"}
-                  >
-                    {services?.opencode.healthy ? "运行中" : "未启动"}
-                  </span>
-                </div>
-                {!llmSettings?.hasApiKey && (
-                  <div className="inline-alert opencode-config-alert">
-                    请先保存模型供应商和 API Key，然后再启动本地 OpenCode。
-                  </div>
-                )}
-                <div className="card-actions compact-actions">
-                  <button
-                    className="primary"
-                    onClick={() => startLocalOpenCode()}
-                    disabled={!llmSettings?.hasApiKey || busy === "opencode-start"}
-                  >
-                    <Play size={17} />
-                    启动
-                  </button>
-                  <button
-                    className="secondary"
-                    onClick={() => createOpenCodeSession({ forceLocal: true })}
-                    disabled={!llmSettings?.hasApiKey || busy === "opencode-session"}
-                  >
-                    <TerminalSquare size={17} />
-                    进入对话
-                  </button>
-                  <button
-                    className="secondary"
-                    onClick={stopLocalOpenCode}
-                    disabled={!services?.opencode.running || busy === "opencode-stop"}
-                  >
-                    <Power size={17} />
-                    停止
-                  </button>
-                </div>
-                <div className="service-log-list">
-                  <span>OpenCode：{serviceLabel(services?.opencode)}</span>
-                  <span>LLM Wiki：{serviceLabel(services?.llmWiki)}</span>
-                </div>
-              </section>
-
-              <section className="opencode-section">
-                <div className="section-heading compact">
-                  <div>
                     <h2>添加远程知识库</h2>
-                    <p>粘贴分享方提供的 LLM Wiki API 地址。</p>
+                    <p>粘贴分享方提供的 URL 地址。</p>
                   </div>
                 </div>
                 <form className="remote-form" onSubmit={addRemoteKnowledgeBase}>
                   <label>
-                    名称
-                    <input
-                      value={remoteName}
-                      onChange={(event) => setRemoteName(event.target.value)}
-                      placeholder="可留空"
-                    />
-                  </label>
-                  <label>
-                    API 地址
+                    URL 地址
                     <input
                       value={remoteUrl}
-                      onChange={(event) => setRemoteUrl(event.target.value)}
+                      onChange={(event) => {
+                        setRemoteUrl(event.target.value)
+                        setRemoteNeedsPassword(false)
+                        setRemotePassword("")
+                      }}
                       placeholder="https://wiki.example.com 或 /api/v1"
                     />
                   </label>
-                  <label>
-                    Token
-                    <input
-                      value={remoteToken}
-                      onChange={(event) => setRemoteToken(event.target.value)}
-                      placeholder="可选"
-                      type="password"
-                      autoComplete="off"
-                    />
-                  </label>
+                  {remoteNeedsPassword && (
+                    <label>
+                      访问密码
+                      <input
+                        value={remotePassword}
+                        onChange={(event) => setRemotePassword(event.target.value)}
+                        placeholder="输入分享方提供的密码"
+                        type="password"
+                        autoComplete="off"
+                      />
+                    </label>
+                  )}
                   <button className="primary" disabled={busy === "remote-add" || !remoteUrl.trim()}>
                     <Plus size={17} />
-                    添加
+                    {remoteNeedsPassword ? "验证并添加" : "添加"}
                   </button>
                 </form>
               </section>
@@ -754,6 +693,10 @@ export default function App() {
                           activeRemoteId === remote.remoteId ? "remote-card active" : "remote-card"
                         }
                         key={remote.remoteId}
+                        onClick={() => {
+                          setActiveRemoteId(remote.remoteId)
+                          setViewerMode("remote")
+                        }}
                       >
                         <div className="remote-card-heading">
                           <div>
@@ -765,52 +708,17 @@ export default function App() {
                           </span>
                         </div>
                         <div className="remote-card-meta">
-                          <span>项目：{remote.projectCount || 0}</span>
-                          <span>当前：{remote.currentProject?.name || "未选择"}</span>
-                          <span>MCP：{mcpStatusLabel(remote.mcpStatus)}</span>
+                          <span>{remote.currentProject?.name || `${remote.projectCount || 0} 个项目`}</span>
+                          {remote.authRequired && <span>需要访问密码</span>}
                         </div>
-                        {remote.projects?.length ? (
-                          <label className="remote-project-select">
-                            选择知识库
-                            <select
-                              value={remote.currentProject?.id || remote.projects[0]?.id || ""}
-                              onChange={(event) => selectRemoteProject(remote, event.target.value)}
-                              disabled={
-                                busy === `remote-project-${remote.remoteId}` ||
-                                busy === `remote-open-${remote.remoteId}`
-                              }
-                            >
-                              {remote.projects.map((project) => (
-                                <option key={project.id} value={project.id}>
-                                  {project.name || project.id}
-                                </option>
-                              ))}
-                            </select>
-                          </label>
-                        ) : null}
                         <div className="card-actions">
-                          <button
-                            className="secondary compact"
-                            onClick={() => openRemoteKnowledgeBase(remote)}
-                            disabled={
-                              !llmSettings?.hasApiKey || busy === `remote-open-${remote.remoteId}`
-                            }
-                          >
-                            <Globe2 size={15} />
-                            连接
-                          </button>
-                          <button
-                            className="secondary compact"
-                            onClick={() => checkRemoteKnowledgeBase(remote)}
-                            disabled={busy === `remote-check-${remote.remoteId}`}
-                          >
-                            <RefreshCcw size={15} />
-                            检测
-                          </button>
                           <button
                             className="icon-button danger"
                             title="删除"
-                            onClick={() => removeRemoteKnowledgeBase(remote)}
+                            onClick={(event) => {
+                              event.stopPropagation()
+                              removeRemoteKnowledgeBase(remote)
+                            }}
                             disabled={busy === `remote-remove-${remote.remoteId}`}
                           >
                             <Trash2 size={15} aria-hidden="true" />
@@ -821,7 +729,7 @@ export default function App() {
                   </div>
                 ) : (
                   <div className="empty-state compact">
-                    添加 LLM Wiki API 地址后可连接到本地 OpenCode。
+                    添加远程知识库 URL 后可进入本地 OpenCode。
                   </div>
                 )}
               </section>
@@ -834,18 +742,20 @@ export default function App() {
                   <span>{viewerUrl || viewerPlaceholder}</span>
                 </div>
                 <div className="card-actions">
-                  <button
-                    className="primary"
-                    onClick={() => createOpenCodeSession()}
-                    disabled={
-                      !llmSettings?.hasApiKey ||
-                      busy === "opencode-session" ||
-                      busy === "opencode-start"
-                    }
-                  >
-                    <Plus size={17} />
-                    {viewerUrl ? "新建对话" : "启动并进入"}
-                  </button>
+                  {viewerUrl && (
+                    <button
+                      className="primary"
+                      onClick={() => createOpenCodeSession()}
+                      disabled={
+                        !llmSettings?.hasApiKey ||
+                        busy === "opencode-session" ||
+                        busy === "opencode-start"
+                      }
+                    >
+                      <Plus size={17} />
+                      新建对话
+                    </button>
+                  )}
                   {viewerUrl && (
                     <button className="secondary" onClick={() => setFrameKey((key) => key + 1)}>
                       <RefreshCcw size={17} />
@@ -887,12 +797,18 @@ export default function App() {
               ) : (
                 <div className="remote-empty-panel">
                   <TerminalSquare size={32} aria-hidden="true" />
-                  <h1>本地 OpenCode</h1>
-                  <p>保存模型设置后，可在这里通过本地 OpenCode 提问。</p>
+                  <h1>{activeRemote ? activeRemote.name : "本地 OpenCode"}</h1>
+                  <p>
+                    {activeRemote
+                      ? "通过本地 OpenCode 进入这个远程知识库上下文。"
+                      : "保存模型设置后，可在这里通过本地 OpenCode 提问。"}
+                  </p>
                   <button
                     className="primary"
                     onClick={() =>
-                      services?.opencode.running
+                      activeRemote
+                        ? createOpenCodeSession()
+                        : services?.opencode.running
                         ? createOpenCodeSession({ forceLocal: true })
                         : startLocalOpenCode()
                     }
@@ -903,7 +819,7 @@ export default function App() {
                     }
                   >
                     <TerminalSquare size={17} />
-                    {services?.opencode.running ? "进入对话" : "启动并进入"}
+                    {activeRemote || !services?.opencode.running ? "启动并进入" : "进入对话"}
                   </button>
                 </div>
               )}
@@ -949,7 +865,7 @@ function currentProviderId(mode: LlmMode, relayProvider: string) {
 }
 
 function defaultModelForMode(mode: LlmMode) {
-  if (mode === "deepseek") return "deepseek-chat"
+  if (mode === "deepseek") return "deepseek-v4-flash"
   return "gpt-5"
 }
 
@@ -984,7 +900,7 @@ function remoteStatusLabel(status: string) {
   const labels: Record<string, string> = {
     ready: "可用",
     llm_wiki_unavailable: "知识库异常",
-    auth_required: "需 Token",
+    auth_required: "需密码",
     unreachable: "不可达",
     not_llm_wiki: "非知识库 API",
     no_projects: "无项目",
@@ -1012,5 +928,5 @@ function friendlyError(error: unknown) {
   if (text.includes("后端地址") || text.includes("backend")) return text
   if (text.includes("OpenCode") || text.includes("分享链接") || text.includes("远程知识库"))
     return text
-  return "操作未完成，请稍后重试"
+  return text === "操作失败" ? "操作未完成，请稍后重试" : `操作未完成：${text}`
 }

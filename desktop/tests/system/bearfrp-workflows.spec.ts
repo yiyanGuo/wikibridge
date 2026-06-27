@@ -1,41 +1,77 @@
 import { expect, test } from "@playwright/test"
 import {
   enqueueOpenResult,
-  getOpenCalls,
+  getInvocations,
   prepareSystemTestPage,
   setConfirmResult,
 } from "./test-utils"
 
-test("imports sources, builds wiki, refreshes graph, and starts/stops Chat", async ({ page }) => {
+test("saves publisher model config and keeps the saved key visible", async ({ page }) => {
+  await prepareSystemTestPage(page, {
+    llmConfig: {
+      provider: "deepseek",
+      apiKey: "",
+      model: "deepseek-v4-flash",
+      baseUrl: "https://api.deepseek.com/v1",
+      maxContextSize: 64000,
+      configured: false,
+    },
+  })
+
+  await page.getByLabel("DeepSeek API Key").fill("sk-first")
+  await page.getByRole("button", { name: "保存" }).click()
+  await expect(page.getByText("知识库构建模型已保存")).toBeVisible()
+
+  await page.getByRole("button", { name: "高级模型设置" }).click()
+  await page.getByLabel("Model").fill("deepseek-v4-pro")
+  await page.getByLabel("Base URL").fill("https://api.deepseek.com/v1")
+  await page.getByLabel("maxContextSize").fill("128000")
+  await page.getByRole("button", { name: "保存" }).click()
+  await expect(page.getByLabel("DeepSeek API Key")).toHaveValue("sk-first")
+  await expect(page.getByRole("button", { name: "清除 Key" })).toHaveCount(0)
+
+  const saveInvocations = (await getInvocations(page)).filter(
+    (invocation) => invocation.command === "set_llm_wiki_llm_config",
+  )
+  expect(saveInvocations.at(-1)?.args).toMatchObject({
+    input: {
+      apiKey: "sk-first",
+      model: "deepseek-v4-pro",
+      baseUrl: "https://api.deepseek.com/v1",
+      maxContextSize: 128000,
+    },
+  })
+})
+
+test("imports sources and runs Build with internal graph refresh", async ({ page }) => {
   await prepareSystemTestPage(page)
 
+  await expect(page.getByText("链接：")).toHaveCount(0)
+  await expect(page.getByRole("button", { name: "Chat" })).toHaveCount(0)
   await page.getByRole("button", { name: "进入项目" }).click()
+  await expect(page.getByRole("button", { name: "Build" })).toBeVisible()
+  await expect(page.getByRole("button", { name: "Link" })).toHaveCount(0)
+  await expect(page.getByRole("button", { name: "启动 Chat" })).toHaveCount(0)
+  await expect(page.getByRole("button", { name: "打开 Chat" })).toHaveCount(0)
+  await expect(page.getByRole("button", { name: "停止 Chat" })).toHaveCount(0)
+  await expect(page.getByText("Graph：")).toHaveCount(0)
+  await expect(page.getByText("已处理文件 1/1")).toBeVisible()
+
   await enqueueOpenResult(page, ["/tmp/source-one.md", "/tmp/source-two.md"])
   await page.getByRole("button", { name: "Add 文件", exact: true }).click()
   await expect(page.getByText("已导入 2 个 source")).toBeVisible()
-  await expect(page.getByText("Sources：3")).toBeVisible()
+  await expect(page.getByText("Sources：")).toHaveCount(0)
 
-  await page.getByRole("button", { name: "构建" }).click()
-  await expect(page.getByText("已加入构建队列：1 个 source")).toBeVisible()
-  await expect(page.getByText("队列：pending 1")).toBeVisible()
+  await page.getByRole("button", { name: "Build" }).click()
+  await expect(page.getByText("构建完成：处理 1 个 source，生成 1 个 Wiki 文件")).toBeVisible()
+  await expect(page.getByText("已处理文件 1/1")).toBeVisible()
+  await expect(page.getByText("Graph 已刷新")).toHaveCount(0)
 
-  await page.getByRole("button", { name: "Link" }).click()
-  await expect(page.getByText("Graph 已刷新：1 个节点，0 条边")).toBeVisible()
-  await expect(page.getByText("Graph：1/0")).toBeVisible()
-
-  await page.getByRole("button", { name: "Chat" }).click()
-  await expect(page.getByText(/OpenCode Chat 已创建对话：http:\/\/127\.0\.0\.1:9010/)).toBeVisible()
-  await expect
-    .poll(() => getOpenCalls(page))
-    .toContainEqual({
-      url: expect.stringMatching(/^http:\/\/127\.0\.0\.1:9010/),
-      target: "_blank",
-    })
-  await expect(page.getByRole("button", { name: "停止 Chat" })).toBeVisible()
-
-  await page.getByRole("button", { name: "停止 Chat" }).click()
-  await expect(page.getByText("消费端 Chat 已停止")).toBeVisible()
-  await expect(page.getByRole("button", { name: "启动 Chat" })).toBeVisible()
+  const commands = (await getInvocations(page)).map((invocation) => invocation.command)
+  expect(commands.indexOf("build_wiki_project")).toBeGreaterThan(-1)
+  expect(commands.indexOf("refresh_wiki_graph")).toBeGreaterThan(
+    commands.indexOf("build_wiki_project"),
+  )
 })
 
 test("shows empty reader state when a project has no wiki documents", async ({ page }) => {
@@ -61,7 +97,7 @@ test("shows empty reader state when a project has no wiki documents", async ({ p
 
   await page.getByRole("button", { name: "进入项目" }).click()
   await expect(page.getByText("暂无 Wiki 文档")).toBeVisible()
-  await expect(page.getByText("请先 Add source，再构建。")).toBeVisible()
+  await expect(page.getByText("请先 Add source，再 Build。")).toBeVisible()
 })
 
 test("shows reader errors when document loading fails", async ({ page }) => {

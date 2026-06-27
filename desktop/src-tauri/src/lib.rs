@@ -4,6 +4,7 @@ use std::{
     net::{TcpStream, ToSocketAddrs},
     path::{Component, Path, PathBuf},
     sync::Mutex,
+    thread,
     time::{Duration, SystemTime, UNIX_EPOCH},
 };
 
@@ -52,6 +53,8 @@ pub struct AddMaterialsInput {
 pub struct CreateConnectionInput {
     pub project_id: String,
     pub traffic_mb: i64,
+    #[serde(default)]
+    pub access_token: Option<String>,
 }
 
 #[derive(Debug, Clone, serde::Deserialize)]
@@ -75,6 +78,7 @@ pub struct ProjectConnectionDto {
     pub service_ready: bool,
     pub traffic_limit_mb: i64,
     pub traffic_used_bytes: i64,
+    pub access_protected: bool,
     pub status: String,
 }
 
@@ -264,7 +268,14 @@ async fn add_remote_knowledge_base(
     if !check.ok {
         return Err(check.message);
     }
-    let name = normalize_remote_name(input.name.as_deref(), &check.api_url)?;
+    let name = normalize_remote_name(
+        input.name.as_deref(),
+        check
+            .current_project
+            .as_ref()
+            .map(|project| project.name.as_str()),
+        &check.api_url,
+    )?;
     let mut runtime = runtime.lock().map_err(lock_error)?;
     if let Some(remote_id) = runtime
         .persisted
@@ -815,6 +826,7 @@ async fn create_connection(
     let client = client_from_runtime(&runtime)?;
     let user = client.me().await?;
     let traffic_mb = normalize_traffic_mb(input.traffic_mb)?;
+    let access_token = normalize_optional_token(input.access_token);
     let project = get_project(&runtime, &input.project_id)?;
     ensure_project_unbound(&runtime, &input.project_id)?;
     let connection_id = new_id("conn");
@@ -825,10 +837,17 @@ async fn create_connection(
         proxy_id: 0,
         local_host: local_service::SERVICE_HOST.to_string(),
         local_port,
+        access_token,
         traffic_mb,
         created_at: unix_timestamp(),
     };
-    ensure_project_api_service(&app, &runtime, &project, local_port)?;
+    ensure_project_api_service(
+        &app,
+        &runtime,
+        &project,
+        local_port,
+        draft_connection.access_token.as_deref(),
+    )?;
     let proxy = match create_connection_proxy(
         &client,
         &user,
@@ -875,7 +894,13 @@ async fn start_connection(
     let mut connection = get_connection(&runtime, &connection_id)?;
     let project = get_project(&runtime, &connection.project_id)?;
     connection = ensure_connection_proxy_active(&runtime, &client, &project, connection).await?;
-    ensure_project_api_service(&app, &runtime, &project, connection.local_port)?;
+    ensure_project_api_service(
+        &app,
+        &runtime,
+        &project,
+        connection.local_port,
+        connection.access_token.as_deref(),
+    )?;
     let scripts = client.get_proxy_scripts(connection.proxy_id).await?;
     {
         let mut runtime = runtime.lock().map_err(lock_error)?;
@@ -972,7 +997,7 @@ async fn probe_remote_knowledge_base_url(
         .build()
         .map_err(|error| format!("无法创建远程探测客户端: {error}"))?;
 
-    let health = fetch_json_with_token(&client, &format!("{api_url}/health"), token).await;
+    let health = fetch_json_with_token_retry(&client, &format!("{api_url}/health"), token).await;
     let (health_status, health_body) = match health {
         Ok(value) => value,
         Err(error) => {
@@ -1000,7 +1025,7 @@ async fn probe_remote_knowledge_base_url(
             api_url,
             ok: false,
             status: "auth_required".to_string(),
-            message: "远程知识库 API 需要 token，请填写分享方提供的 token".to_string(),
+            message: "远程知识库需要密码，请填写分享方提供的密码".to_string(),
             llm_wiki_healthy: false,
             project_count: 0,
             projects: Vec::new(),
@@ -1049,7 +1074,8 @@ async fn probe_remote_knowledge_base_url(
         .get("authRequired")
         .and_then(Value::as_bool)
         .unwrap_or(false);
-    let projects = fetch_json_with_token(&client, &format!("{api_url}/projects"), token).await;
+    let projects =
+        fetch_json_with_token_retry(&client, &format!("{api_url}/projects"), token).await;
     let (projects_status, projects_body) = match projects {
         Ok(value) => value,
         Err(error) => {
@@ -1076,7 +1102,7 @@ async fn probe_remote_knowledge_base_url(
             api_url,
             ok: false,
             status: "auth_required".to_string(),
-            message: "远程知识库 API 需要 token，请填写分享方提供的 token".to_string(),
+            message: "远程知识库需要密码，请填写分享方提供的密码".to_string(),
             llm_wiki_healthy: true,
             project_count: 0,
             projects: Vec::new(),
@@ -1184,6 +1210,35 @@ async fn fetch_json_with_token(
     Ok((status, json))
 }
 
+async fn fetch_json_with_token_retry(
+    client: &reqwest::Client,
+    url: &str,
+    token: Option<&str>,
+) -> Result<(reqwest::StatusCode, Value), String> {
+    let mut last_error = None;
+    let mut last_response = None;
+    for attempt in 0..3 {
+        match fetch_json_with_token(client, url, token).await {
+            Ok((status, body)) if !matches!(status.as_u16(), 502 | 503 | 504) => {
+                return Ok((status, body));
+            }
+            Ok(response) => {
+                last_response = Some(response);
+            }
+            Err(error) => {
+                last_error = Some(error);
+            }
+        }
+        if attempt < 2 {
+            thread::sleep(Duration::from_millis(250 * (attempt + 1)));
+        }
+    }
+    if let Some(response) = last_response {
+        return Ok(response);
+    }
+    Err(last_error.unwrap_or_else(|| "远程知识库 API 暂时不可用".to_string()))
+}
+
 fn normalize_remote_llm_wiki_url(value: &str) -> Result<String, String> {
     let trimmed = value.trim().trim_end_matches('/');
     if trimmed.is_empty() {
@@ -1283,10 +1338,18 @@ fn normalize_optional_token(value: Option<String>) -> Option<String> {
         .filter(|token| !token.is_empty())
 }
 
-fn normalize_remote_name(value: Option<&str>, url: &str) -> Result<String, String> {
+fn normalize_remote_name(
+    value: Option<&str>,
+    current_project_name: Option<&str>,
+    url: &str,
+) -> Result<String, String> {
     let name = value.unwrap_or_default().trim();
     let name = if name.is_empty() {
-        remote_name_from_url(url)
+        current_project_name
+            .map(str::trim)
+            .filter(|name| !name.is_empty())
+            .map(ToOwned::to_owned)
+            .unwrap_or_else(|| remote_name_from_url(url))
     } else {
         name.to_string()
     };
@@ -1379,6 +1442,11 @@ async fn connection_dto(
         service_ready,
         traffic_limit_mb,
         traffic_used_bytes,
+        access_protected: connection
+            .access_token
+            .as_deref()
+            .map(|token| !token.trim().is_empty())
+            .unwrap_or(false),
         status: status.to_string(),
     })
 }
@@ -1480,10 +1548,12 @@ fn ensure_project_api_service(
     runtime: &State<'_, SharedRuntime>,
     project: &KnowledgeProject,
     preferred_port: u16,
+    access_token: Option<&str>,
 ) -> Result<String, String> {
     let mut runtime = runtime.lock().map_err(lock_error)?;
     let _ = wiki::ensure_wiki_project(&mut runtime, &project.project_id)?;
-    sidecar::start_project_llm_wiki_server(app, &mut runtime, project, preferred_port)
+    wiki::configure_llm_wiki_api_access(&runtime.paths.app_data_dir, access_token)?;
+    sidecar::start_project_llm_wiki_server(app, &mut runtime, project, preferred_port, access_token)
 }
 
 fn stop_mask_service_locked(runtime: &mut DesktopRuntime, connection_id: &str) {
@@ -1925,6 +1995,7 @@ pub fn run() {
             link_project,
             wiki::get_llm_wiki_llm_config,
             wiki::set_llm_wiki_llm_config,
+            wiki::clear_llm_wiki_llm_config_key,
             wiki::get_wiki_project,
             wiki::import_wiki_sources,
             wiki::build_wiki_project,

@@ -128,10 +128,13 @@ pub struct LlmWikiLlmConfigDto {
 #[serde(rename_all = "camelCase")]
 pub struct LlmWikiLlmConfigInput {
     pub provider: Option<String>,
-    pub api_key: String,
+    #[serde(default)]
+    pub api_key: Option<String>,
     pub model: Option<String>,
     pub base_url: Option<String>,
     pub max_context_size: Option<u64>,
+    #[serde(default)]
+    pub clear_api_key: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -204,6 +207,24 @@ pub fn set_llm_wiki_llm_config(
 ) -> Result<LlmWikiLlmConfigDto, String> {
     let runtime = runtime.lock().map_err(crate::lock_error)?;
     write_deepseek_llm_config(&runtime.paths.app_data_dir, input)
+}
+
+#[tauri::command]
+pub fn clear_llm_wiki_llm_config_key(
+    runtime: State<'_, SharedRuntime>,
+) -> Result<LlmWikiLlmConfigDto, String> {
+    let runtime = runtime.lock().map_err(crate::lock_error)?;
+    write_deepseek_llm_config(
+        &runtime.paths.app_data_dir,
+        LlmWikiLlmConfigInput {
+            provider: Some(DEEPSEEK_PRESET_ID.to_string()),
+            api_key: None,
+            model: None,
+            base_url: None,
+            max_context_size: None,
+            clear_api_key: true,
+        },
+    )
 }
 
 #[tauri::command]
@@ -555,15 +576,23 @@ fn write_deepseek_llm_config(
         }
     }
 
-    let api_key = input.api_key.trim().to_string();
-    if api_key.is_empty() {
-        return Err("DeepSeek API Key 不能为空".to_string());
-    }
+    let previous = read_deepseek_llm_config(app_data_dir)?;
+    let api_key = if input.clear_api_key {
+        String::new()
+    } else {
+        input
+            .api_key
+            .as_deref()
+            .map(str::trim)
+            .filter(|key| !key.is_empty())
+            .map(ToOwned::to_owned)
+            .unwrap_or_else(|| previous.api_key.clone())
+    };
 
     let model = input
         .model
         .as_deref()
-        .unwrap_or(DEFAULT_DEEPSEEK_MODEL)
+        .unwrap_or(previous.model.as_str())
         .trim();
     let model = if model.is_empty() {
         DEFAULT_DEEPSEEK_MODEL.to_string()
@@ -573,7 +602,7 @@ fn write_deepseek_llm_config(
     let base_url = input
         .base_url
         .as_deref()
-        .unwrap_or(DEFAULT_DEEPSEEK_BASE_URL)
+        .unwrap_or(previous.base_url.as_str())
         .trim()
         .trim_end_matches('/')
         .to_string();
@@ -586,7 +615,7 @@ fn write_deepseek_llm_config(
     let max_context_size = input
         .max_context_size
         .filter(|value| *value > 0)
-        .unwrap_or(DEFAULT_DEEPSEEK_CONTEXT_SIZE);
+        .unwrap_or(previous.max_context_size);
 
     let mut state = read_llm_wiki_app_state(app_data_dir)?;
     let object = llm_wiki_app_state_object_mut(&mut state)?;
@@ -647,6 +676,31 @@ fn write_deepseek_llm_config(
     read_deepseek_llm_config(app_data_dir)
 }
 
+pub(crate) fn configure_llm_wiki_api_access(
+    app_data_dir: &Path,
+    token: Option<&str>,
+) -> Result<(), String> {
+    let token = token
+        .map(str::trim)
+        .filter(|token| !token.is_empty())
+        .unwrap_or("");
+    let mut state = read_llm_wiki_app_state(app_data_dir)?;
+    let object = llm_wiki_app_state_object_mut(&mut state)?;
+    let api_config = object
+        .entry("apiConfig".to_string())
+        .or_insert_with(|| json!({}))
+        .as_object_mut()
+        .ok_or_else(|| "LLM Wiki apiConfig 格式错误".to_string())?;
+    api_config.insert("enabled".to_string(), Value::Bool(true));
+    api_config.insert("mcpEnabled".to_string(), Value::Bool(true));
+    api_config.insert(
+        "allowUnauthenticated".to_string(),
+        Value::Bool(token.is_empty()),
+    );
+    api_config.insert("token".to_string(), Value::String(token.to_string()));
+    write_llm_wiki_app_state(app_data_dir, &state)
+}
+
 fn register_llm_wiki_project(app_data_dir: &Path, project: &WikiProjectDto) -> Result<(), String> {
     let mut state = read_llm_wiki_app_state(app_data_dir)?;
     let object = llm_wiki_app_state_object_mut(&mut state)?;
@@ -659,7 +713,9 @@ fn register_llm_wiki_project(app_data_dir: &Path, project: &WikiProjectDto) -> R
     api_config
         .entry("enabled".to_string())
         .or_insert(Value::Bool(true));
-    api_config.insert("allowUnauthenticated".to_string(), Value::Bool(true));
+    api_config
+        .entry("allowUnauthenticated".to_string())
+        .or_insert(Value::Bool(true));
 
     let registry = object
         .entry("projectRegistry".to_string())
@@ -1833,10 +1889,11 @@ mod tests {
             &app_data,
             LlmWikiLlmConfigInput {
                 provider: Some("deepseek".to_string()),
-                api_key: " sk-test ".to_string(),
+                api_key: Some(" sk-test ".to_string()),
                 model: Some("deepseek-chat".to_string()),
                 base_url: Some("https://api.deepseek.com/v1/".to_string()),
                 max_context_size: Some(32_000),
+                clear_api_key: false,
             },
         )
         .unwrap();
@@ -1892,10 +1949,11 @@ mod tests {
             &app_data,
             LlmWikiLlmConfigInput {
                 provider: None,
-                api_key: "deepseek-key".to_string(),
+                api_key: Some("deepseek-key".to_string()),
                 model: None,
                 base_url: None,
                 max_context_size: None,
+                clear_api_key: false,
             },
         )
         .unwrap();

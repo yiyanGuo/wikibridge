@@ -13,6 +13,7 @@
     "test:conda": "node scripts/check-conda-env.mjs bearfrp_test",
     "test:integration:desktop": "node scripts/run-integration.mjs",
     "test:integration:fake-stack": "node scripts/run-fake-stack.mjs",
+    "test:e2e:public-frps": "node scripts/run-public-frps-e2e.mjs",
     "test:system": "playwright test",
     "test:system:install": "playwright install chromium",
     "test:system:ui": "playwright test --ui",

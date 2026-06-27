@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "format:owned": "node scripts/format-owned.mjs",
-    "format:owned:check": "node scripts/format-owned.mjs --check"
+    "format:owned:check": "node scripts/format-owned.mjs --check",
+    "test:e2e:public-frps": "npm --prefix desktop run test:e2e:public-frps"
   },
   "devDependencies": {
     "prettier": "3.8.5"

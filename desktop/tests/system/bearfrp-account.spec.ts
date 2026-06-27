@@ -13,6 +13,8 @@ test("shows login failures and supports logout", async ({ page }) => {
   await page.getByLabel("密码").fill("wrong")
   await page.locator(".auth-panel form").getByRole("button", { name: "登录" }).click()
   await expect(page.getByText("用户名或密码错误")).toBeVisible()
+  await expect(page.getByText("用户名或密码错误")).toBeHidden({ timeout: 4000 })
+  await expect(page.getByLabel("密码")).toBeVisible()
 
   await page.evaluate(() => window.__wikibridgeSystemTest?.clearCommandFailure("login_user"))
   await page.getByLabel("密码").fill("secret")
@@ -35,10 +37,11 @@ test("reports recharge failures without changing the account summary", async ({ 
   await expect(page.getByText("可用额度：100 MB")).toBeVisible()
   await page.getByRole("button", { name: "免费充值" }).click()
   await expect(page.getByText("可用额度暂时无法充值")).toBeVisible()
+  await expect(page.getByText("可用额度暂时无法充值")).toBeHidden({ timeout: 4000 })
   await expect(page.getByText("可用额度：100 MB")).toBeVisible()
 })
 
-test("opens and deletes a published Chat connection with confirmation", async ({ page }) => {
+test("opens and deletes a published access connection with confirmation", async ({ page }) => {
   await prepareSystemTestPage(page, {
     authenticated: true,
     user: { username: "alice", balance_mb: 100 },

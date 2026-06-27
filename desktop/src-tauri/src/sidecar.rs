@@ -7,7 +7,7 @@ use std::{
     path::{Path, PathBuf},
     process::{Child, Command, Stdio},
     thread,
-    time::{Duration, SystemTime, UNIX_EPOCH},
+    time::{Duration, Instant, SystemTime, UNIX_EPOCH},
 };
 
 use serde::Serialize;
@@ -33,6 +33,7 @@ pub struct OpenCodeStack {
     pub opencode_work_dir: Option<PathBuf>,
     pub project_id: Option<String>,
     pub opencode_config_hash: Option<u64>,
+    pub llm_wiki_access_token: Option<String>,
 }
 
 #[derive(Debug)]
@@ -57,6 +58,7 @@ impl OpenCodeStack {
         self.opencode_work_dir = None;
         self.project_id = None;
         self.opencode_config_hash = None;
+        self.llm_wiki_access_token = None;
     }
 
     pub fn reap_exited(&mut self) {
@@ -82,6 +84,7 @@ impl OpenCodeStack {
         {
             self.llm_wiki = None;
             self.llm_wiki_port = None;
+            self.llm_wiki_access_token = None;
         }
     }
 }
@@ -402,6 +405,7 @@ pub fn stop_project_llm_wiki_server(runtime: &mut DesktopRuntime, project_id: &s
     if runtime.opencode_stack.project_id.as_deref() == Some(project_id) {
         runtime.opencode_stack.llm_wiki.take();
         runtime.opencode_stack.llm_wiki_port = None;
+        runtime.opencode_stack.llm_wiki_access_token = None;
         runtime.opencode_stack.project_id = None;
     }
 }
@@ -419,14 +423,21 @@ pub fn start_project_llm_wiki_server(
     runtime: &mut DesktopRuntime,
     project: &KnowledgeProject,
     preferred_port: u16,
+    access_token: Option<&str>,
 ) -> Result<String, String> {
     runtime.opencode_stack.reap_exited();
+    let access_token = access_token
+        .map(str::trim)
+        .filter(|token| !token.is_empty())
+        .map(ToOwned::to_owned);
 
     if let Some(port) = runtime.opencode_stack.llm_wiki_port {
         let same_project =
             runtime.opencode_stack.project_id.as_deref() == Some(&project.project_id);
+        let same_access = runtime.opencode_stack.llm_wiki_access_token == access_token;
         if port == preferred_port
             && same_project
+            && same_access
             && runtime.opencode_stack.llm_wiki.is_some()
             && is_llm_wiki_server_ready(port)
         {
@@ -434,6 +445,7 @@ pub fn start_project_llm_wiki_server(
         }
         runtime.opencode_stack.llm_wiki = None;
         runtime.opencode_stack.llm_wiki_port = None;
+        runtime.opencode_stack.llm_wiki_access_token = None;
         stop_opencode_process(runtime);
     }
 
@@ -450,22 +462,27 @@ pub fn start_project_llm_wiki_server(
         .paths
         .log_dir
         .join(format!("llm-wiki-server-{}.log", project.project_id));
+    let mut envs = vec![
+        ("LLM_WIKI_DATA_DIR", data_dir.to_string_lossy().to_string()),
+        ("LLM_WIKI_BIND", HOST.to_string()),
+        ("LLM_WIKI_PORT", port.to_string()),
+    ];
+    if let Some(token) = &access_token {
+        envs.push(("LLM_WIKI_TOKEN", token.clone()));
+    }
     let process = spawn_logged(
         binary,
         &[],
         &runtime.paths.app_data_dir,
         &log_path,
-        &[
-            ("LLM_WIKI_DATA_DIR", data_dir.to_string_lossy().to_string()),
-            ("LLM_WIKI_BIND", HOST.to_string()),
-            ("LLM_WIKI_PORT", port.to_string()),
-        ],
+        &envs,
         "llm-wiki-server",
     )?;
 
     runtime.opencode_stack.llm_wiki = Some(process);
     runtime.opencode_stack.llm_wiki_port = Some(port);
     runtime.opencode_stack.project_id = Some(project.project_id.clone());
+    runtime.opencode_stack.llm_wiki_access_token = access_token;
     wait_for_health(port, "/api/v1/health", None, "LLM Wiki")?;
     Ok(format!("{}/api/v1", local_url(port)))
 }
@@ -481,6 +498,7 @@ fn ensure_llm_wiki_running(app: &AppHandle, runtime: &mut DesktopRuntime) -> Res
         }
         runtime.opencode_stack.llm_wiki = None;
         runtime.opencode_stack.llm_wiki_port = None;
+        runtime.opencode_stack.llm_wiki_access_token = None;
     }
 
     let port = allocate_port(LLM_WIKI_START_PORT, LLM_WIKI_END_PORT)?;
@@ -509,6 +527,7 @@ fn ensure_llm_wiki_running(app: &AppHandle, runtime: &mut DesktopRuntime) -> Res
     runtime.opencode_stack.llm_wiki = Some(process);
     runtime.opencode_stack.llm_wiki_port = Some(port);
     runtime.opencode_stack.project_id = None;
+    runtime.opencode_stack.llm_wiki_access_token = None;
     wait_for_health(port, "/api/v1/health", None, "LLM Wiki")?;
     Ok(port)
 }
@@ -579,10 +598,18 @@ fn ensure_opencode_running(
     let config_dir = launch.data_dir.join("config");
     fs::create_dir_all(&config_dir)
         .map_err(|error| format!("无法创建 OpenCode 配置目录: {error}"))?;
+    let xdg_config_dir = launch.data_dir.join("xdg-config");
     let xdg_data_dir = launch.data_dir.join("xdg-data");
     let xdg_state_dir = launch.data_dir.join("xdg-state");
     let xdg_cache_dir = launch.data_dir.join("xdg-cache");
-    for dir in [&xdg_data_dir, &xdg_state_dir, &xdg_cache_dir] {
+    let isolated_home = launch.data_dir.join("home");
+    for dir in [
+        &xdg_config_dir,
+        &xdg_data_dir,
+        &xdg_state_dir,
+        &xdg_cache_dir,
+        &isolated_home,
+    ] {
         fs::create_dir_all(dir).map_err(|error| format!("无法创建 OpenCode 运行目录: {error}"))?;
     }
     let db_path = launch.data_dir.join("opencode.db");
@@ -605,11 +632,16 @@ fn ensure_opencode_running(
         ),
         ("OPENCODE_KB_USER", "default".to_string()),
         ("OPENCODE_KB_READONLY", "1".to_string()),
+        ("OPENCODE_DISABLE_PROJECT_CONFIG", "1".to_string()),
         (
             "OPENCODE_CONFIG_DIR",
             config_dir.to_string_lossy().to_string(),
         ),
         ("OPENCODE_DB", db_path.to_string_lossy().to_string()),
+        (
+            "XDG_CONFIG_HOME",
+            xdg_config_dir.to_string_lossy().to_string(),
+        ),
         ("XDG_DATA_HOME", xdg_data_dir.to_string_lossy().to_string()),
         (
             "XDG_STATE_HOME",
@@ -619,6 +651,12 @@ fn ensure_opencode_running(
             "XDG_CACHE_HOME",
             xdg_cache_dir.to_string_lossy().to_string(),
         ),
+        (
+            "OPENCODE_TEST_HOME",
+            isolated_home.to_string_lossy().to_string(),
+        ),
+        ("HOME", isolated_home.to_string_lossy().to_string()),
+        ("USERPROFILE", isolated_home.to_string_lossy().to_string()),
         ("LLM_WIKI_BASE_URL", launch.llm_wiki_base_url.clone()),
         ("OPENCODE_CONFIG_CONTENT", config.content.clone()),
     ];
@@ -844,10 +882,7 @@ fn http_json_post(port: u16, path: &str, payload: &Value, label: &str) -> Result
     stream
         .write_all(request.as_bytes())
         .map_err(|error| format!("{label}请求发送失败: {error}"))?;
-    let mut response = String::new();
-    stream
-        .read_to_string(&mut response)
-        .map_err(|error| format!("{label}响应读取失败: {error}"))?;
+    let response = read_http_response_with_retry(&mut stream, label)?;
     let (header, body) = response
         .split_once("\r\n\r\n")
         .ok_or_else(|| format!("{label}响应格式错误"))?;
@@ -863,6 +898,26 @@ fn http_json_post(port: u16, path: &str, payload: &Value, label: &str) -> Result
         return Err(message.to_string());
     }
     Ok(json)
+}
+
+fn read_http_response_with_retry(stream: &mut TcpStream, label: &str) -> Result<String, String> {
+    let deadline = Instant::now() + Duration::from_secs(8);
+    let mut response = Vec::new();
+    let mut buffer = [0_u8; 4096];
+    loop {
+        match stream.read(&mut buffer) {
+            Ok(0) => break,
+            Ok(size) => response.extend_from_slice(&buffer[..size]),
+            Err(error) if error.kind() == std::io::ErrorKind::WouldBlock => {
+                if Instant::now() >= deadline {
+                    return Err(format!("{label}响应读取超时"));
+                }
+                thread::sleep(Duration::from_millis(100));
+            }
+            Err(error) => return Err(format!("{label}响应读取失败: {error}")),
+        }
+    }
+    String::from_utf8(response).map_err(|error| format!("{label}返回非 UTF-8 响应: {error}"))
 }
 
 fn opencode_base64_encode(input: &[u8]) -> String {
