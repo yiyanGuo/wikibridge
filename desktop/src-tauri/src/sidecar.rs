@@ -756,6 +756,12 @@ fn register_llm_wiki_mcp(
     remote: &RemoteKnowledgeBase,
     server_name: &str,
 ) -> Result<String, String> {
+    if let Some(status) = current_mcp_status(opencode_port, server_name) {
+        if status == "connected" {
+            return Ok(status);
+        }
+    }
+
     let entry_path = find_mcp_server_entry(app)?;
     let api_base_url = remote_api_base(remote);
     let mut environment = serde_json::Map::new();
@@ -795,6 +801,18 @@ fn register_llm_wiki_mcp(
         .unwrap_or("registered")
         .to_string();
     Ok(status)
+}
+
+fn current_mcp_status(opencode_port: u16, server_name: &str) -> Option<String> {
+    http_json_get(opencode_port, "/mcp", "查询知识库 MCP")
+        .ok()
+        .and_then(|response| {
+            response
+                .get(server_name)
+                .and_then(|value| value.get("status"))
+                .and_then(Value::as_str)
+                .map(str::to_string)
+        })
 }
 
 fn write_kb_agent_instructions(launch: &OpenCodeLaunch) -> Result<(), String> {
@@ -869,16 +887,35 @@ fn normalize_api_base(value: &str) -> String {
 
 fn http_json_post(port: u16, path: &str, payload: &Value, label: &str) -> Result<Value, String> {
     let body = payload.to_string();
+    http_json_request(port, "POST", path, Some(&body), label)
+}
+
+fn http_json_get(port: u16, path: &str, label: &str) -> Result<Value, String> {
+    http_json_request(port, "GET", path, None, label)
+}
+
+fn http_json_request(
+    port: u16,
+    method: &str,
+    path: &str,
+    body: Option<&str>,
+    label: &str,
+) -> Result<Value, String> {
     let Ok(mut stream) = TcpStream::connect((HOST, port)) else {
         return Err(format!("本地 OpenCode 还未就绪，无法{label}"));
     };
     let _ = stream.set_read_timeout(Some(Duration::from_secs(8)));
     let _ = stream.set_write_timeout(Some(Duration::from_secs(8)));
-    let request = format!(
-        "POST {path} HTTP/1.1\r\nHost: {HOST}:{port}\r\nContent-Type: application/json\r\nAccept: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{}",
-        body.as_bytes().len(),
-        body
-    );
+    let request = match body {
+        Some(body) => format!(
+            "{method} {path} HTTP/1.1\r\nHost: {HOST}:{port}\r\nContent-Type: application/json\r\nAccept: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{}",
+            body.as_bytes().len(),
+            body
+        ),
+        None => format!(
+            "{method} {path} HTTP/1.1\r\nHost: {HOST}:{port}\r\nAccept: application/json\r\nConnection: close\r\n\r\n"
+        ),
+    };
     stream
         .write_all(request.as_bytes())
         .map_err(|error| format!("{label}请求发送失败: {error}"))?;
