@@ -902,12 +902,14 @@ fn enqueue_ingest_tasks(
         if let Some(task) = tasks.iter_mut().find(|task| {
             task.project_id == project_id
                 && normalize_rel_string(&task.source_path) == normalize_rel_string(source_path)
-                && matches!(task.status.as_str(), "pending" | "processing" | "failed")
         }) {
-            if task.status != "processing" {
-                task.status = "pending".to_string();
-                task.error = None;
-                task.retry_count = 0;
+            match task.status.as_str() {
+                "done" | "processing" => {}
+                _ => {
+                    task.status = "pending".to_string();
+                    task.error = None;
+                    task.retry_count = 0;
+                }
             }
             continue;
         }
@@ -1019,7 +1021,11 @@ async fn process_ingest_queue_with_deepseek(
                 summary.processed_count += 1;
                 summary.written_paths.extend(written_paths);
                 let mut tasks = read_ingest_queue(&queue_path)?;
-                tasks.retain(|candidate| candidate.id != task.id);
+                if let Some(task) = tasks.iter_mut().find(|candidate| candidate.id == task.id) {
+                    task.status = "done".to_string();
+                    task.error = None;
+                    task.retry_count = 0;
+                }
                 write_ingest_queue(&queue_path, &tasks)?;
             }
             Ok(_) => {
@@ -1868,6 +1874,49 @@ mod tests {
 
         let _ = fs::remove_dir_all(project);
         let _ = fs::remove_dir_all(outside);
+    }
+
+    #[test]
+    fn successful_build_keeps_completed_queue_status() {
+        let project = temp_root("completed-queue");
+        ensure_wiki_layout(&project).unwrap();
+        let source = project.join("raw/sources/note.md");
+        fs::write(&source, "# Note\n\nBridge relay notes.").unwrap();
+        let imported = "raw/sources/note.md".to_string();
+
+        let added = enqueue_ingest_tasks(&project, "project-1", &[imported.clone()]).unwrap();
+        assert_eq!(added, 1);
+
+        let (base_url, server) = start_fake_deepseek_server();
+        let config = LlmWikiLlmConfigDto {
+            provider: "deepseek".to_string(),
+            api_key: "test-key".to_string(),
+            model: "deepseek-chat".to_string(),
+            base_url,
+            max_context_size: 16_000,
+            configured: true,
+        };
+        let summary = tauri::async_runtime::block_on(process_ingest_queue_with_deepseek(
+            &project,
+            "project-1",
+            &config,
+        ))
+        .unwrap();
+        server.join().unwrap();
+
+        assert_eq!(summary.processed_count, 1);
+        let queue = read_queue_summary(&project).unwrap();
+        assert_eq!(queue.pending, 0);
+        assert_eq!(queue.completed, 1);
+        assert_eq!(queue.total, 1);
+
+        let added_again = enqueue_ingest_tasks(&project, "project-1", &[imported]).unwrap();
+        assert_eq!(added_again, 0);
+        let queue = read_queue_summary(&project).unwrap();
+        assert_eq!(queue.completed, 1);
+        assert_eq!(queue.total, 1);
+
+        let _ = fs::remove_dir_all(project);
     }
 
     #[test]

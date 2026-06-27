@@ -462,12 +462,39 @@ export default function App() {
       setError("请先配置 DeepSeek API Key，再构建知识库。")
       return
     }
+    let progressTimer: number | undefined
+    let progressPollingActive = true
+    let progressPollInFlight = false
+    const stopProgressPolling = () => {
+      progressPollingActive = false
+      if (progressTimer !== undefined) {
+        window.clearInterval(progressTimer)
+        progressTimer = undefined
+      }
+    }
+    const pollBuildProgress = () => {
+      if (!progressPollingActive || progressPollInFlight) return
+      progressPollInFlight = true
+      void invoke<WikiProjectState>("get_wiki_project", { projectId: project.project_id })
+        .then((state) => {
+          if (progressPollingActive) setWikiProjectState(state)
+        })
+        .catch(() => {
+          // Build owns the user-visible error; progress polling is best-effort.
+        })
+        .finally(() => {
+          progressPollInFlight = false
+        })
+    }
     setBusy(`build-${project.project_id}`)
     setError("")
     try {
+      pollBuildProgress()
+      progressTimer = window.setInterval(pollBuildProgress, 900)
       const result = await invoke<WikiBuildResult>("build_wiki_project", {
         projectId: project.project_id,
       })
+      stopProgressPolling()
       setWikiProjectState((current) =>
         current
           ? {
@@ -505,8 +532,10 @@ export default function App() {
         )
       }
     } catch (err) {
+      stopProgressPolling()
       setError(friendlyError(err))
     } finally {
+      stopProgressPolling()
       setBusy("")
     }
   }
