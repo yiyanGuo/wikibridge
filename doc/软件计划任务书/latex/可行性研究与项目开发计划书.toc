@@ -1,0 +1,75 @@
+\contentsline {section}{文档变更历史记录}{I}{Doc-Start}%
+\contentsline {section}{文档约定}{I}{table.1}%
+\contentsline {section}{\numberline {1}引言}{1}{section.1}%
+\contentsline {subsection}{\numberline {1.1}编写目的}{1}{subsection.1.1}%
+\contentsline {subsection}{\numberline {1.2}项目背景}{1}{subsection.1.2}%
+\contentsline {subsection}{\numberline {1.3}项目相关方}{1}{subsection.1.3}%
+\contentsline {subsection}{\numberline {1.4}与其他系统的关系}{2}{subsection.1.4}%
+\contentsline {subsection}{\numberline {1.5}术语与缩写}{2}{subsection.1.5}%
+\contentsline {subsection}{\numberline {1.6}参考资料}{3}{subsection.1.6}%
+\contentsline {section}{\numberline {2}项目概述}{3}{section.2}%
+\contentsline {subsection}{\numberline {2.1}产品定位}{3}{subsection.2.1}%
+\contentsline {subsection}{\numberline {2.2}范围与边界}{4}{subsection.2.2}%
+\contentsline {subsubsection}{\numberline {2.2.1}In-Scope}{4}{subsubsection.2.2.1}%
+\contentsline {subsubsection}{\numberline {2.2.2}Out-of-Scope}{4}{subsubsection.2.2.2}%
+\contentsline {subsection}{\numberline {2.3}核心功能概览}{4}{subsection.2.3}%
+\contentsline {subsection}{\numberline {2.4}项目可交付物}{5}{subsection.2.4}%
+\contentsline {subsubsection}{\numberline {2.4.1}程序}{5}{subsubsection.2.4.1}%
+\contentsline {subsubsection}{\numberline {2.4.2}文档}{5}{subsubsection.2.4.2}%
+\contentsline {subsubsection}{\numberline {2.4.3}服务与演示材料}{5}{subsubsection.2.4.3}%
+\contentsline {section}{\numberline {3}需求分析}{6}{section.3}%
+\contentsline {subsection}{\numberline {3.1}用户角色与画像}{6}{subsection.3.1}%
+\contentsline {subsection}{\numberline {3.2}用户用例图}{6}{subsection.3.2}%
+\contentsline {subsection}{\numberline {3.3}典型用例}{7}{subsection.3.3}%
+\contentsline {subsubsection}{\numberline {3.3.1}UC-01 B 端构建本地知识库}{7}{subsubsection.3.3.1}%
+\contentsline {subsubsection}{\numberline {3.3.2}UC-02 B 端发布 LLM-Wiki API}{7}{subsubsection.3.3.2}%
+\contentsline {subsubsection}{\numberline {3.3.3}UC-03 C 端添加远程知识库}{7}{subsubsection.3.3.3}%
+\contentsline {subsubsection}{\numberline {3.3.4}UC-04 C 端本地 OpenCode + MCP 对话}{8}{subsubsection.3.3.4}%
+\contentsline {subsection}{\numberline {3.4}功能性需求}{8}{subsection.3.4}%
+\contentsline {subsection}{\numberline {3.5}需求追踪关系}{9}{subsection.3.5}%
+\contentsline {subsection}{\numberline {3.6}非功能性需求}{9}{subsection.3.6}%
+\contentsline {subsubsection}{\numberline {3.6.1}安全与隐私}{9}{subsubsection.3.6.1}%
+\contentsline {subsubsection}{\numberline {3.6.2}可靠性}{10}{subsubsection.3.6.2}%
+\contentsline {subsubsection}{\numberline {3.6.3}可维护性}{10}{subsubsection.3.6.3}%
+\contentsline {subsubsection}{\numberline {3.6.4}可用性}{10}{subsubsection.3.6.4}%
+\contentsline {section}{\numberline {4}系统设计}{10}{section.4}%
+\contentsline {subsection}{\numberline {4.1}架构演进}{10}{subsection.4.1}%
+\contentsline {subsection}{\numberline {4.2}当前总体技术路线}{11}{subsection.4.2}%
+\contentsline {subsection}{\numberline {4.3}关键设计决策}{12}{subsection.4.3}%
+\contentsline {subsection}{\numberline {4.4}安全边界设计}{12}{subsection.4.4}%
+\contentsline {subsection}{\numberline {4.5}部署计划}{12}{subsection.4.5}%
+\contentsline {section}{\numberline {5}可行性分析}{13}{section.5}%
+\contentsline {subsection}{\numberline {5.1}技术可行性}{13}{subsection.5.1}%
+\contentsline {subsection}{\numberline {5.2}经济可行性}{14}{subsection.5.2}%
+\contentsline {subsection}{\numberline {5.3}法律与合规可行性}{14}{subsection.5.3}%
+\contentsline {subsection}{\numberline {5.4}社会与运行可行性}{14}{subsection.5.4}%
+\contentsline {subsection}{\numberline {5.5}操作可行性}{15}{subsection.5.5}%
+\contentsline {section}{\numberline {6}备选方案比较}{15}{section.6}%
+\contentsline {subsection}{\numberline {6.1}备选方案 1：B 端发布完整 OpenCode}{15}{subsection.6.1}%
+\contentsline {subsection}{\numberline {6.2}备选方案 2：B 端只发布静态 Wiki 页面}{15}{subsection.6.2}%
+\contentsline {subsection}{\numberline {6.3}备选方案 3：B 端发布 LLM-Wiki API，C 端本地 OpenCode + MCP}{16}{subsection.6.3}%
+\contentsline {subsection}{\numberline {6.4}方案对比总结}{16}{subsection.6.4}%
+\contentsline {section}{\numberline {7}投入与效益分析}{17}{section.7}%
+\contentsline {subsection}{\numberline {7.1}项目投入}{17}{subsection.7.1}%
+\contentsline {subsection}{\numberline {7.2}项目收益}{17}{subsection.7.2}%
+\contentsline {subsection}{\numberline {7.3}风险与敏感性}{17}{subsection.7.3}%
+\contentsline {section}{\numberline {8}项目开发计划}{18}{section.8}%
+\contentsline {subsection}{\numberline {8.1}工作内容综述}{18}{subsection.8.1}%
+\contentsline {subsection}{\numberline {8.2}工作分解结构}{18}{subsection.8.2}%
+\contentsline {subsection}{\numberline {8.3}人员组织与分工}{19}{subsection.8.3}%
+\contentsline {subsection}{\numberline {8.4}协作机制}{20}{subsection.8.4}%
+\contentsline {subsection}{\numberline {8.5}进度安排}{20}{subsection.8.5}%
+\contentsline {subsection}{\numberline {8.6}验收标准}{21}{subsection.8.6}%
+\contentsline {subsubsection}{\numberline {8.6.1}功能完整度}{21}{subsubsection.8.6.1}%
+\contentsline {subsubsection}{\numberline {8.6.2}安全边界}{21}{subsubsection.8.6.2}%
+\contentsline {subsubsection}{\numberline {8.6.3}测试要求}{21}{subsubsection.8.6.3}%
+\contentsline {subsubsection}{\numberline {8.6.4}文档要求}{22}{subsubsection.8.6.4}%
+\contentsline {subsection}{\numberline {8.7}风险与应对}{22}{subsection.8.7}%
+\contentsline {section}{\numberline {9}支持条件}{22}{section.9}%
+\contentsline {subsection}{\numberline {9.1}开发环境}{22}{subsection.9.1}%
+\contentsline {subsection}{\numberline {9.2}测试环境}{23}{subsection.9.2}%
+\contentsline {subsection}{\numberline {9.3}运行环境}{23}{subsection.9.3}%
+\contentsline {subsection}{\numberline {9.4}组内支持条件}{23}{subsection.9.4}%
+\contentsline {section}{\numberline {10}结论与建议}{23}{section.10}%
+\contentsline {section}{\numberline {A}终版材料索引}{24}{appendix.A}%
+\contentsline {section}{\numberline {B}可引用证据}{24}{appendix.B}%

@@ -1,0 +1,601 @@
+\documentclass[UTF8,a4paper,12pt,fontset=fandol]{ctexart}
+
+\usepackage[a4paper,top=2.6cm,bottom=2.4cm,left=2.6cm,right=2.4cm,headheight=15pt]{geometry}
+\usepackage{array}
+\usepackage{booktabs}
+\usepackage{caption}
+\usepackage{enumitem}
+\usepackage{fancyhdr}
+\usepackage{float}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{longtable}
+\usepackage{tabularx}
+\usepackage{titlesec}
+\usepackage{xcolor}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning,fit,calc,shapes.geometric,shapes.misc,backgrounds}
+
+\definecolor{whu}{RGB}{30,55,113}
+\definecolor{softblue}{RGB}{232,239,250}
+\definecolor{softgreen}{RGB}{232,248,239}
+\definecolor{softorange}{RGB}{255,246,229}
+\definecolor{softgray}{RGB}{246,248,251}
+\definecolor{linegray}{RGB}{205,211,222}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=whu,
+  urlcolor=whu,
+  citecolor=whu,
+  pdftitle={WikiBridge 软件设计规格说明书},
+  pdfauthor={项目组},
+  pdfsubject={零代码本地知识库 API 分享与 OpenCode/MCP 消费平台},
+  pdfkeywords={WikiBridge, 软件设计规格说明书, 本地知识库, frp, LLM-Wiki, OpenCode, MCP}
+}
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{WikiBridge 软件设计规格说明书}
+\fancyhead[R]{V1.2}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\footrulewidth}{0pt}
+
+\titleformat{\section}{\Large\bfseries\color{whu}}{\thesection、}{0.2em}{}
+\titleformat{\subsection}{\large\bfseries\color{whu}}{\thesubsection}{0.6em}{}
+\titleformat{\subsubsection}{\normalsize\bfseries\color{whu}}{\thesubsubsection}{0.6em}{}
+\titlespacing*{\section}{0pt}{1.2em}{0.6em}
+\titlespacing*{\subsection}{0pt}{0.9em}{0.35em}
+\titlespacing*{\subsubsection}{0pt}{0.65em}{0.25em}
+
+\setlength{\parindent}{2em}
+\setlength{\parskip}{0.25em}
+\renewcommand{\arraystretch}{1.25}
+\setlength{\tabcolsep}{4pt}
+\emergencystretch=2em
+\captionsetup{font=small,labelfont=bf}
+\setlist[itemize]{leftmargin=2.2em,itemsep=0.15em,topsep=0.25em}
+\setlist[enumerate]{leftmargin=2.4em,itemsep=0.15em,topsep=0.25em}
+
+\newcolumntype{Y}{>{\raggedright\arraybackslash}X}
+\newcommand{\docid}{WikiBridge-SDS-1.2}
+\newcommand{\docdate}{2026年6月26日}
+\newcommand{\code}[1]{\texttt{\footnotesize #1}}
+
+\begin{document}
+
+\begin{titlepage}
+  \thispagestyle{empty}
+  \begin{flushleft}
+    \small 文档编号：\docid
+  \end{flushleft}
+  \vspace*{2.2cm}
+  \begin{center}
+    {\zihao{1}\bfseries WikiBridge\par}
+    \vspace{0.5cm}
+    {\zihao{2}\bfseries 软件设计规格说明书\par}
+    \vspace{0.8cm}
+    {\large 零代码本地知识库 API 分享与 OpenCode/MCP 消费平台\par}
+    \vspace{2.4cm}
+    \begin{tabular}{>{\bfseries}r l}
+      项目名称： & WikiBridge \\
+      文档版本： & V1.2 \\
+      编写人员： & 项目组 \\
+      适用阶段： & 课程设计原型与系统设计评审 \\
+      日期： & \docdate \\
+    \end{tabular}
+  \end{center}
+  \vfill
+  \begin{center}
+    武汉大学
+  \end{center}
+\end{titlepage}
+
+\pagenumbering{Roman}
+\section*{文档变更历史记录}
+\addcontentsline{toc}{section}{文档变更历史记录}
+\begin{longtable}{>{\centering\arraybackslash}p{1.2cm}>{\centering\arraybackslash}p{2.8cm}>{\centering\arraybackslash}p{2.2cm}p{6.4cm}>{\centering\arraybackslash}p{1.8cm}}
+\toprule
+序号 & 变更日期 & 变更人员 & 变更内容详情描述 & 版本 \\
+\midrule
+1 & 2026年6月1日 & 项目组 & 启动系统设计调研，明确本地知识库、内网穿透、桌面端和对话式知识消费的总体设计目标。 & V0.1 \\
+2 & 2026年6月10日 & 项目组 & 补充 B 端、S 端、C 端初始职责划分，形成体系结构、用户界面、用例和部署设计草案。 & V0.5 \\
+3 & 2026年6月14日 & 项目组 & 基于现有项目简介、汇报材料、架构图与用例图，撰写 WikiBridge 软件设计规格说明书主体内容，形成设计说明书 V1.0。 & V1.0 \\
+4 & 2026年6月25日 & 项目组 & 根据联调结果完成 MCP 架构调整：淘汰 B 端发布完整 OpenCode 方案，改为 B 端仅发布 LLM-Wiki API，S 端提供 BearFRP/frps 控制面，C 端本地运行 OpenCode 并通过 MCP 消费远程知识库。 & V1.1 \\
+5 & 2026年6月26日 & 项目组 & 整理章节、图表、术语和参考资料，同步需求、计划和测试材料口径，按课程提交格式生成软件设计说明书终版。 & V1.2 \\
+\bottomrule
+\end{longtable}
+
+\newpage
+\tableofcontents
+\newpage
+\pagenumbering{arabic}
+
+\section{引言}
+
+\subsection{编写目的}
+软件设计过程包括体系结构设计、用户界面设计、用例设计、构件设计、类设计、数据设计和部署设计。本文档以软件设计规格说明书的形式，对 WikiBridge 零代码本地知识库 API 分享与 OpenCode/MCP 消费平台的设计方案进行系统描述，形成可用于评审、开发分工、测试设计和后续迭代的设计基线。
+
+本文档重点说明系统如何在 B 端生成和持有本地知识库，如何通过 BearFRP/frp 将 LLM-Wiki API 发布为受控公网入口，以及 C 端如何在本地运行 OpenCode 并通过 \code{llm-wiki-*} MCP 工具访问远程知识库。本文档以联调后确定的新架构为准：B 端不再直接发布完整 OpenCode 页面，也不把 C 端访客的 Agent 行为运行在 B 端环境中。
+
+\subsection{读者对象}
+本文档面向以下读者：
+\begin{itemize}
+  \item 项目评审人员和课程设计指导教师，用于评估系统设计的完整性、合理性和可实现性。
+  \item 软件设计人员和开发人员，用于理解系统边界、模块职责、关键流程和数据结构。
+  \item 测试人员和质量保证人员，用于设计功能测试、异常测试和端到端验收场景。
+  \item 配置管理人员和运维人员，用于理解本地端、服务器端和公网访问端的部署关系。
+\end{itemize}
+
+\subsection{软件项目概述}
+项目名称为 WikiBridge，定位为零代码本地知识库 API 分享与受控 Agent 化消费平台。项目面向教师、学生、研究者、小团队和其他低技术门槛用户，解决个人资料分散、AI 知识库部署复杂、本地知识库难以安全分享、Agent 能力公网暴露边界不清的问题。
+
+系统的核心思想是把知识库生成、发布和消费拆分到三个明确边界中。B 端知识库拥有者在本地运行 LLM-Wiki，保留原始资料、Wiki 页面和知识库 API；B 端只通过 frpc/frps 发布 LLM-Wiki API，而不是发布完整 OpenCode Agent。S 端运行 BearFRP 控制面和 frps，负责账号、鉴权、子域名或端口分配、隧道状态和公网入口转发。C 端知识消费者在自己的设备上运行 WikiBridge Desktop 与本地 OpenCode，保存自己的模型供应商、模型名和 API Key，并通过本地 MCP server 将 B 端分享的 LLM-Wiki API 注册为 \code{llm-wiki-*} 工具。
+
+系统划分为三个端：
+\begin{itemize}
+  \item B 端：知识库拥有者和发布者所在环境，负责本地资料整理、LLM-Wiki 构建、LLM-Wiki API 服务和 frpc 发布。
+  \item S 端：公网服务器端，负责 BearFRP 控制面、frps、HTTP vhost、发布入口、账号鉴权和隧道状态。
+  \item C 端：知识消费者所在环境，负责本地 OpenCode、MCP 注册、模型配置、远程知识库连接和对话式知识消费。
+\end{itemize}
+
+\subsection{文档概述}
+本文档共分为三大部分。第一部分为引言，说明编写目的、读者对象、项目概述、术语定义和参考资料。第二部分为软件设计约束，说明设计目标、设计原则、运行约束、安全约束和技术约束。第三部分为软件设计，分别描述体系结构、用户界面、用例、类与构件、数据和部署。
+
+\subsection{定义}
+\begin{longtable}{>{\bfseries}p{3.2cm}p{11.0cm}}
+\toprule
+术语 & 定义 \\
+\midrule
+WikiBridge & 本项目名称，表示连接本地知识库、受控公网入口和本地 Agent 消费端的桥接平台。 \\
+B 端 & 知识库拥有者/发布者所在环境，保存本地资料、Wiki 内容和 LLM-Wiki API。 \\
+S 端 & 公网服务器端，运行 BearFRP 控制面、frps 和 HTTP vhost。 \\
+C 端 & 知识消费者所在环境，本地运行 WikiBridge Desktop、OpenCode 和 MCP server。 \\
+LLM-Wiki & 本地知识库编译与 API 服务，提供健康检查、项目列表、文件读取和搜索等接口。 \\
+OpenCode & C 端本地对话式知识消费入口，负责模型调用、KB Chat Session 和工具调用。 \\
+MCP & Model Context Protocol，用于将远程 LLM-Wiki API 注册为 OpenCode 可调用工具。 \\
+BearFRP & 本项目中的 frp 控制面，负责账号、代理、流量、子域名/端口和发布入口。 \\
+frp / frpc / frps & 开源内网穿透工具及其客户端/服务端；B 端运行 frpc，S 端运行 frps。 \\
+KB 模式 & OpenCode 的知识库模式，限制文件访问和工具能力范围。 \\
+API 分享 & B 端通过 BearFRP 分享 LLM-Wiki API，而不是分享完整 OpenCode 页面。 \\
+控制面 & S 端负责的账号、鉴权、隧道调度、状态记录和资源控制能力。 \\
+数据面 & B 端知识内容、C 端模型配置、MCP 工具调用和远程 API 响应等业务数据流。 \\
+\bottomrule
+\end{longtable}
+
+\subsection{参考资料}
+\begin{enumerate}
+  \item WikiBridge 部署和 BearFRP 发布说明。
+  \item WikiBridge Desktop 交接说明。
+  \item 新旧架构对比说明。
+  \item 软件设计说明书图表素材。
+  \item 软件设计规格说明书模板：\code{软件设计规格说明书-空巢老人看护系统.doc}。
+\end{enumerate}
+
+\section{软件设计约束}
+
+\subsection{软件设计目标和原则}
+WikiBridge 的软件设计目标是在课程设计周期内形成可演示、可解释、可扩展的端到端原型设计。系统应让 B 端用户不需要手写 frp 配置即可发布本地 LLM-Wiki API，让 C 端用户只需粘贴远程知识库 API 地址、配置自己的模型 Key，即可在本地 OpenCode 中对远程知识库进行对话式消费。
+
+系统设计遵循以下原则：
+\begin{itemize}
+  \item 本地优先原则：B 端原始资料、Wiki 页面和 LLM-Wiki 数据保留在 B 端；C 端模型供应商、模型名和 API Key 保留在 C 端；S 端不保存知识正文和问答上下文。
+  \item B/S/C 职责分离原则：B 端负责知识库生成和 API 分享，S 端负责 BearFRP 控制面和公网转发，C 端负责本地 OpenCode、MCP 注册和模型调用。
+  \item Agent 边界收敛原则：不通过 frp 暴露 B 端完整 OpenCode；OpenCode Agent 能力运行在 C 端本地，且通过 KB 只读模式和 \code{llm-wiki-*} MCP 白名单收紧工具范围。
+  \item 模块化与低耦合原则：LLM-Wiki API、BearFRP/frp、WikiBridge Desktop、OpenCode sidecar 和 MCP server 通过清晰接口协作，便于替换和扩展。
+  \item 主动触发原则：发布 API、添加远程知识库、启动 OpenCode、注册 MCP 和连接远程知识库均由用户显式操作或确认。
+  \item 可观测原则：LLM-Wiki 健康状态、frp 隧道状态、远程知识库可用性、OpenCode 启动状态和 MCP 注册状态均应在界面中可见。
+  \item 可追踪原则：功能需求、用例、模块、数据结构和测试场景之间保持可追踪关系。
+\end{itemize}
+
+\subsection{软件设计的约束和限制}
+\begin{longtable}{>{\bfseries}p{3.2cm}p{11.0cm}}
+\toprule
+约束类别 & 约束说明 \\
+\midrule
+运行环境 & B 端运行 LLM-Wiki API 和 frpc；S 端运行 BearFRP backend、frps 和控制面数据库；C 端运行 WikiBridge Desktop、OpenCode 和 MCP server。 \\
+网络条件 & B 端通常处于内网或 NAT 环境，公网访问依赖 frpc 与 frps 建立隧道；HTTP 子域名模式依赖真实可解析的通配域名。 \\
+隐私边界 & S 端不保存用户原始资料、Wiki 正文、向量数据或问答上下文；C 端模型 API Key 不上传到 S 端或 B 端。 \\
+安全约束 & B 端不暴露完整 OpenCode；发布入口需要可回收、可鉴权、可限速；Token 和 API Key 不应明文长期暴露在界面或日志中。 \\
+能力约束 & OpenCode KB 模式应阻断危险文件访问、终端执行和不受控工具能力；MCP 接入只允许项目内 \code{llm-wiki-*} 工具。 \\
+技术约束 & 当前阶段以原型验证为主，优先保证 B/S/C 主链路闭环；静态 Wiki 页面浏览可作为降级方案，不作为主消费路径。 \\
+课程周期 & 设计以可演示闭环为优先，先打通 B 端 API 发布、C 端远程知识库添加、OpenCode + MCP 对话，再逐步完善体验和边界场景。 \\
+\bottomrule
+\end{longtable}
+
+\section{软件设计}
+
+\subsection{软件体系结构设计}
+系统采用 B/S/C 三端分层架构。B 端负责知识库内容和 LLM-Wiki API，S 端负责 BearFRP 控制面和公网转发，C 端负责本地 OpenCode、MCP 注册和模型调用。总体架构如图 \ref{fig:architecture} 所示。
+
+\begin{figure}[H]
+\centering
+\resizebox{\textwidth}{!}{%
+\begin{tikzpicture}[
+  font=\small,
+  group/.style={draw=whu, thick, rounded corners=6pt, align=center, minimum width=4.55cm, minimum height=4.75cm},
+  component/.style={draw=whu, thick, rounded corners=3pt, fill=white, align=center, minimum width=3.8cm, minimum height=0.78cm},
+  flow/.style={draw=whu, thick, -{Stealth[length=2.2mm]}},
+  dashedflow/.style={draw=whu, thick, dashed, -{Stealth[length=2.2mm]}},
+  label/.style={font=\scriptsize, fill=white, inner sep=1pt}
+]
+\begin{scope}[on background layer]
+\node[group, fill=softgreen] at (0,0) {};
+\node[group, fill=softblue] at (5.9,0) {};
+\node[group, fill=softorange] at (11.8,0) {};
+\end{scope}
+\node[text=whu, font=\bfseries] at (0,1.95) {B 端：知识库拥有者};
+\node[text=whu, font=\bfseries] at (5.9,1.95) {S 端：BearFRP/frps};
+\node[text=whu, font=\bfseries] at (11.8,1.95) {C 端：知识消费者};
+
+\node[component] (b1) at (0,1.1) {本地资料 / Wiki 数据};
+\node[component] (b2) at (0,0.15) {LLM-Wiki API};
+\node[component] (b3) at (0,-0.8) {frpc 发布 API};
+\node[component, fill=softgreen] (b4) at (0,-1.75) {边界：不暴露 OpenCode};
+
+\node[component] (s1) at (5.9,1.1) {BearFRP backend};
+\node[component] (s2) at (5.9,0.15) {frps / HTTP vhost};
+\node[component] (s3) at (5.9,-0.8) {控制面数据库};
+\node[component, fill=softgray] (s4) at (5.9,-1.75) {只保存账号/代理/状态};
+
+\node[component] (c1) at (11.8,1.1) {WikiBridge Desktop};
+\node[component] (c2) at (11.8,0.15) {本地 OpenCode};
+\node[component] (c3) at (11.8,-0.8) {llm-wiki MCP Server};
+\node[component, fill=softgreen] (c4) at (11.8,-1.75) {模型 Key 与 Agent 在 C 端};
+
+\draw[flow] (b1) -- (b2);
+\draw[flow] (b2) -- (b3);
+\draw[flow] (b3.east) -- node[label, below] {frp 隧道} (s2.west);
+\draw[dashedflow] (b3.north east) -- node[label, above] {创建代理} (s1.west);
+\draw[flow] (s1) -- (s2);
+\draw[flow] (s1) -- (s3);
+\draw[dashedflow] (s2.east) -- node[label, above] {公网 LLM-Wiki API URL} (c1.west);
+\draw[flow] (c1) -- (c2);
+\draw[flow] (c2) -- (c3);
+\draw[flow] (c3.west) -- node[label, below] {read/search/projects} (s2.east);
+\end{tikzpicture}}
+\caption{WikiBridge B/S/C 总体架构图}
+\label{fig:architecture}
+\end{figure}
+
+\subsubsection{B 端子系统}
+B 端是知识库拥有者的核心操作环境，承担知识内容持有和 API 发布职责。其内部包含 LLM-Wiki 数据目录、LLM-Wiki API 服务、WikiBridge Desktop 发布控制界面和 frpc。B 端可以构建、浏览和管理本地知识库，但对外只发布 LLM-Wiki API，不发布完整 OpenCode 页面。
+
+LLM-Wiki API 至少提供健康检查、项目列表、文件读取、搜索和元数据接口。frpc 仅将该 API 映射到 S 端公网入口，避免外部访客获得 B 端本机文件系统、模型 Key 或 OpenCode Agent 能力。
+
+\subsubsection{S 端子系统}
+S 端只处理平台控制面和转发面，不进入用户知识内容。BearFRP backend 负责用户、余额、代理、发布记录、脚本生成和在线状态；frps 负责接收 B 端 frpc 连接并根据 HTTP vhost 或 TCP 端口转发请求；控制面数据库保存账号、代理和隧道状态，不保存原始资料、Wiki 正文或问答上下文。
+
+\subsubsection{C 端子系统}
+C 端是知识消费者的本地 Agent 环境。WikiBridge Desktop 负责保存远程知识库 API 地址、检测健康状态、选择项目、启动本地 OpenCode 并注册 \code{llm-wiki-*} MCP。OpenCode 在 KB 模式下调用 MCP 工具读取或搜索远程知识库，模型供应商、模型名和 API Key 均保存在 C 端本地。
+
+\subsection{用户界面设计}
+WikiBridge Desktop 以 B 端发布和 C 端消费两类任务为核心，主要界面如表 \ref{tab:ui} 所示。界面设计目标是让用户无需手写 frp 配置、MCP 配置和 OpenCode 启动命令，也能完成远程知识库发布和消费。
+
+\begin{longtable}{>{\bfseries}p{3.2cm}p{5.1cm}p{5.7cm}}
+\caption{WikiBridge Desktop 主要界面设计}\label{tab:ui}\\
+\toprule
+界面 & 主要元素 & 职责 \\
+\midrule
+\endfirsthead
+\toprule
+界面 & 主要元素 & 职责 \\
+\midrule
+\endhead
+欢迎/引导界面 & 项目简介、B/S/C 边界、本地优先说明、开始按钮 & 解释系统用途和隐私边界，引导用户进入工作台。 \\
+模型设置界面 & 模型供应商、模型名、API Key、保存/清除按钮 & 在 C 端本地保存模型配置，不上传到 S 端或 B 端。 \\
+本地 OpenCode 面板 & OpenCode 地址、启动/进入对话/停止按钮、运行状态 & 启动 C 端本地 OpenCode，展示健康状态和 KB Session 入口。 \\
+BearFRP 发布面板 & 本地 LLM-Wiki 地址、代理类型、子域名/端口、隧道状态 & 供 B 端创建和管理 LLM-Wiki API 公网入口。 \\
+远程知识库面板 & API 地址、名称、Token、健康检查、项目列表 & 供 C 端添加 B 端分享的 LLM-Wiki API 并选择项目。 \\
+MCP 连接面板 & MCP 名称、工具列表、连接/检测按钮、错误提示 & 注册 \code{llm-wiki-*} MCP 并检测 \code{read\_file}、\code{search} 等工具。 \\
+远程知识库列表 & 已保存 API、可用状态、当前项目、连接按钮 & 展示已添加的远程知识库，并支持切换或删除。 \\
+系统日志与错误提示 & OpenCode 日志、MCP 注册错误、frp 状态、远程 API 错误 & 让联调和验收时能定位端口、域名、配置和 API 错误。 \\
+\bottomrule
+\end{longtable}
+
+界面跳转关系遵循“配置模型和服务状态、添加远程知识库、连接 MCP、进入 OpenCode 对话”的结构。发生 URL 不完整、通配域名未配置、远程 API 不可达、OpenCode 未就绪或 MCP 注册失败时，系统应在当前界面给出明确状态和可执行处理建议，而不是只输出底层错误日志。
+
+\subsection{用例设计}
+系统主要参与者包括 B 端知识拥有者、C 端知识消费者和 S 端管理员。用例关系如图 \ref{fig:usecase} 所示。
+
+\begin{figure}[H]
+\centering
+\resizebox{0.96\textwidth}{!}{%
+\begin{tikzpicture}[
+  font=\small,
+  actor/.style={draw=whu, fill=softblue, thick, ellipse, align=center, minimum width=2.7cm, minimum height=0.9cm},
+  usecase/.style={draw=whu, fill=white, thick, ellipse, align=center, minimum width=3.45cm, minimum height=0.9cm},
+  system/.style={draw=whu, rounded corners=4pt, thick, fill=softgray},
+  link/.style={draw=whu, thick},
+  include/.style={draw=whu, thick, dashed, -{Stealth[length=2mm]}},
+  note/.style={draw=orange!80!black, fill=softorange, rounded corners=3pt, align=left, inner sep=5pt}
+]
+\node[actor] (creator) at (-6.3,2.7) {B 端知识拥有者\\发布者};
+\node[actor] (visitor) at (-6.3,-2.5) {C 端知识消费者\\受限访客};
+\node[actor] (admin) at (6.5,0) {S 端管理员\\服务器维护者};
+
+\node[system, minimum width=9.0cm, minimum height=6.2cm] (box) at (0,0) {};
+\node[anchor=north west, text=whu, font=\bfseries] at (box.north west) {WikiBridge 平台};
+
+\node[usecase] (build) at (-2.5,2.0) {构建本地知识库};
+\node[usecase] (publish) at (1.9,2.0) {发布 LLM-Wiki API};
+\node[usecase] (manage) at (-2.5,0.35) {管理 BearFRP 代理};
+\node[usecase] (remote) at (1.9,0.35) {添加远程知识库};
+\node[usecase] (opencode) at (-2.5,-1.25) {启动本地 OpenCode};
+\node[usecase] (mcp) at (1.9,-1.25) {注册 llm-wiki MCP};
+\node[usecase] (chat) at (1.9,-2.8) {对话式读取/搜索};
+
+\draw[link] (creator) -- (build);
+\draw[link] (creator) -- (publish);
+\draw[link] (creator) -- (manage);
+\draw[link] (visitor) -- (remote);
+\draw[link] (visitor) -- (opencode);
+\draw[link] (visitor) -- (mcp);
+\draw[link] (visitor) -- (chat);
+\draw[link] (admin) -- (manage);
+\draw[link] (admin) -- (publish);
+
+\draw[include] (publish) -- node[above, sloped, font=\scriptsize] {include} (manage);
+\draw[include] (chat) -- node[right, font=\scriptsize] {include} (mcp);
+\draw[include] (mcp) -- node[above, sloped, font=\scriptsize] {include} (remote);
+\draw[include] (chat) -- node[below, sloped, font=\scriptsize] {include} (opencode);
+
+\node[note] at (0,-4.05) {非功能约束：B 端不暴露完整 OpenCode；C 端自持模型配置；S 端不保存知识正文；MCP 工具受白名单与 KB 只读模式限制。};
+\end{tikzpicture}}
+\caption{WikiBridge 用例图}
+\label{fig:usecase}
+\end{figure}
+
+\subsubsection{构建本地知识库用例}
+B 端知识拥有者在本地准备资料并运行 LLM-Wiki，系统生成或维护本地 Wiki 项目、文件和索引。该用例由 LLM-Wiki 内部构建流程承担，WikiBridge Desktop 主要关注服务健康、项目列表和 API 是否可分享。
+
+\subsubsection{发布 LLM-Wiki API 用例}
+B 端用户登录 BearFRP 后创建 HTTP 或 TCP 代理。系统校验本地 LLM-Wiki API 可访问后启动 frpc，将本地 API 映射到 S 端公网入口。HTTP 子域名模式要求真实通配域名已经解析到 S 端；否则系统应提示配置域名或切换 TCP 模式。发布成功后，B 端获得可分享的 LLM-Wiki API URL。
+
+\subsubsection{添加远程知识库用例}
+C 端用户在 WikiBridge Desktop 中粘贴 B 端分享的 LLM-Wiki API URL，并可填写名称和 Token。系统调用健康检查和项目列表接口，确认 API 可达后保存远程知识库配置，并允许用户选择具体项目。
+
+\subsubsection{启动本地 OpenCode 与注册 MCP 用例}
+C 端用户保存模型配置后，Desktop 启动本地 OpenCode 并创建 KB Chat Session。随后系统注册 \code{llm-wiki-*} MCP，使 OpenCode 能调用 \code{llm\_wiki\_read\_file}、\code{llm\_wiki\_search} 等受控工具访问远程 LLM-Wiki API。
+
+\subsubsection{对话式读取与搜索用例}
+C 端用户在本地 OpenCode 中提问。OpenCode 根据模型推理和工具描述调用 llm-wiki MCP，MCP server 向远程 LLM-Wiki API 发起文件读取、项目列表或搜索请求。工具结果返回 OpenCode 后，由 C 端模型配置生成回答。该过程中 B 端不运行 C 端访客的 Agent 行为。
+
+\subsection{核心流程设计}
+系统主流程由 B 端 API 发布、C 端远程知识库添加、OpenCode 启动、MCP 注册和工具调用组成，如图 \ref{fig:workflow} 所示。
+
+\begin{figure}[H]
+\centering
+\resizebox{0.94\textwidth}{!}{%
+\begin{tikzpicture}[
+  font=\small,
+  processbox/.style={draw=whu, thick, rounded corners=4pt, fill=white, align=center, minimum width=3.25cm, minimum height=1.0cm},
+  data/.style={draw=whu, thick, cylinder, shape border rotate=90, aspect=0.24, fill=softgray, align=center, minimum height=0.9cm, minimum width=2.0cm},
+  flow/.style={draw=whu, thick, -{Stealth[length=2.2mm]}},
+  branch/.style={draw=whu, thick, diamond, fill=softorange, align=center, aspect=2.0, inner sep=1pt}
+]
+\node[processbox] (bwiki) at (0,0) {B 端\\LLM-Wiki API};
+\node[branch] (bhealth) at (3.4,0) {健康\\通过};
+\node[processbox] (frp) at (6.8,0) {BearFRP/frpc\\发布 API};
+\node[data] (url) at (10.2,0) {公网\\API URL};
+\node[processbox] (remote) at (13.6,0) {C 端\\添加远程知识库};
+
+\node[processbox] (open) at (3.4,-2.25) {启动本地\\OpenCode};
+\node[processbox] (mcp) at (6.8,-2.25) {注册\\llm-wiki MCP};
+\node[branch] (mcpok) at (10.2,-2.25) {连接\\通过};
+\node[processbox] (chat) at (13.6,-2.25) {KB Chat\\读取/搜索/回答};
+
+\draw[flow] (bwiki) -- (bhealth);
+\draw[flow] (bhealth) -- node[above] {是} (frp);
+\draw[flow] (frp) -- (url);
+\draw[flow] (url) -- (remote);
+\draw[flow] (remote.south) |- (open.east);
+\draw[flow] (open) -- (mcp);
+\draw[flow] (mcp) -- (mcpok);
+\draw[flow] (mcpok) -- node[above] {是} (chat);
+\draw[flow] (chat.north) |- node[right] {MCP HTTP 调用} (url.south);
+\end{tikzpicture}}
+\caption{B 端 API 发布与 C 端 OpenCode/MCP 消费核心流程图}
+\label{fig:workflow}
+\end{figure}
+
+\subsection{类设计和构件设计}
+当前阶段采用构件级设计结合关键类设计。构件划分如表 \ref{tab:components} 所示。
+
+\begin{longtable}{>{\bfseries}p{3.4cm}p{4.2cm}p{6.4cm}}
+\caption{主要构件职责}\label{tab:components}\\
+\toprule
+构件 & 关键类/对象 & 职责 \\
+\midrule
+\endfirsthead
+\toprule
+构件 & 关键类/对象 & 职责 \\
+\midrule
+\endhead
+桌面端壳层 & \begin{tabular}[t]{@{}l@{}}\code{DesktopShell}\\\code{StatusPanel}\\\code{ErrorToast}\end{tabular} & 聚合 BearFRP、OpenCode、远程知识库和 MCP 状态，提供统一操作入口。 \\
+模型配置 & \begin{tabular}[t]{@{}l@{}}\code{ModelConfigStore}\\\code{ProviderConfig}\\\code{ApiKeyStore}\end{tabular} & 在 C 端本地保存模型供应商、模型名和 API Key，支持保存和清除。 \\
+B 端发布控制 & \begin{tabular}[t]{@{}l@{}}\code{LlmWikiServiceRef}\\\code{FrpcController}\\\code{TunnelStatusWatcher}\end{tabular} & 检查本地 LLM-Wiki API，创建 BearFRP 代理，启动和监控 frpc。 \\
+BearFRP 控制面 & \begin{tabular}[t]{@{}l@{}}\code{BearfrpClient}\\\code{ProxyService}\\\code{FrpsStatusCollector}\end{tabular} & 处理认证、代理创建、HTTP/TCP 发布入口、在线状态和脚本生成。 \\
+C 端远程知识库 & \begin{tabular}[t]{@{}l@{}}\code{RemoteKnowledgeBase}\\\code{LlmWikiApiClient}\\\code{ProjectSelector}\end{tabular} & 保存远程 API URL 和 Token，执行健康检查、项目列表、文件读取和搜索。 \\
+OpenCode sidecar & \begin{tabular}[t]{@{}l@{}}\code{OpenCodeSidecar}\\\code{KbSessionManager}\\\code{OpenCodeHealthProbe}\end{tabular} & 启动本地 OpenCode，创建 KB Chat Session，检测运行状态。 \\
+MCP 注册与工具 & \begin{tabular}[t]{@{}l@{}}\code{McpRegistry}\\\code{LlmWikiMcpServer}\\\code{ToolWhitelist}\end{tabular} & 注册 \code{llm-wiki-*} MCP，限制工具名称、命令、入口文件和环境变量。 \\
+KB 安全边界 & \begin{tabular}[t]{@{}l@{}}\code{KbGuard}\\\code{ReadonlyPolicy}\\\code{ToolPolicy}\end{tabular} & 在 OpenCode KB 模式下阻断危险文件访问、写入操作和不受控工具调用。 \\
+\bottomrule
+\end{longtable}
+
+\subsubsection{关键类关系}
+系统类关系以端侧控制类协调任务、实体类保存状态、边界类展示界面为主。核心关系如下：
+\begin{itemize}
+  \item 桌面端壳层聚合 OpenCode sidecar、远程知识库、MCP 注册和 frpc 控制器的状态，并把错误映射为用户可理解提示。
+  \item 远程知识库对象持有远程 API URL、Token 和当前项目，依赖 LLM-Wiki API 客户端执行健康检查、项目列表、文件读取和搜索。
+  \item \code{OpenCodeSidecar} 负责启动本地 OpenCode，并由 \code{KbSessionManager} 创建 KB Chat Session。
+  \item MCP 注册器读取远程知识库配置，注册 llm-wiki MCP server，并通过工具白名单限制 \code{llm-wiki-*} 工具范围。
+  \item frpc 控制器调用 BearFRP 客户端获取代理配置，再启动 B 端 frpc 进程；隧道状态监听器负责在线状态和重连提示。
+  \item \code{KbGuard} 约束 OpenCode KB 模式下的文件访问、写入和工具调用策略。
+\end{itemize}
+
+\subsubsection{关键方法设计}
+\begin{longtable}{>{\bfseries}p{3.2cm}p{5.6cm}p{5.3cm}}
+\toprule
+类 & 方法 & 说明 \\
+\midrule
+\code{ModelConfigStore} & \code{save(provider, model, apiKey)} & 在 C 端安全保存模型配置，不上传到 S 端。 \\
+\code{LlmWikiApiClient} & \code{health(baseUrl)}；\code{listProjects()} & 检查远程 LLM-Wiki API 可用性并读取项目列表。 \\
+\begin{tabular}[t]{@{}l@{}}\code{Remote}\\\code{KnowledgeBase}\end{tabular} & \code{connect()}；\code{selectProject(id)} & 保存 API URL、Token 和当前项目，并维护可用状态。 \\
+\code{OpenCodeSidecar} & \code{start()} / \code{stop()} / \code{health()} & 启动或停止本地 OpenCode，并返回运行状态。 \\
+\code{KbSessionManager} & \code{createKbSession(remoteKb)} & 为远程知识库创建 OpenCode KB Chat Session。 \\
+\code{McpRegistry} & \code{registerLlmWiki(remoteKb)} & 注册 \code{llm-wiki-*} MCP，并写入必要环境变量。 \\
+\code{LlmWikiMcpServer} & \code{readFile(project, path)}；\code{search(query)} & 将 OpenCode 工具调用转换为远程 LLM-Wiki API 请求。 \\
+\code{FrpcController} & \code{publishApi(localPort)} & B 端申请公网入口、生成配置、启动 frpc 并返回 API URL。 \\
+\code{BearfrpClient} & \code{createProxy(type, localPort)} & 调用 BearFRP 控制面创建 HTTP/TCP 代理。 \\
+\code{KbGuard} & \code{enforceReadonly(toolCall)} & 在 KB 模式下阻断写入、删除、终端执行和非白名单 MCP。 \\
+\bottomrule
+\end{longtable}
+
+\subsection{数据设计}
+WikiBridge 的数据设计分为 B 端知识库数据、S 端控制面数据和 C 端本地配置数据。系统明确避免把用户知识内容上传到 S 端持久化保存。
+
+\subsubsection{B 端数据结构}
+\begin{longtable}{>{\bfseries}p{3.0cm}p{4.0cm}p{7.0cm}}
+\toprule
+路径/文件 & 数据内容 & 说明 \\
+\midrule
+\code{/raw} & 原始资料 & B 端用户本地保存的 Word、PDF、网页摘录、笔记、Markdown、TXT 等。 \\
+\code{/wiki} & Wiki 页面 & LLM-Wiki 生成或维护的结构化页面和元数据。 \\
+\code{/index} & 本地索引 & 供 LLM-Wiki 搜索和 API 查询使用的索引。 \\
+\code{llm-wiki config} & 服务配置 & B 端 LLM-Wiki 服务端口、项目目录、模型或构建配置。 \\
+\code{frpc config} & 发布配置 & B 端 frpc 连接 S 端 frps 的 token、协议、子域名或端口。 \\
+\code{publish cache} & 发布状态缓存 & 当前公网 API URL、隧道状态、最近连接时间和可回收标识。 \\
+\bottomrule
+\end{longtable}
+
+\subsubsection{C 端本地配置数据}
+\begin{longtable}{>{\bfseries}p{3.2cm}p{11.0cm}}
+\toprule
+数据项 & 说明 \\
+\midrule
+\code{ModelConfig} & 模型供应商、模型名和 API Key 保存位置。API Key 应使用系统安全存储能力或加密保存。 \\
+\begin{tabular}[t]{@{}l@{}}\code{Remote}\\\code{KnowledgeBase}\end{tabular} & 远程 LLM-Wiki API URL、名称、Token、当前项目、健康检查状态和最近检测时间。 \\
+\code{OpenCodeState} & 本地 OpenCode 地址、端口、运行状态、当前 KB Session。 \\
+\code{McpRegistration} & MCP 名称、命令、入口文件、环境变量、工具列表和注册状态。 \\
+\code{UserPreference} & 默认模型、默认远程知识库、日志级别和界面偏好。 \\
+\bottomrule
+\end{longtable}
+
+\subsubsection{S 端控制面数据表}
+S 端只保存平台控制面数据。建议设计以下数据表：
+
+\begin{longtable}{>{\bfseries}p{3.2cm}p{11.0cm}}
+\toprule
+数据表 & 字段说明 \\
+\midrule
+\code{T\_User} & \code{id}、\code{account}、\code{password\_hash}、\code{display\_name}、\code{status}、\code{created\_at}、\code{last\_login\_at}。用于保存平台账号，不保存知识内容。 \\
+\code{T\_AccessToken} & \code{id}、\code{user\_id}、\code{token\_hash}、\code{expire\_at}、\code{revoked\_at}。用于 Token 校验和吊销。 \\
+\code{T\_Proxy} & \code{id}、\code{user\_id}、\code{type}、\code{subdomain}、\code{public\_port}、\code{local\_port}、\code{status}、\code{created\_at}、\code{closed\_at}。用于记录 HTTP/TCP 发布入口。 \\
+\code{T\_TunnelStatus} & \code{id}、\code{proxy\_id}、\code{online}、\code{bandwidth\_in}、\code{bandwidth\_out}、\code{connection\_count}、\code{last\_heartbeat}。用于管理 frp 状态。 \\
+\code{T\_RateLimitPolicy} & \code{id}、\code{user\_id}、\code{max\_bandwidth}、\code{max\_connections}、\code{enabled}。用于基础限速和防滥用。 \\
+\bottomrule
+\end{longtable}
+
+\subsubsection{数据安全设计}
+本地配置中的 Token 和 API Key 应加密保存或使用系统安全存储能力。日志中不得输出完整 Token、API Key、用户密码、原始资料全文和模型请求完整上下文。S 端密码只保存哈希值，Token 只保存哈希或可验证摘要。发布入口应支持用户主动关闭，管理员也可在滥用或异常流量场景下回收入口。B 端不得将完整 OpenCode 暴露到公网，C 端不得将模型 API Key 上传给 B 端或 S 端。
+
+\subsection{部署设计}
+系统采用 B/S/C 分布式部署方式，部署关系如图 \ref{fig:deployment} 所示。
+
+\begin{figure}[H]
+\centering
+\resizebox{\textwidth}{!}{%
+\begin{tikzpicture}[
+  font=\small,
+  group/.style={draw=whu, thick, rounded corners=6pt, align=center, minimum width=4.25cm, minimum height=5.25cm},
+  comp/.style={draw=whu, thick, rounded corners=3pt, fill=white, align=center, minimum width=3.55cm, minimum height=0.68cm},
+  flow/.style={draw=whu, thick, -{Stealth[length=2.2mm]}},
+  dashedflow/.style={draw=whu, thick, dashed, -{Stealth[length=2.2mm]}},
+  label/.style={font=\scriptsize, fill=white, inner sep=1pt}
+]
+\begin{scope}[on background layer]
+\node[group, fill=softgreen] at (0,0) {};
+\node[group, fill=softblue] at (5.75,0) {};
+\node[group, fill=softorange] at (11.5,0) {};
+\end{scope}
+\node[text=whu, font=\bfseries] at (0,2.25) {B 端主机};
+\node[text=whu, font=\bfseries] at (5.75,2.25) {S 端公网服务器};
+\node[text=whu, font=\bfseries] at (11.5,2.25) {C 端主机};
+
+\node[comp] (bdata) at (0,1.35) {资料目录 / Wiki 数据};
+\node[comp] (bapi) at (0,0.45) {LLM-Wiki API\\localhost:19828};
+\node[comp] (bfrpc) at (0,-0.45) {frpc client};
+\node[comp] (bos) at (0,-1.35) {Windows / macOS / Linux};
+
+\node[comp] (sapi) at (5.75,1.35) {BearFRP backend\\:8000};
+\node[comp] (sfrps) at (5.75,0.45) {frps bind\\:7000};
+\node[comp] (svhost) at (5.75,-0.45) {HTTP vhost\\:8080};
+\node[comp] (sdb) at (5.75,-1.35) {控制面数据库};
+
+\node[comp] (cdesk) at (11.5,1.35) {WikiBridge Desktop};
+\node[comp] (copen) at (11.5,0.45) {OpenCode\\localhost:4096};
+\node[comp] (cmcp) at (11.5,-0.45) {llm-wiki MCP server};
+\node[comp] (ckey) at (11.5,-1.35) {模型 API Key\\本地保存};
+
+\draw[flow] (bdata) -- (bapi);
+\draw[flow] (bapi) -- (bfrpc);
+\draw[flow] (bfrpc.east) -- node[label, above] {frp control/data channel} (sfrps.west);
+\draw[flow] (sapi) -- (sdb);
+\draw[flow] (sapi) -- (sfrps);
+\draw[flow] (sfrps) -- (svhost);
+\draw[dashedflow] (cdesk.west) -- node[label, above] {添加公网 API URL} (svhost.east);
+\draw[flow] (cdesk) -- (copen);
+\draw[flow] (copen) -- (cmcp);
+\draw[flow] (ckey) -- (copen);
+\draw[flow] (cmcp.west) -- node[label, below] {HTTP API request} (svhost.east);
+\node[font=\scriptsize, align=center] at (5.75,-2.45) {B 端只发布 LLM-Wiki API；C 端本地运行 OpenCode 和 MCP；S 端只保存控制面状态。};
+\end{tikzpicture}}
+\caption{WikiBridge B/S/C 部署图}
+\label{fig:deployment}
+\end{figure}
+
+\subsubsection{B 端部署}
+B 端部署 LLM-Wiki API 和 frpc。LLM-Wiki API 默认监听本地端口，例如 \code{19828}，frpc 只将该 API 发布到 S 端公网入口。B 端不部署对外开放的 OpenCode 页面，也不向 C 端共享模型 API Key。
+
+\subsubsection{S 端部署}
+S 端部署在具有公网 IP 或公网域名的 Linux 主机上，包含 BearFRP backend、frps、HTTP vhost 和控制面数据库。HTTP 子域名模式需要将通配域名解析到 S 端；若不具备域名条件，应使用 TCP 端口模式作为替代。
+
+\subsubsection{C 端部署}
+C 端部署 WikiBridge Desktop、OpenCode 和 llm-wiki MCP server。OpenCode 默认监听本地端口，例如 \code{4096}。C 端用户保存自己的模型配置，添加远程知识库 API URL 后，通过 MCP 工具访问 B 端 LLM-Wiki API。
+
+\subsection{异常处理与可靠性设计}
+\begin{longtable}{>{\bfseries}p{3.3cm}p{5.0cm}p{5.8cm}}
+\toprule
+异常场景 & 检测方式 & 处理策略 \\
+\midrule
+LLM-Wiki API 不可达 & B/C 端健康检查失败或连接超时 & 提示检查 B 端 LLM-Wiki 服务、端口和防火墙，不创建远程知识库。 \\
+HTTP 子域名不可解析 & C 端访问公网 URL 失败或域名解析异常 & 提示配置真实通配域名，或切换 TCP 发布模式。 \\
+Token 过期或无权限 & 远程 API 返回 401/403 & 提示重新登录、更新 token 或联系 B 端发布者。 \\
+隧道断开 & frpc 心跳或 frps 状态异常 & 自动重连并在界面展示状态；多次失败后提示检查网络和 S 端配置。 \\
+OpenCode 未就绪 & 本地 \code{4096} 健康检查失败 & 提示启动 OpenCode、检查端口占用或查看 sidecar 日志。 \\
+MCP 注册失败 & OpenCode MCP 列表缺少 \code{llm-wiki-*} 或工具调用失败 & 回滚注册状态，提示检查 MCP 命令、入口文件、环境变量和远程 URL。 \\
+模型 API 配置缺失 & OpenCode 对话返回模型配置错误 & 提示在 C 端模型设置中保存 provider、model 和 API Key。 \\
+KB 安全策略命中 & 工具调用请求写入、删除或非白名单 MCP & 拒绝执行并记录审计日志，提示当前为 KB 只读模式。 \\
+\bottomrule
+\end{longtable}
+
+\subsection{测试设计}
+课程设计原型阶段建议按以下场景验收：
+\begin{enumerate}
+  \item B 端 API 测试：启动 LLM-Wiki API 后，确认 \code{/api/v1/health}、项目列表、文件读取和搜索接口可用。
+  \item BearFRP 发布测试：创建 HTTP/TCP 代理，确认 frpc 连接 frps，公网 API URL 可访问。
+  \item 通配域名测试：HTTP 子域名模式下验证域名解析；缺少通配域名时确认系统给出明确错误或降级建议。
+  \item C 端远程知识库测试：粘贴公网 API URL 后，确认 Desktop 能完成健康检查、保存远程知识库并列出项目。
+  \item OpenCode 启动测试：确认 C 端可启动本地 OpenCode，创建 KB Chat Session。
+  \item MCP 注册测试：确认 \code{llm-wiki-*} MCP 出现在 OpenCode 可用工具列表，并能调用 \code{read\_file} 和 \code{search}。
+  \item 安全边界测试：确认 B 端未暴露完整 OpenCode，C 端模型 Key 不上传到 S 端，KB 只读模式和 MCP 白名单生效。
+  \item 异常测试：模拟远程 API 不可达、Token 错误、OpenCode 未就绪、MCP 注册失败和模型配置缺失，确认界面提示清晰且系统可恢复。
+\end{enumerate}
+
+\section*{结论}
+\addcontentsline{toc}{section}{结论}
+WikiBridge 的设计目标是验证“B 端 LLM-Wiki API 发布 + S 端 BearFRP/frps 转发 + C 端 OpenCode/MCP 消费”的端到端可行性。系统通过 B/S/C 职责分离和 Agent 能力本地化，避免把 B 端完整 OpenCode 暴露到公网，也避免把 C 端模型 Key 交给 B 端或 S 端。后续实现应优先保证 B 端 API 发布、C 端远程知识库添加、OpenCode KB Session 和 llm-wiki MCP 工具调用闭环，再逐步完善 token 鉴权、限速策略、跨平台打包和自动化测试。
+
+\end{document}

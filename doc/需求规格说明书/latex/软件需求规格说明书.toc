@@ -1,0 +1,46 @@
+\contentsline {section}{文档变更历史记录}{I}{Doc-Start}%
+\contentsline {section}{\numberline {1}引言}{1}{section.1}%
+\contentsline {subsection}{\numberline {1.1}编写目的}{1}{subsection.1.1}%
+\contentsline {subsection}{\numberline {1.2}读者对象}{1}{subsection.1.2}%
+\contentsline {subsection}{\numberline {1.3}软件项目概述}{1}{subsection.1.3}%
+\contentsline {subsection}{\numberline {1.4}文档概述}{2}{subsection.1.4}%
+\contentsline {subsection}{\numberline {1.5}定义}{2}{subsection.1.5}%
+\contentsline {subsection}{\numberline {1.6}参考资料}{3}{subsection.1.6}%
+\contentsline {section}{\numberline {2}软件的一般性描述}{3}{section.2}%
+\contentsline {subsection}{\numberline {2.1}软件产品与其环境之间的关系}{3}{subsection.2.1}%
+\contentsline {subsection}{\numberline {2.2}三端角色与职责}{4}{subsection.2.2}%
+\contentsline {subsection}{\numberline {2.3}假设与前提条件}{5}{subsection.2.3}%
+\contentsline {subsection}{\numberline {2.4}产品范围边界}{5}{subsection.2.4}%
+\contentsline {subsubsection}{\numberline {2.4.1}范围内}{5}{subsubsection.2.4.1}%
+\contentsline {subsubsection}{\numberline {2.4.2}范围外}{6}{subsubsection.2.4.2}%
+\contentsline {subsection}{\numberline {2.5}架构需求演进}{6}{subsection.2.5}%
+\contentsline {section}{\numberline {3}软件功能需求描述}{6}{section.3}%
+\contentsline {subsection}{\numberline {3.1}软件需求的用例模型}{6}{subsection.3.1}%
+\contentsline {subsection}{\numberline {3.2}关键业务流程}{7}{subsection.3.2}%
+\contentsline {subsection}{\numberline {3.3}核心用例表}{7}{subsection.3.3}%
+\contentsline {subsection}{\numberline {3.4}功能需求概览}{8}{subsection.3.4}%
+\contentsline {subsection}{\numberline {3.5}软件需求的分析模型与功能需求详述}{9}{subsection.3.5}%
+\contentsline {subsubsection}{\numberline {3.5.1}FR-01 本地资料导入与 Wiki 构建}{9}{subsubsection.3.5.1}%
+\contentsline {subsubsection}{\numberline {3.5.2}FR-02 LLM-Wiki API 健康检查、项目、文件、搜索能力}{10}{subsubsection.3.5.2}%
+\contentsline {subsubsection}{\numberline {3.5.3}FR-03 B 端通过 BearFRP 发布 LLM-Wiki API}{11}{subsubsection.3.5.3}%
+\contentsline {subsubsection}{\numberline {3.5.4}FR-04 S 端代理、隧道、端口/子域名和状态管理}{11}{subsubsection.3.5.4}%
+\contentsline {subsubsection}{\numberline {3.5.5}FR-05 C 端添加远程知识库 API}{12}{subsubsection.3.5.5}%
+\contentsline {subsubsection}{\numberline {3.5.6}FR-06 C 端本地启动 OpenCode}{13}{subsubsection.3.5.6}%
+\contentsline {subsubsection}{\numberline {3.5.7}FR-07 注册并调用 llm-wiki MCP 工具}{13}{subsubsection.3.5.7}%
+\contentsline {subsubsection}{\numberline {3.5.8}FR-08 对话式读取、搜索和总结远程知识库}{14}{subsubsection.3.5.8}%
+\contentsline {subsubsection}{\numberline {3.5.9}FR-09 KB 模式安全边界}{15}{subsubsection.3.5.9}%
+\contentsline {subsubsection}{\numberline {3.5.10}FR-10 部署、健康检查、联调和测试支撑}{16}{subsubsection.3.5.10}%
+\contentsline {subsection}{\numberline {3.6}需求追踪矩阵}{17}{subsection.3.6}%
+\contentsline {section}{\numberline {4}其它软件需求描述}{17}{section.4}%
+\contentsline {subsection}{\numberline {4.1}性能要求}{17}{subsection.4.1}%
+\contentsline {subsection}{\numberline {4.2}安全与隐私要求}{18}{subsection.4.2}%
+\contentsline {subsection}{\numberline {4.3}可用性与可靠性要求}{19}{subsection.4.3}%
+\contentsline {subsection}{\numberline {4.4}兼容性与运行环境要求}{19}{subsection.4.4}%
+\contentsline {subsection}{\numberline {4.5}界面要求}{19}{subsection.4.5}%
+\contentsline {subsection}{\numberline {4.6}进度要求}{20}{subsection.4.6}%
+\contentsline {subsection}{\numberline {4.7}交付要求}{20}{subsection.4.7}%
+\contentsline {subsection}{\numberline {4.8}验收要求}{21}{subsection.4.8}%
+\contentsline {section}{\numberline {5}软件原型与演示证据}{21}{section.5}%
+\contentsline {subsection}{\numberline {5.1}原型界面文字描述}{21}{subsection.5.1}%
+\contentsline {subsection}{\numberline {5.2}已完成截图证据}{21}{subsection.5.2}%
+\contentsline {subsection}{\numberline {5.3}演示脚本}{22}{subsection.5.3}%

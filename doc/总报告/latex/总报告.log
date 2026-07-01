@@ -1,89 +1,87 @@
-This is XeTeX, Version 3.141592653-2.6-0.999996 (TeX Live 2024) (preloaded format=xelatex 2024.10.20)  27 JUN 2026 06:38
+This is XeTeX, Version 3.141592653-2.6-0.999995 (TeX Live 2023/Debian) (preloaded format=xelatex 2026.6.16)  27 JUN 2026 01:34
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
 **总报告.tex
 (./总报告.tex
 LaTeX2e <2023-11-01> patch level 1
-L3 programming layer <2024-02-20>
-(/usr/local/texlive/2024/texmf-dist/tex/latex/ctex/ctexart.cls
-(/usr/local/texlive/2024/texmf-dist/tex/latex/ctex/config/ctexbackend.cfg
+L3 programming layer <2024-01-22>
+(/usr/share/texlive/texmf-dist/tex/latex/ctex/ctexart.cls
+(/usr/share/texlive/texmf-dist/tex/latex/ctex/config/ctexbackend.cfg
 File: ctexbackend.cfg 2022/07/14 v2.5.10 Backend configuration file (CTEX)
 )
-(/usr/local/texlive/2024/texmf-dist/tex/latex/l3kernel/expl3.sty
-Package: expl3 2024-02-20 L3 programming layer (loader) 
+(/usr/share/texlive/texmf-dist/tex/latex/l3kernel/expl3.sty
+Package: expl3 2024-01-22 L3 programming layer (loader) 
 
-(/usr/local/texlive/2024/texmf-dist/tex/latex/l3backend/l3backend-xetex.def
-File: l3backend-xetex.def 2024-02-20 L3 backend support: XeTeX
-\g__graphics_track_int=\count184
+(/usr/share/texlive/texmf-dist/tex/latex/l3backend/l3backend-xetex.def
+File: l3backend-xetex.def 2024-01-04 L3 backend support: XeTeX
+\g__graphics_track_int=\count183
 \l__pdf_internal_box=\box51
-\g__pdf_backend_object_int=\count185
-\g__pdf_backend_annotation_int=\count186
-\g__pdf_backend_link_int=\count187
+\g__pdf_backend_object_int=\count184
+\g__pdf_backend_annotation_int=\count185
+\g__pdf_backend_link_int=\count186
 ))
 Document Class: ctexart 2022/07/14 v2.5.10 Chinese adapter for class article (C
 TEX)
-(/usr/local/texlive/2024/texmf-dist/tex/latex/ctex/ctexhook.sty
+(/usr/share/texlive/texmf-dist/tex/latex/ctex/ctexhook.sty
 Package: ctexhook 2022/07/14 v2.5.10 Document and package hooks (CTEX)
 )
-(/usr/local/texlive/2024/texmf-dist/tex/latex/ctex/ctexpatch.sty
+(/usr/share/texlive/texmf-dist/tex/latex/ctex/ctexpatch.sty
 Package: ctexpatch 2022/07/14 v2.5.10 Patching commands (CTEX)
 )
-(/usr/local/texlive/2024/texmf-dist/tex/latex/base/fix-cm.sty
+(/usr/share/texlive/texmf-dist/tex/latex/base/fix-cm.sty
 Package: fix-cm 2020/11/24 v1.1t fixes to LaTeX
 
-(/usr/local/texlive/2024/texmf-dist/tex/latex/base/ts1enc.def
+(/usr/share/texlive/texmf-dist/tex/latex/base/ts1enc.def
 File: ts1enc.def 2001/06/05 v3.0e (jk/car/fm) Standard LaTeX file
 LaTeX Font Info:    Redeclaring font encoding TS1 on input line 47.
 ))
-\l__ctex_tmp_int=\count188
+\l__ctex_tmp_int=\count187
 \l__ctex_tmp_box=\box52
 \l__ctex_tmp_dim=\dimen140
-\g__ctex_section_depth_int=\count189
-\g__ctex_font_size_int=\count190
+\g__ctex_section_depth_int=\count188
+\g__ctex_font_size_int=\count189
 
-(/usr/local/texlive/2024/texmf-dist/tex/latex/ctex/config/ctexopts.cfg
+(/usr/share/texlive/texmf-dist/tex/latex/ctex/config/ctexopts.cfg
 File: ctexopts.cfg 2022/07/14 v2.5.10 Option configuration file (CTEX)
 )
-(/usr/local/texlive/2024/texmf-dist/tex/latex/base/article.cls
+(/usr/share/texlive/texmf-dist/tex/latex/base/article.cls
 Document Class: article 2023/05/17 v1.4n Standard LaTeX document class
-(/usr/local/texlive/2024/texmf-dist/tex/latex/base/size12.clo
+(/usr/share/texlive/texmf-dist/tex/latex/base/size12.clo
 File: size12.clo 2023/05/17 v1.4n Standard LaTeX file (size option)
 )
-\c@part=\count191
-\c@section=\count192
-\c@subsection=\count193
-\c@subsubsection=\count194
-\c@paragraph=\count195
-\c@subparagraph=\count196
-\c@figure=\count197
-\c@table=\count198
+\c@part=\count190
+\c@section=\count191
+\c@subsection=\count192
+\c@subsubsection=\count193
+\c@paragraph=\count194
+\c@subparagraph=\count195
+\c@figure=\count196
+\c@table=\count197
 \abovecaptionskip=\skip48
 \belowcaptionskip=\skip49
 \bibindent=\dimen141
 )
-(/usr/local/texlive/2024/texmf-dist/tex/latex/ctex/engine/ctex-engine-xetex.def
+(/usr/share/texlive/texmf-dist/tex/latex/ctex/engine/ctex-engine-xetex.def
 File: ctex-engine-xetex.def 2022/07/14 v2.5.10 XeLaTeX adapter (CTEX)
-(/usr/local/texlive/2024/texmf-dist/tex/xelatex/xecjk/xeCJK.sty
+
+(/usr/share/texlive/texmf-dist/tex/xelatex/xecjk/xeCJK.sty
 Package: xeCJK 2022/08/05 v3.9.1 Typesetting CJK scripts with XeLaTeX
 
-(/usr/local/texlive/2024/texmf-dist/tex/latex/l3packages/xtemplate/xtemplate.st
-y
-(/usr/local/texlive/2024/texmf-dist/tex/latex/l3packages/xtemplate/xtemplate-20
-23-10-10.sty
+(/usr/share/texlive/texmf-dist/tex/latex/l3packages/xtemplate/xtemplate.sty
 Package: xtemplate 2023-10-10 L3 Experimental prototype document functions
 \l__xtemplate_tmp_dim=\dimen142
-\l__xtemplate_tmp_int=\count199
+\l__xtemplate_tmp_int=\count198
 \l__xtemplate_tmp_muskip=\muskip16
 \l__xtemplate_tmp_skip=\skip50
-))
-\l__xeCJK_tmp_int=\count266
+)
+\l__xeCJK_tmp_int=\count199
 \l__xeCJK_tmp_box=\box53
 \l__xeCJK_tmp_dim=\dimen143
 \l__xeCJK_tmp_skip=\skip51
-\g__xeCJK_space_factor_int=\count267
-\l__xeCJK_begin_int=\count268
-\l__xeCJK_end_int=\count269
+\g__xeCJK_space_factor_int=\count266
+\l__xeCJK_begin_int=\count267
+\l__xeCJK_end_int=\count268
 \c__xeCJK_CJK_class_int=\XeTeXcharclass1
 \c__xeCJK_FullLeft_class_int=\XeTeXcharclass2
 \c__xeCJK_FullRight_class_int=\XeTeXcharclass3
@@ -93,8 +91,8 @@ Package: xtemplate 2023-10-10 L3 Experimental prototype document functions
 \c__xeCJK_CM_class_int=\XeTeXcharclass7
 \c__xeCJK_HangulJamo_class_int=\XeTeXcharclass8
 \l__xeCJK_last_skip=\skip52
-\c__xeCJK_none_node=\count270
-\g__xeCJK_node_int=\count271
+\c__xeCJK_none_node=\count269
+\g__xeCJK_node_int=\count270
 \c__xeCJK_CJK_node_dim=\dimen144
 \c__xeCJK_CJK-space_node_dim=\dimen145
 \c__xeCJK_default_node_dim=\dimen146
@@ -105,10 +103,10 @@ Package: xtemplate 2023-10-10 L3 Experimental prototype document functions
 \l__xeCJK_ecglue_skip=\skip55
 \l__xeCJK_punct_kern_skip=\skip56
 \l__xeCJK_indent_box=\box54
-\l__xeCJK_last_penalty_int=\count272
+\l__xeCJK_last_penalty_int=\count271
 \l__xeCJK_last_bound_dim=\dimen149
 \l__xeCJK_last_kern_dim=\dimen150
-\l__xeCJK_widow_penalty_int=\count273
+\l__xeCJK_widow_penalty_int=\count272
 
 Package xtemplate Info: Declaring object type 'xeCJK/punctuation' taking 0
 (xtemplate)             argument(s) on line 2396.
@@ -132,41 +130,41 @@ Package xtemplate Info: Declaring object type 'xeCJK/punctuation' taking 0
 \l__xeCJK_margin_dim=\dimen167
 \l__xeCJK_minimum_bound_dim=\dimen168
 \l__xeCJK_kerning_margin_dim=\dimen169
-\g__xeCJK_family_int=\count274
-\l__xeCJK_fam_int=\count275
-\g__xeCJK_fam_allocation_int=\count276
-\l__xeCJK_verb_case_int=\count277
+\g__xeCJK_family_int=\count273
+\l__xeCJK_fam_int=\count274
+\g__xeCJK_fam_allocation_int=\count275
+\l__xeCJK_verb_case_int=\count276
 \l__xeCJK_verb_exspace_skip=\skip57
 
-(/usr/local/texlive/2024/texmf-dist/tex/latex/fontspec/fontspec.sty
-(/usr/local/texlive/2024/texmf-dist/tex/latex/l3packages/xparse/xparse.sty
-Package: xparse 2024-02-18 L3 Experimental document command parser
+(/usr/share/texlive/texmf-dist/tex/latex/fontspec/fontspec.sty
+(/usr/share/texlive/texmf-dist/tex/latex/l3packages/xparse/xparse.sty
+Package: xparse 2023-10-10 L3 Experimental document command parser
 )
-Package: fontspec 2024/02/13 v2.9a Font selection for XeLaTeX and LuaLaTeX
+Package: fontspec 2022/01/15 v2.8a Font selection for XeLaTeX and LuaLaTeX
 
-(/usr/local/texlive/2024/texmf-dist/tex/latex/fontspec/fontspec-xetex.sty
-Package: fontspec-xetex 2024/02/13 v2.9a Font selection for XeLaTeX and LuaLaTe
+(/usr/share/texlive/texmf-dist/tex/latex/fontspec/fontspec-xetex.sty
+Package: fontspec-xetex 2022/01/15 v2.8a Font selection for XeLaTeX and LuaLaTe
 X
-\l__fontspec_script_int=\count278
-\l__fontspec_language_int=\count279
-\l__fontspec_strnum_int=\count280
-\l__fontspec_tmp_int=\count281
-\l__fontspec_tmpa_int=\count282
-\l__fontspec_tmpb_int=\count283
-\l__fontspec_tmpc_int=\count284
-\l__fontspec_em_int=\count285
-\l__fontspec_emdef_int=\count286
-\l__fontspec_strong_int=\count287
-\l__fontspec_strongdef_int=\count288
+\l__fontspec_script_int=\count277
+\l__fontspec_language_int=\count278
+\l__fontspec_strnum_int=\count279
+\l__fontspec_tmp_int=\count280
+\l__fontspec_tmpa_int=\count281
+\l__fontspec_tmpb_int=\count282
+\l__fontspec_tmpc_int=\count283
+\l__fontspec_em_int=\count284
+\l__fontspec_emdef_int=\count285
+\l__fontspec_strong_int=\count286
+\l__fontspec_strongdef_int=\count287
 \l__fontspec_tmpa_dim=\dimen170
 \l__fontspec_tmpb_dim=\dimen171
 \l__fontspec_tmpc_dim=\dimen172
 
-(/usr/local/texlive/2024/texmf-dist/tex/latex/base/fontenc.sty
+(/usr/share/texlive/texmf-dist/tex/latex/base/fontenc.sty
 Package: fontenc 2021/04/29 v2.0v Standard LaTeX package
 )
-(/usr/local/texlive/2024/texmf-dist/tex/latex/fontspec/fontspec.cfg)))
-(/usr/local/texlive/2024/texmf-dist/tex/xelatex/xecjk/xeCJK.cfg
+(/usr/share/texlive/texmf-dist/tex/latex/fontspec/fontspec.cfg)))
+(/usr/share/texlive/texmf-dist/tex/xelatex/xecjk/xeCJK.cfg
 File: xeCJK.cfg 2022/08/05 v3.9.1 Configuration file for xeCJK package
 ))
 \ccwd=\dimen173
@@ -174,26 +172,24 @@ File: xeCJK.cfg 2022/08/05 v3.9.1 Configuration file for xeCJK package
 )
 \l__ctex_ziju_dim=\dimen174
 
-(/usr/local/texlive/2024/texmf-dist/tex/latex/zhnumber/zhnumber.sty
+(/usr/share/texlive/texmf-dist/tex/latex/zhnumber/zhnumber.sty
 Package: zhnumber 2022/07/14 v3.0 Typesetting numbers with Chinese glyphs
-\l__zhnum_scale_int=\count289
-\l__zhnum_tmp_int=\count290
+\l__zhnum_scale_int=\count288
+\l__zhnum_tmp_int=\count289
 
-(/usr/local/texlive/2024/texmf-dist/tex/latex/zhnumber/zhnumber-utf8.cfg
+(/usr/share/texlive/texmf-dist/tex/latex/zhnumber/zhnumber-utf8.cfg
 File: zhnumber-utf8.cfg 2022/07/14 v3.0 Chinese numerals with UTF8 encoding
 ))
 \l__ctex_heading_skip=\skip59
 
-(/usr/local/texlive/2024/texmf-dist/tex/latex/ctex/scheme/ctex-scheme-chinese-a
-rticle.def
+(/usr/share/texlive/texmf-dist/tex/latex/ctex/scheme/ctex-scheme-chinese-articl
+e.def
 File: ctex-scheme-chinese-article.def 2022/07/14 v2.5.10 Chinese scheme for art
 icle (CTEX)
-
-(/usr/local/texlive/2024/texmf-dist/tex/latex/ctex/config/ctex-name-utf8.cfg
+ (/usr/share/texlive/texmf-dist/tex/latex/ctex/config/ctex-name-utf8.cfg
 File: ctex-name-utf8.cfg 2022/07/14 v2.5.10 Caption with encoding UTF-8 (CTEX)
-))
-(/usr/local/texlive/2024/texmf-dist/tex/latex/ctex/fontset/ctex-fontset-fandol.
-def
+)) (/usr/share/texlive/texmf-dist/tex/latex/ctex/fontset/ctex-fontset-fandol.de
+f
 File: ctex-fontset-fandol.def 2022/07/14 v2.5.10 Fandol fonts definition (CTEX)
 
 
@@ -220,25 +216,25 @@ Package fontspec Info: Font family 'FandolSong-Regular(0)' created for font
 (fontspec)             <->"[FandolKai-Regular.otf]/OT:language=dflt;"
 (fontspec)             - 'italic small caps'  (m/scit) with NFSS spec.: 
 
-)) (/usr/local/texlive/2024/texmf-dist/tex/latex/ctex/config/ctex.cfg
+)) (/usr/share/texlive/texmf-dist/tex/latex/ctex/config/ctex.cfg
 File: ctex.cfg 2022/07/14 v2.5.10 Configuration file (CTEX)
 )
-(/usr/local/texlive/2024/texmf-dist/tex/latex/geometry/geometry.sty
+(/usr/share/texlive/texmf-dist/tex/latex/geometry/geometry.sty
 Package: geometry 2020/01/02 v5.9 Page Geometry
 
-(/usr/local/texlive/2024/texmf-dist/tex/latex/graphics/keyval.sty
+(/usr/share/texlive/texmf-dist/tex/latex/graphics/keyval.sty
 Package: keyval 2022/05/29 v1.15 key=value parser (DPC)
 \KV@toks@=\toks17
 )
-(/usr/local/texlive/2024/texmf-dist/tex/generic/iftex/ifvtex.sty
+(/usr/share/texlive/texmf-dist/tex/generic/iftex/ifvtex.sty
 Package: ifvtex 2019/10/25 v1.7 ifvtex legacy package. Use iftex instead.
 
-(/usr/local/texlive/2024/texmf-dist/tex/generic/iftex/iftex.sty
+(/usr/share/texlive/texmf-dist/tex/generic/iftex/iftex.sty
 Package: iftex 2022/02/03 v1.0f TeX engine tests
 ))
-\Gm@cnth=\count291
-\Gm@cntv=\count292
-\c@Gm@tempcnt=\count293
+\Gm@cnth=\count290
+\Gm@cntv=\count291
+\c@Gm@tempcnt=\count292
 \Gm@bindingoffset=\dimen175
 \Gm@wd@mp=\dimen176
 \Gm@odd@mp=\dimen177
@@ -249,7 +245,7 @@ Package: iftex 2022/02/03 v1.0f TeX engine tests
 \Gm@layoutvoffset=\dimen182
 \Gm@dimlist=\toks18
 )
-(/usr/local/texlive/2024/texmf-dist/tex/latex/tools/array.sty
+(/usr/share/texlive/texmf-dist/tex/latex/tools/array.sty
 Package: array 2023/10/16 v2.5g Tabular extension package (FMi)
 \col@sep=\dimen183
 \ar@mcellbox=\box55
@@ -259,7 +255,7 @@ Package: array 2023/10/16 v2.5g Tabular extension package (FMi)
 \backup@length=\skip61
 \ar@cellbox=\box56
 )
-(/usr/local/texlive/2024/texmf-dist/tex/latex/booktabs/booktabs.sty
+(/usr/share/texlive/texmf-dist/tex/latex/booktabs/booktabs.sty
 Package: booktabs 2020/01/12 v1.61803398 Publication quality tables
 \heavyrulewidth=\dimen185
 \lightrulewidth=\dimen186
@@ -271,15 +267,15 @@ Package: booktabs 2020/01/12 v1.61803398 Publication quality tables
 \cmidrulesep=\dimen192
 \cmidrulekern=\dimen193
 \defaultaddspace=\dimen194
-\@cmidla=\count294
-\@cmidlb=\count295
+\@cmidla=\count293
+\@cmidlb=\count294
 \@aboverulesep=\dimen195
 \@belowrulesep=\dimen196
-\@thisruleclass=\count296
-\@lastruleclass=\count297
+\@thisruleclass=\count295
+\@lastruleclass=\count296
 \@thisrulewidth=\dimen197
 )
-(/usr/local/texlive/2024/texmf-dist/tex/latex/fancyhdr/fancyhdr.sty
+(/usr/share/texlive/texmf-dist/tex/latex/fancyhdr/fancyhdr.sty
 Package: fancyhdr 2022/11/09 v4.1 Extensive control of page headers and footers
 
 \f@nch@headwidth=\skip62
@@ -292,69 +288,69 @@ Package: fancyhdr 2022/11/09 v4.1 Extensive control of page headers and footers
 \f@nch@O@olf=\skip69
 \f@nch@O@orf=\skip70
 )
-(/usr/local/texlive/2024/texmf-dist/tex/latex/hyperref/hyperref.sty
+(/usr/share/texlive/texmf-dist/tex/latex/hyperref/hyperref.sty
 Package: hyperref 2024-01-20 v7.01h Hypertext links for LaTeX
 
-(/usr/local/texlive/2024/texmf-dist/tex/latex/kvsetkeys/kvsetkeys.sty
+(/usr/share/texlive/texmf-dist/tex/latex/kvsetkeys/kvsetkeys.sty
 Package: kvsetkeys 2022-10-05 v1.19 Key value parser (HO)
 )
-(/usr/local/texlive/2024/texmf-dist/tex/generic/kvdefinekeys/kvdefinekeys.sty
+(/usr/share/texlive/texmf-dist/tex/generic/kvdefinekeys/kvdefinekeys.sty
 Package: kvdefinekeys 2019-12-19 v1.6 Define keys (HO)
 )
-(/usr/local/texlive/2024/texmf-dist/tex/generic/pdfescape/pdfescape.sty
+(/usr/share/texlive/texmf-dist/tex/generic/pdfescape/pdfescape.sty
 Package: pdfescape 2019/12/09 v1.15 Implements pdfTeX's escape features (HO)
 
-(/usr/local/texlive/2024/texmf-dist/tex/generic/ltxcmds/ltxcmds.sty
+(/usr/share/texlive/texmf-dist/tex/generic/ltxcmds/ltxcmds.sty
 Package: ltxcmds 2023-12-04 v1.26 LaTeX kernel commands for general use (HO)
 )
-(/usr/local/texlive/2024/texmf-dist/tex/generic/pdftexcmds/pdftexcmds.sty
+(/usr/share/texlive/texmf-dist/tex/generic/pdftexcmds/pdftexcmds.sty
 Package: pdftexcmds 2020-06-27 v0.33 Utility functions of pdfTeX for LuaTeX (HO
 )
 
-(/usr/local/texlive/2024/texmf-dist/tex/generic/infwarerr/infwarerr.sty
+(/usr/share/texlive/texmf-dist/tex/generic/infwarerr/infwarerr.sty
 Package: infwarerr 2019/12/03 v1.5 Providing info/warning/error messages (HO)
 )
 Package pdftexcmds Info: \pdf@primitive is available.
 Package pdftexcmds Info: \pdf@ifprimitive is available.
 Package pdftexcmds Info: \pdfdraftmode not found.
 ))
-(/usr/local/texlive/2024/texmf-dist/tex/latex/hycolor/hycolor.sty
+(/usr/share/texlive/texmf-dist/tex/latex/hycolor/hycolor.sty
 Package: hycolor 2020-01-27 v1.10 Color options for hyperref/bookmark (HO)
 )
-(/usr/local/texlive/2024/texmf-dist/tex/latex/auxhook/auxhook.sty
+(/usr/share/texlive/texmf-dist/tex/latex/auxhook/auxhook.sty
 Package: auxhook 2019-12-17 v1.6 Hooks for auxiliary files (HO)
 )
-(/usr/local/texlive/2024/texmf-dist/tex/latex/hyperref/nameref.sty
+(/usr/share/texlive/texmf-dist/tex/latex/hyperref/nameref.sty
 Package: nameref 2023-11-26 v2.56 Cross-referencing by name of section
 
-(/usr/local/texlive/2024/texmf-dist/tex/latex/refcount/refcount.sty
+(/usr/share/texlive/texmf-dist/tex/latex/refcount/refcount.sty
 Package: refcount 2019/12/15 v3.6 Data extraction from label references (HO)
 )
-(/usr/local/texlive/2024/texmf-dist/tex/generic/gettitlestring/gettitlestring.s
-ty
+(/usr/share/texlive/texmf-dist/tex/generic/gettitlestring/gettitlestring.sty
 Package: gettitlestring 2019/12/15 v1.6 Cleanup title references (HO)
- (/usr/local/texlive/2024/texmf-dist/tex/latex/kvoptions/kvoptions.sty
+
+(/usr/share/texlive/texmf-dist/tex/latex/kvoptions/kvoptions.sty
 Package: kvoptions 2022-06-15 v3.15 Key value format for package options (HO)
 ))
-\c@section@level=\count298
+\c@section@level=\count297
 )
-(/usr/local/texlive/2024/texmf-dist/tex/latex/etoolbox/etoolbox.sty
+(/usr/share/texlive/texmf-dist/tex/latex/etoolbox/etoolbox.sty
 Package: etoolbox 2020/10/05 v2.5k e-TeX tools for LaTeX (JAW)
-\etb@tempcnta=\count299
+\etb@tempcnta=\count298
 )
 \@linkdim=\dimen198
-\Hy@linkcounter=\count300
-\Hy@pagecounter=\count301
+\Hy@linkcounter=\count299
+\Hy@pagecounter=\count300
 
-(/usr/local/texlive/2024/texmf-dist/tex/latex/hyperref/pd1enc.def
+(/usr/share/texlive/texmf-dist/tex/latex/hyperref/pd1enc.def
 File: pd1enc.def 2024-01-20 v7.01h Hyperref: PDFDocEncoding definition (HO)
 )
-(/usr/local/texlive/2024/texmf-dist/tex/generic/intcalc/intcalc.sty
+(/usr/share/texlive/texmf-dist/tex/generic/intcalc/intcalc.sty
 Package: intcalc 2019/12/15 v1.3 Expandable calculations with integers (HO)
 )
-\Hy@SavedSpaceFactor=\count302
+\Hy@SavedSpaceFactor=\count301
 
-(/usr/local/texlive/2024/texmf-dist/tex/latex/hyperref/puenc.def
+(/usr/share/texlive/texmf-dist/tex/latex/hyperref/puenc.def
 File: puenc.def 2024-01-20 v7.01h Hyperref: PDF Unicode definition (HO)
 )
 Package hyperref Info: Option `unicode' set `true' on input line 4062.
@@ -365,23 +361,23 @@ Package hyperref Info: Plain pages OFF on input line 4194.
 Package hyperref Info: Backreferencing OFF on input line 4199.
 Package hyperref Info: Implicit mode ON; LaTeX internals redefined.
 Package hyperref Info: Bookmarks ON on input line 4446.
-\c@Hy@tempcnt=\count303
+\c@Hy@tempcnt=\count302
 
-(/usr/local/texlive/2024/texmf-dist/tex/latex/url/url.sty
+(/usr/share/texlive/texmf-dist/tex/latex/url/url.sty
 \Urlmuskip=\muskip17
 Package: url 2013/09/16  ver 3.4  Verb mode for urls, etc.
 )
 LaTeX Info: Redefining \url on input line 4784.
 \XeTeXLinkMargin=\dimen199
 
-(/usr/local/texlive/2024/texmf-dist/tex/generic/bitset/bitset.sty
+(/usr/share/texlive/texmf-dist/tex/generic/bitset/bitset.sty
 Package: bitset 2019/12/09 v1.3 Handle bit-vector datatype (HO)
 
-(/usr/local/texlive/2024/texmf-dist/tex/generic/bigintcalc/bigintcalc.sty
+(/usr/share/texlive/texmf-dist/tex/generic/bigintcalc/bigintcalc.sty
 Package: bigintcalc 2019/12/15 v1.5 Expandable calculations on big integers (HO
 )
 ))
-\Fld@menulength=\count304
+\Fld@menulength=\count303
 \Field@Width=\dimen256
 \Fld@charsize=\dimen257
 Package hyperref Info: Hyper figures OFF on input line 6063.
@@ -392,98 +388,100 @@ Package hyperref Info: Link coloring OFF on input line 6083.
 Package hyperref Info: Link coloring with OCG OFF on input line 6088.
 Package hyperref Info: PDF/A mode OFF on input line 6093.
 
-(/usr/local/texlive/2024/texmf-dist/tex/latex/base/atbegshi-ltx.sty
+(/usr/share/texlive/texmf-dist/tex/latex/base/atbegshi-ltx.sty
 Package: atbegshi-ltx 2021/01/10 v1.0c Emulation of the original atbegshi
 package with kernel methods
 )
-\Hy@abspage=\count305
-\c@Item=\count306
-\c@Hfootnote=\count307
+\Hy@abspage=\count304
+\c@Item=\count305
+\c@Hfootnote=\count306
 )
 Package hyperref Info: Driver (autodetected): hxetex.
 
-(/usr/local/texlive/2024/texmf-dist/tex/latex/hyperref/hxetex.def
+(/usr/share/texlive/texmf-dist/tex/latex/hyperref/hxetex.def
 File: hxetex.def 2024-01-20 v7.01h Hyperref driver for XeTeX
 
-(/usr/local/texlive/2024/texmf-dist/tex/generic/stringenc/stringenc.sty
+(/usr/share/texlive/texmf-dist/tex/generic/stringenc/stringenc.sty
 Package: stringenc 2019/11/29 v1.12 Convert strings between diff. encodings (HO
 )
 )
 \pdfm@box=\box57
-\c@Hy@AnnotLevel=\count308
-\HyField@AnnotCount=\count309
-\Fld@listcount=\count310
-\c@bookmark@seq@number=\count311
+\c@Hy@AnnotLevel=\count307
+\HyField@AnnotCount=\count308
+\Fld@listcount=\count309
+\c@bookmark@seq@number=\count310
 
-(/usr/local/texlive/2024/texmf-dist/tex/latex/rerunfilecheck/rerunfilecheck.sty
+(/usr/share/texlive/texmf-dist/tex/latex/rerunfilecheck/rerunfilecheck.sty
 Package: rerunfilecheck 2022-07-10 v1.10 Rerun checks for auxiliary files (HO)
-(/usr/local/texlive/2024/texmf-dist/tex/latex/base/atveryend-ltx.sty
+
+(/usr/share/texlive/texmf-dist/tex/latex/base/atveryend-ltx.sty
 Package: atveryend-ltx 2020/08/19 v1.0a Emulation of the original atveryend pac
 kage
 with kernel methods
 )
-(/usr/local/texlive/2024/texmf-dist/tex/generic/uniquecounter/uniquecounter.sty
+(/usr/share/texlive/texmf-dist/tex/generic/uniquecounter/uniquecounter.sty
 Package: uniquecounter 2019/12/15 v1.4 Provide unlimited unique counter (HO)
 )
 Package uniquecounter Info: New unique counter `rerunfilecheck' on input line 2
 85.
 )
 \Hy@SectionHShift=\skip71
-) (/usr/local/texlive/2024/texmf-dist/tex/latex/tools/longtable.sty
+)
+(/usr/share/texlive/texmf-dist/tex/latex/tools/longtable.sty
 Package: longtable 2023-11-01 v4.19 Multi-page Table package (DPC)
 \LTleft=\skip72
 \LTright=\skip73
 \LTpre=\skip74
 \LTpost=\skip75
-\LTchunksize=\count312
+\LTchunksize=\count311
 \LTcapwidth=\dimen258
 \LT@head=\box58
 \LT@firsthead=\box59
 \LT@foot=\box60
 \LT@lastfoot=\box61
 \LT@gbox=\box62
-\LT@cols=\count313
-\LT@rows=\count314
-\c@LT@tables=\count315
-\c@LT@chunks=\count316
+\LT@cols=\count312
+\LT@rows=\count313
+\c@LT@tables=\count314
+\c@LT@chunks=\count315
 \LT@p@ftn=\toks20
 )
-(/usr/local/texlive/2024/texmf-dist/tex/latex/pdfpages/pdfpages.sty
+(/usr/share/texlive/texmf-dist/tex/latex/pdfpages/pdfpages.sty
 Package: pdfpages 2024/01/21 v0.5y Insert pages of external PDF documents (AM)
 
-(/usr/local/texlive/2024/texmf-dist/tex/latex/base/ifthen.sty
+(/usr/share/texlive/texmf-dist/tex/latex/base/ifthen.sty
 Package: ifthen 2022/04/13 v1.1d Standard LaTeX ifthen package (DPC)
 )
-(/usr/local/texlive/2024/texmf-dist/tex/latex/tools/calc.sty
+(/usr/share/texlive/texmf-dist/tex/latex/tools/calc.sty
 Package: calc 2023/07/08 v4.3 Infix arithmetic (KKT,FJ)
-\calc@Acount=\count317
-\calc@Bcount=\count318
+\calc@Acount=\count316
+\calc@Bcount=\count317
 \calc@Adimen=\dimen259
 \calc@Bdimen=\dimen260
 \calc@Askip=\skip76
 \calc@Bskip=\skip77
 LaTeX Info: Redefining \setlength on input line 80.
 LaTeX Info: Redefining \addtolength on input line 81.
-\calc@Ccount=\count319
+\calc@Ccount=\count318
 \calc@Cskip=\skip78
 )
-(/usr/local/texlive/2024/texmf-dist/tex/latex/eso-pic/eso-pic.sty
+(/usr/share/texlive/texmf-dist/tex/latex/eso-pic/eso-pic.sty
 Package: eso-pic 2023/05/03 v3.0c eso-pic (RN)
 \ESO@tempdima=\dimen261
 \ESO@tempdimb=\dimen262
 
-(/usr/local/texlive/2024/texmf-dist/tex/latex/xcolor/xcolor.sty
+(/usr/share/texlive/texmf-dist/tex/latex/xcolor/xcolor.sty
 Package: xcolor 2023/11/15 v3.01 LaTeX color extensions (UK)
 
-(/usr/local/texlive/2024/texmf-dist/tex/latex/graphics-cfg/color.cfg
+(/usr/share/texlive/texmf-dist/tex/latex/graphics-cfg/color.cfg
 File: color.cfg 2016/01/02 v1.6 sample color configuration
 )
 Package xcolor Info: Driver file: xetex.def on input line 274.
 
-(/usr/local/texlive/2024/texmf-dist/tex/latex/graphics-def/xetex.def
+(/usr/share/texlive/texmf-dist/tex/latex/graphics-def/xetex.def
 File: xetex.def 2022/09/22 v5.0n Graphics/color driver for xetex
 )
-(/usr/local/texlive/2024/texmf-dist/tex/latex/graphics/mathcolor.ltx)
+(/usr/share/texlive/texmf-dist/tex/latex/graphics/mathcolor.ltx)
 Package xcolor Info: Model `cmy' substituted by `cmy0' on input line 1350.
 Package xcolor Info: Model `RGB' extended on input line 1366.
 Package xcolor Info: Model `HTML' substituted by `rgb' on input line 1368.
@@ -493,16 +491,16 @@ Package xcolor Info: Model `HSB' substituted by `hsb' on input line 1371.
 Package xcolor Info: Model `Gray' substituted by `gray' on input line 1372.
 Package xcolor Info: Model `wave' substituted by `hsb' on input line 1373.
 ))
-(/usr/local/texlive/2024/texmf-dist/tex/latex/graphics/graphicx.sty
+(/usr/share/texlive/texmf-dist/tex/latex/graphics/graphicx.sty
 Package: graphicx 2021/09/16 v1.2d Enhanced LaTeX Graphics (DPC,SPQR)
 
-(/usr/local/texlive/2024/texmf-dist/tex/latex/graphics/graphics.sty
+(/usr/share/texlive/texmf-dist/tex/latex/graphics/graphics.sty
 Package: graphics 2022/03/10 v1.4e Standard LaTeX Graphics (DPC,SPQR)
 
-(/usr/local/texlive/2024/texmf-dist/tex/latex/graphics/trig.sty
+(/usr/share/texlive/texmf-dist/tex/latex/graphics/trig.sty
 Package: trig 2021/08/11 v1.11 sin cos tan (DPC)
 )
-(/usr/local/texlive/2024/texmf-dist/tex/latex/graphics-cfg/graphics.cfg
+(/usr/share/texlive/texmf-dist/tex/latex/graphics-cfg/graphics.cfg
 File: graphics.cfg 2016/06/04 v1.11 sample graphics configuration
 )
 Package graphics Info: Driver file: xetex.def on input line 107.
@@ -514,32 +512,32 @@ Package graphics Info: Driver file: xetex.def on input line 107.
 \AM@pageheight=\dimen266
 \AM@fboxrule=\dimen267
 
-(/usr/local/texlive/2024/texmf-dist/tex/latex/pdfpages/ppxetex.def
+(/usr/share/texlive/texmf-dist/tex/latex/pdfpages/ppxetex.def
 File: ppxetex.def 2024/01/21 v0.5y Pdfpages driver for XeTeX (AM)
 )
-\pdfpages@includegraphics@status=\count320
+\pdfpages@includegraphics@status=\count319
 \AM@pagebox=\box63
 \AM@global@opts=\toks21
-\AM@pagecnt=\count321
+\AM@pagecnt=\count320
 \AM@toc@title=\toks22
 \AM@lof@heading=\toks23
-\c@AM@survey=\count322
+\c@AM@survey=\count321
 \AM@templatesizebox=\box64
 )
-(/usr/local/texlive/2024/texmf-dist/tex/latex/setspace/setspace.sty
+(/usr/share/texlive/texmf-dist/tex/latex/setspace/setspace.sty
 Package: setspace 2022/12/04 v6.7b set line spacing
 )
-(/usr/local/texlive/2024/texmf-dist/tex/latex/tools/tabularx.sty
+(/usr/share/texlive/texmf-dist/tex/latex/tools/tabularx.sty
 Package: tabularx 2023/07/08 v2.11c `tabularx' package (DPC)
 \TX@col@width=\dimen268
 \TX@old@table=\dimen269
 \TX@old@col=\dimen270
 \TX@target=\dimen271
 \TX@delta=\dimen272
-\TX@cols=\count323
+\TX@cols=\count322
 \TX@ftn=\toks24
 )
-(/usr/local/texlive/2024/texmf-dist/tex/latex/titlesec/titlesec.sty
+(/usr/share/texlive/texmf-dist/tex/latex/titlesec/titlesec.sty
 Package: titlesec 2023/10/27 v2.16 Sectioning titles
 \ttl@box=\box65
 \beforetitleunit=\skip79
@@ -673,14 +671,14 @@ Package hyperref Info: Link coloring OFF on input line 73.
 \openout3 = `总报告.out'.
 
 
-(/usr/local/texlive/2024/texmf-dist/tex/latex/pdflscape/pdflscape.sty
+(/usr/share/texlive/texmf-dist/tex/latex/pdflscape/pdflscape.sty
 Package: pdflscape 2022-10-27 v0.13 Display of landscape pages in PDF
 
-(/usr/local/texlive/2024/texmf-dist/tex/latex/pdflscape/pdflscape-nometadata.st
-y
+(/usr/share/texlive/texmf-dist/tex/latex/pdflscape/pdflscape-nometadata.sty
 Package: pdflscape-nometadata 2022-10-28 v0.13 Display of landscape pages in PD
 F (HO)
- (/usr/local/texlive/2024/texmf-dist/tex/latex/graphics/lscape.sty
+
+(/usr/share/texlive/texmf-dist/tex/latex/graphics/lscape.sty
 Package: lscape 2020/05/28 v3.02 Landscape Pages (DPC)
 )
 Package pdflscape Info: Auto-detected driver: dvipdfm (xetex) on input line 98.
@@ -762,415 +760,983 @@ Overfull \hbox (26.2922pt too wide) in paragraph at lines 136--137
 ] [2
 
 ]
+File: ../../软件计划任务书/latex/计划任务书.pdf Graphic file (type pdf)
+<use ../../软件计划任务书/latex/计划任务书.pdf>
+File: ../../软件计划任务书/latex/计划任务书.pdf Graphic file (type pdf)
+<use ../../软件计划任务书/latex/计划任务书.pdf>
+File: ../../软件计划任务书/latex/计划任务书.pdf Graphic file (type pdf)
+<use ../../软件计划任务书/latex/计划任务书.pdf, page 1>
+File: ../../软件计划任务书/latex/计划任务书.pdf Graphic file (type pdf)
+<use ../../软件计划任务书/latex/计划任务书.pdf, page 1>
+File: ../../软件计划任务书/latex/计划任务书.pdf Graphic file (type pdf)
+<use ../../软件计划任务书/latex/计划任务书.pdf, page 1>
+File: ../../软件计划任务书/latex/计划任务书.pdf Graphic file (type pdf)
+<use ../../软件计划任务书/latex/计划任务书.pdf, page 1>
+File: ../../软件计划任务书/latex/计划任务书.pdf Graphic file (type pdf)
+<use ../../软件计划任务书/latex/计划任务书.pdf, page 1>
+ [3
 
-! Package pdfpages Error: Cannot find file `../../软件计划任务书/latex/计划任务书.pdf'.
-
-See the pdfpages package documentation for explanation.
-Type  H <return>  for immediate help.
- ...                                              
-                                                  
-l.145 ...e{empty}}]{../../软件计划任务书/latex/计划任务书.pdf}
-                                                  
-This error message was generated by an \errmessage
-command, so I can't give any explicit help.
-Pretend that you're Hercule Poirot: Examine all clues,
-and deduce the truth by order and method.
-
-
-! Package pdfpages Error: Cannot find file `-'.
-
-See the pdfpages package documentation for explanation.
-Type  H <return>  for immediate help.
- ...                                              
-                                                  
-l.145 ...e{empty}}]{../../软件计划任务书/latex/计划任务书.pdf}
-                                                  
-(That was another \errmessage.)
-
-! Undefined control sequence.
-\AM@expand@range ...M@i \relax \@tempcntb =\AM@ii 
-                                                  \relax \ifnum \@tempcnta <...
-l.145 ...e{empty}}]{../../软件计划任务书/latex/计划任务书.pdf}
-                                                  
-The control sequence at the end of the top line
-of your error message was never \def'ed. If you have
-misspelled it (e.g., `\hobx'), type `I' and the correct
-spelling (e.g., `I\hbox'). Otherwise just continue,
-and I'll forget about whatever was undefined.
-
-! Missing number, treated as zero.
-<to be read again> 
-                   \relax 
-l.145 ...e{empty}}]{../../软件计划任务书/latex/计划任务书.pdf}
-                                                  
-A number should have been here; I inserted `0'.
-(If you can't figure out why I needed to see a number,
-look up `weird error' in the index to The TeXbook.)
-
-! Undefined control sequence.
-\AM@checkpagenumber #1->\ifnum #1>\AM@pagecount 
-                                                \relax \ifthenelse {\boolean...
-l.145 ...e{empty}}]{../../软件计划任务书/latex/计划任务书.pdf}
-                                                  
-The control sequence at the end of the top line
-of your error message was never \def'ed. If you have
-misspelled it (e.g., `\hobx'), type `I' and the correct
-spelling (e.g., `I\hbox'). Otherwise just continue,
-and I'll forget about whatever was undefined.
-
-! Missing number, treated as zero.
-<to be read again> 
-                   \relax 
-l.145 ...e{empty}}]{../../软件计划任务书/latex/计划任务书.pdf}
-                                                  
-A number should have been here; I inserted `0'.
-(If you can't figure out why I needed to see a number,
-look up `weird error' in the index to The TeXbook.)
-
-
-! Package pdfpages Error: Page 1 of `\AM@currentdocname ' does not exist.
-
-See the pdfpages package documentation for explanation.
-Type  H <return>  for immediate help.
- ...                                              
-                                                  
-l.145 ...e{empty}}]{../../软件计划任务书/latex/计划任务书.pdf}
-                                                  
-You have set a wrong page number in the `pages' option. Document 
-`\AM@currentdocname ' does not have 1 pages.
-
-! Undefined control sequence.
-\AM@checkpagenumber #1->\ifnum #1>\AM@pagecount 
-                                                \relax \ifthenelse {\boolean...
-l.145 ...e{empty}}]{../../软件计划任务书/latex/计划任务书.pdf}
-                                                  
-The control sequence at the end of the top line
-of your error message was never \def'ed. If you have
-misspelled it (e.g., `\hobx'), type `I' and the correct
-spelling (e.g., `I\hbox'). Otherwise just continue,
-and I'll forget about whatever was undefined.
-
-! Missing number, treated as zero.
-<to be read again> 
-                   \relax 
-l.145 ...e{empty}}]{../../软件计划任务书/latex/计划任务书.pdf}
-                                                  
-A number should have been here; I inserted `0'.
-(If you can't figure out why I needed to see a number,
-look up `weird error' in the index to The TeXbook.)
-
-[3
-
-] [4
-
-] [5
 
 ]
-
-! Package pdfpages Error: Cannot find file `../../需求规格说明书/latex/软件需求规格说明书.pdf'.
-
-
-See the pdfpages package documentation for explanation.
-Type  H <return>  for immediate help.
- ...                                              
-                                                  
-l.149 ...pty}}]{../../需求规格说明书/latex/软件需求规格说明书.pdf}
-                                                  
-(That was another \errmessage.)
-
-
-! Package pdfpages Error: Cannot find file `-'.
-
-See the pdfpages package documentation for explanation.
-Type  H <return>  for immediate help.
- ...                                              
-                                                  
-l.149 ...pty}}]{../../需求规格说明书/latex/软件需求规格说明书.pdf}
-                                                  
-(That was another \errmessage.)
-
-! Undefined control sequence.
-\AM@expand@range ...M@i \relax \@tempcntb =\AM@ii 
-                                                  \relax \ifnum \@tempcnta <...
-l.149 ...pty}}]{../../需求规格说明书/latex/软件需求规格说明书.pdf}
-                                                  
-The control sequence at the end of the top line
-of your error message was never \def'ed. If you have
-misspelled it (e.g., `\hobx'), type `I' and the correct
-spelling (e.g., `I\hbox'). Otherwise just continue,
-and I'll forget about whatever was undefined.
-
-! Missing number, treated as zero.
-<to be read again> 
-                   \relax 
-l.149 ...pty}}]{../../需求规格说明书/latex/软件需求规格说明书.pdf}
-                                                  
-A number should have been here; I inserted `0'.
-(If you can't figure out why I needed to see a number,
-look up `weird error' in the index to The TeXbook.)
-
-! Undefined control sequence.
-\AM@checkpagenumber #1->\ifnum #1>\AM@pagecount 
-                                                \relax \ifthenelse {\boolean...
-l.149 ...pty}}]{../../需求规格说明书/latex/软件需求规格说明书.pdf}
-                                                  
-The control sequence at the end of the top line
-of your error message was never \def'ed. If you have
-misspelled it (e.g., `\hobx'), type `I' and the correct
-spelling (e.g., `I\hbox'). Otherwise just continue,
-and I'll forget about whatever was undefined.
-
-! Missing number, treated as zero.
-<to be read again> 
-                   \relax 
-l.149 ...pty}}]{../../需求规格说明书/latex/软件需求规格说明书.pdf}
-                                                  
-A number should have been here; I inserted `0'.
-(If you can't figure out why I needed to see a number,
-look up `weird error' in the index to The TeXbook.)
-
-
-! Package pdfpages Error: Page 1 of `\AM@currentdocname ' does not exist.
-
-See the pdfpages package documentation for explanation.
-Type  H <return>  for immediate help.
- ...                                              
-                                                  
-l.149 ...pty}}]{../../需求规格说明书/latex/软件需求规格说明书.pdf}
-                                                  
-You have set a wrong page number in the `pages' option. Document 
-`\AM@currentdocname ' does not have 1 pages.
-
-! Undefined control sequence.
-\AM@checkpagenumber #1->\ifnum #1>\AM@pagecount 
-                                                \relax \ifthenelse {\boolean...
-l.149 ...pty}}]{../../需求规格说明书/latex/软件需求规格说明书.pdf}
-                                                  
-The control sequence at the end of the top line
-of your error message was never \def'ed. If you have
-misspelled it (e.g., `\hobx'), type `I' and the correct
-spelling (e.g., `I\hbox'). Otherwise just continue,
-and I'll forget about whatever was undefined.
-
-! Missing number, treated as zero.
-<to be read again> 
-                   \relax 
-l.149 ...pty}}]{../../需求规格说明书/latex/软件需求规格说明书.pdf}
-                                                  
-A number should have been here; I inserted `0'.
-(If you can't figure out why I needed to see a number,
-look up `weird error' in the index to The TeXbook.)
-
-[6
-
-] [7
-
-] [8
+File: ../../软件计划任务书/latex/计划任务书.pdf Graphic file (type pdf)
+<use ../../软件计划任务书/latex/计划任务书.pdf, page 2>
+File: ../../软件计划任务书/latex/计划任务书.pdf Graphic file (type pdf)
+<use ../../软件计划任务书/latex/计划任务书.pdf, page 2>
+File: ../../软件计划任务书/latex/计划任务书.pdf Graphic file (type pdf)
+<use ../../软件计划任务书/latex/计划任务书.pdf, page 2>
+ [4
 
 ]
-
-! Package pdfpages Error: Cannot find file `../../软件设计说明书/work/reference/wikibr
-idge_spec.pdf'.
-
-See the pdfpages package documentation for explanation.
-Type  H <return>  for immediate help.
- ...                                              
-                                                  
-l.153 ...设计说明书/work/reference/wikibridge_spec.pdf}
-                                                  
-(That was another \errmessage.)
-
-
-! Package pdfpages Error: Cannot find file `-'.
-
-See the pdfpages package documentation for explanation.
-Type  H <return>  for immediate help.
- ...                                              
-                                                  
-l.153 ...设计说明书/work/reference/wikibridge_spec.pdf}
-                                                  
-(That was another \errmessage.)
-
-! Undefined control sequence.
-\AM@expand@range ...M@i \relax \@tempcntb =\AM@ii 
-                                                  \relax \ifnum \@tempcnta <...
-l.153 ...设计说明书/work/reference/wikibridge_spec.pdf}
-                                                  
-The control sequence at the end of the top line
-of your error message was never \def'ed. If you have
-misspelled it (e.g., `\hobx'), type `I' and the correct
-spelling (e.g., `I\hbox'). Otherwise just continue,
-and I'll forget about whatever was undefined.
-
-! Missing number, treated as zero.
-<to be read again> 
-                   \relax 
-l.153 ...设计说明书/work/reference/wikibridge_spec.pdf}
-                                                  
-A number should have been here; I inserted `0'.
-(If you can't figure out why I needed to see a number,
-look up `weird error' in the index to The TeXbook.)
-
-! Undefined control sequence.
-\AM@checkpagenumber #1->\ifnum #1>\AM@pagecount 
-                                                \relax \ifthenelse {\boolean...
-l.153 ...设计说明书/work/reference/wikibridge_spec.pdf}
-                                                  
-The control sequence at the end of the top line
-of your error message was never \def'ed. If you have
-misspelled it (e.g., `\hobx'), type `I' and the correct
-spelling (e.g., `I\hbox'). Otherwise just continue,
-and I'll forget about whatever was undefined.
-
-! Missing number, treated as zero.
-<to be read again> 
-                   \relax 
-l.153 ...设计说明书/work/reference/wikibridge_spec.pdf}
-                                                  
-A number should have been here; I inserted `0'.
-(If you can't figure out why I needed to see a number,
-look up `weird error' in the index to The TeXbook.)
-
-
-! Package pdfpages Error: Page 1 of `\AM@currentdocname ' does not exist.
-
-See the pdfpages package documentation for explanation.
-Type  H <return>  for immediate help.
- ...                                              
-                                                  
-l.153 ...设计说明书/work/reference/wikibridge_spec.pdf}
-                                                  
-You have set a wrong page number in the `pages' option. Document 
-`\AM@currentdocname ' does not have 1 pages.
-
-! Undefined control sequence.
-\AM@checkpagenumber #1->\ifnum #1>\AM@pagecount 
-                                                \relax \ifthenelse {\boolean...
-l.153 ...设计说明书/work/reference/wikibridge_spec.pdf}
-                                                  
-The control sequence at the end of the top line
-of your error message was never \def'ed. If you have
-misspelled it (e.g., `\hobx'), type `I' and the correct
-spelling (e.g., `I\hbox'). Otherwise just continue,
-and I'll forget about whatever was undefined.
-
-! Missing number, treated as zero.
-<to be read again> 
-                   \relax 
-l.153 ...设计说明书/work/reference/wikibridge_spec.pdf}
-                                                  
-A number should have been here; I inserted `0'.
-(If you can't figure out why I needed to see a number,
-look up `weird error' in the index to The TeXbook.)
-
-[9
-
-] [10
-
-] [11
+File: ../../软件计划任务书/latex/计划任务书.pdf Graphic file (type pdf)
+<use ../../软件计划任务书/latex/计划任务书.pdf, page 3>
+File: ../../软件计划任务书/latex/计划任务书.pdf Graphic file (type pdf)
+<use ../../软件计划任务书/latex/计划任务书.pdf, page 3>
+File: ../../软件计划任务书/latex/计划任务书.pdf Graphic file (type pdf)
+<use ../../软件计划任务书/latex/计划任务书.pdf, page 3>
+ [5
 
 ]
+File: ../../软件计划任务书/latex/计划任务书.pdf Graphic file (type pdf)
+<use ../../软件计划任务书/latex/计划任务书.pdf, page 4>
+File: ../../软件计划任务书/latex/计划任务书.pdf Graphic file (type pdf)
+<use ../../软件计划任务书/latex/计划任务书.pdf, page 4>
+File: ../../软件计划任务书/latex/计划任务书.pdf Graphic file (type pdf)
+<use ../../软件计划任务书/latex/计划任务书.pdf, page 4>
+ [6
 
-! Package pdfpages Error: Cannot find file `../../软件测试报告/latex/测试分析报告.pdf'.
+]
+File: ../../软件计划任务书/latex/计划任务书.pdf Graphic file (type pdf)
+<use ../../软件计划任务书/latex/计划任务书.pdf, page 5>
+File: ../../软件计划任务书/latex/计划任务书.pdf Graphic file (type pdf)
+<use ../../软件计划任务书/latex/计划任务书.pdf, page 5>
+File: ../../软件计划任务书/latex/计划任务书.pdf Graphic file (type pdf)
+<use ../../软件计划任务书/latex/计划任务书.pdf, page 5>
+ [7
 
-See the pdfpages package documentation for explanation.
-Type  H <return>  for immediate help.
- ...                                              
-                                                  
-l.157 ...e{empty}}]{../../软件测试报告/latex/测试分析报告.pdf}
-                                                  
-(That was another \errmessage.)
+]
+File: ../../软件计划任务书/latex/计划任务书.pdf Graphic file (type pdf)
+<use ../../软件计划任务书/latex/计划任务书.pdf, page 6>
+File: ../../软件计划任务书/latex/计划任务书.pdf Graphic file (type pdf)
+<use ../../软件计划任务书/latex/计划任务书.pdf, page 6>
+File: ../../软件计划任务书/latex/计划任务书.pdf Graphic file (type pdf)
+<use ../../软件计划任务书/latex/计划任务书.pdf, page 6>
+ [8
+
+]
+File: ../../软件计划任务书/latex/计划任务书.pdf Graphic file (type pdf)
+<use ../../软件计划任务书/latex/计划任务书.pdf, page 7>
+File: ../../软件计划任务书/latex/计划任务书.pdf Graphic file (type pdf)
+<use ../../软件计划任务书/latex/计划任务书.pdf, page 7>
+File: ../../软件计划任务书/latex/计划任务书.pdf Graphic file (type pdf)
+<use ../../软件计划任务书/latex/计划任务书.pdf, page 7>
+ [9
+
+]
+File: ../../软件计划任务书/latex/计划任务书.pdf Graphic file (type pdf)
+<use ../../软件计划任务书/latex/计划任务书.pdf, page 8>
+File: ../../软件计划任务书/latex/计划任务书.pdf Graphic file (type pdf)
+<use ../../软件计划任务书/latex/计划任务书.pdf, page 8>
+File: ../../软件计划任务书/latex/计划任务书.pdf Graphic file (type pdf)
+<use ../../软件计划任务书/latex/计划任务书.pdf, page 8>
+ [10
+
+]
+File: ../../软件计划任务书/latex/计划任务书.pdf Graphic file (type pdf)
+<use ../../软件计划任务书/latex/计划任务书.pdf, page 9>
+File: ../../软件计划任务书/latex/计划任务书.pdf Graphic file (type pdf)
+<use ../../软件计划任务书/latex/计划任务书.pdf, page 9>
+File: ../../软件计划任务书/latex/计划任务书.pdf Graphic file (type pdf)
+<use ../../软件计划任务书/latex/计划任务书.pdf, page 9>
+ [11
+
+]
+File: ../../软件计划任务书/latex/计划任务书.pdf Graphic file (type pdf)
+<use ../../软件计划任务书/latex/计划任务书.pdf, page 10>
+File: ../../软件计划任务书/latex/计划任务书.pdf Graphic file (type pdf)
+<use ../../软件计划任务书/latex/计划任务书.pdf, page 10>
+File: ../../软件计划任务书/latex/计划任务书.pdf Graphic file (type pdf)
+<use ../../软件计划任务书/latex/计划任务书.pdf, page 10>
+ [12
+
+]
+File: ../../软件计划任务书/latex/计划任务书.pdf Graphic file (type pdf)
+<use ../../软件计划任务书/latex/计划任务书.pdf, page 11>
+File: ../../软件计划任务书/latex/计划任务书.pdf Graphic file (type pdf)
+<use ../../软件计划任务书/latex/计划任务书.pdf, page 11>
+File: ../../软件计划任务书/latex/计划任务书.pdf Graphic file (type pdf)
+<use ../../软件计划任务书/latex/计划任务书.pdf, page 11>
+ [13
+
+]
+File: ../../软件计划任务书/latex/计划任务书.pdf Graphic file (type pdf)
+<use ../../软件计划任务书/latex/计划任务书.pdf, page 12>
+File: ../../软件计划任务书/latex/计划任务书.pdf Graphic file (type pdf)
+<use ../../软件计划任务书/latex/计划任务书.pdf, page 12>
+File: ../../软件计划任务书/latex/计划任务书.pdf Graphic file (type pdf)
+<use ../../软件计划任务书/latex/计划任务书.pdf, page 12>
+ [14
+
+]
+File: ../../软件计划任务书/latex/计划任务书.pdf Graphic file (type pdf)
+<use ../../软件计划任务书/latex/计划任务书.pdf, page 13>
+File: ../../软件计划任务书/latex/计划任务书.pdf Graphic file (type pdf)
+<use ../../软件计划任务书/latex/计划任务书.pdf, page 13>
+File: ../../软件计划任务书/latex/计划任务书.pdf Graphic file (type pdf)
+<use ../../软件计划任务书/latex/计划任务书.pdf, page 13>
+ [15
+
+]
+File: ../../软件计划任务书/latex/计划任务书.pdf Graphic file (type pdf)
+<use ../../软件计划任务书/latex/计划任务书.pdf, page 14>
+File: ../../软件计划任务书/latex/计划任务书.pdf Graphic file (type pdf)
+<use ../../软件计划任务书/latex/计划任务书.pdf, page 14>
+File: ../../软件计划任务书/latex/计划任务书.pdf Graphic file (type pdf)
+<use ../../软件计划任务书/latex/计划任务书.pdf, page 14>
+ [16
+
+]
+File: ../../软件计划任务书/latex/计划任务书.pdf Graphic file (type pdf)
+<use ../../软件计划任务书/latex/计划任务书.pdf, page 15>
+File: ../../软件计划任务书/latex/计划任务书.pdf Graphic file (type pdf)
+<use ../../软件计划任务书/latex/计划任务书.pdf, page 15>
+File: ../../软件计划任务书/latex/计划任务书.pdf Graphic file (type pdf)
+<use ../../软件计划任务书/latex/计划任务书.pdf, page 15>
+
+[17
+
+]
+File: ../../软件计划任务书/latex/计划任务书.pdf Graphic file (type pdf)
+<use ../../软件计划任务书/latex/计划任务书.pdf, page 16>
+File: ../../软件计划任务书/latex/计划任务书.pdf Graphic file (type pdf)
+<use ../../软件计划任务书/latex/计划任务书.pdf, page 16>
+File: ../../软件计划任务书/latex/计划任务书.pdf Graphic file (type pdf)
+<use ../../软件计划任务书/latex/计划任务书.pdf, page 16>
+ [18
+
+]
+File: ../../软件计划任务书/latex/计划任务书.pdf Graphic file (type pdf)
+<use ../../软件计划任务书/latex/计划任务书.pdf, page 17>
+File: ../../软件计划任务书/latex/计划任务书.pdf Graphic file (type pdf)
+<use ../../软件计划任务书/latex/计划任务书.pdf, page 17>
+File: ../../软件计划任务书/latex/计划任务书.pdf Graphic file (type pdf)
+<use ../../软件计划任务书/latex/计划任务书.pdf, page 17>
+ [19
+
+]
+File: ../../软件计划任务书/latex/计划任务书.pdf Graphic file (type pdf)
+<use ../../软件计划任务书/latex/计划任务书.pdf, page 18>
+File: ../../软件计划任务书/latex/计划任务书.pdf Graphic file (type pdf)
+<use ../../软件计划任务书/latex/计划任务书.pdf, page 18>
+File: ../../软件计划任务书/latex/计划任务书.pdf Graphic file (type pdf)
+<use ../../软件计划任务书/latex/计划任务书.pdf, page 18>
+ [20
+
+]
+File: ../../软件计划任务书/latex/计划任务书.pdf Graphic file (type pdf)
+<use ../../软件计划任务书/latex/计划任务书.pdf, page 19>
+File: ../../软件计划任务书/latex/计划任务书.pdf Graphic file (type pdf)
+<use ../../软件计划任务书/latex/计划任务书.pdf, page 19>
+File: ../../软件计划任务书/latex/计划任务书.pdf Graphic file (type pdf)
+<use ../../软件计划任务书/latex/计划任务书.pdf, page 19>
+ [21
+
+]
+File: ../../软件计划任务书/latex/计划任务书.pdf Graphic file (type pdf)
+<use ../../软件计划任务书/latex/计划任务书.pdf, page 20>
+File: ../../软件计划任务书/latex/计划任务书.pdf Graphic file (type pdf)
+<use ../../软件计划任务书/latex/计划任务书.pdf, page 20>
+File: ../../软件计划任务书/latex/计划任务书.pdf Graphic file (type pdf)
+<use ../../软件计划任务书/latex/计划任务书.pdf, page 20>
+ [22
+
+]
+File: ../../软件计划任务书/latex/计划任务书.pdf Graphic file (type pdf)
+<use ../../软件计划任务书/latex/计划任务书.pdf, page 21>
+File: ../../软件计划任务书/latex/计划任务书.pdf Graphic file (type pdf)
+<use ../../软件计划任务书/latex/计划任务书.pdf, page 21>
+File: ../../软件计划任务书/latex/计划任务书.pdf Graphic file (type pdf)
+<use ../../软件计划任务书/latex/计划任务书.pdf, page 21>
+ [23
+
+]
+File: ../../软件计划任务书/latex/计划任务书.pdf Graphic file (type pdf)
+<use ../../软件计划任务书/latex/计划任务书.pdf, page 22>
+File: ../../软件计划任务书/latex/计划任务书.pdf Graphic file (type pdf)
+<use ../../软件计划任务书/latex/计划任务书.pdf, page 22>
+File: ../../软件计划任务书/latex/计划任务书.pdf Graphic file (type pdf)
+<use ../../软件计划任务书/latex/计划任务书.pdf, page 22>
+ [24
+
+]
+File: ../../软件计划任务书/latex/计划任务书.pdf Graphic file (type pdf)
+<use ../../软件计划任务书/latex/计划任务书.pdf, page 23>
+File: ../../软件计划任务书/latex/计划任务书.pdf Graphic file (type pdf)
+<use ../../软件计划任务书/latex/计划任务书.pdf, page 23>
+File: ../../软件计划任务书/latex/计划任务书.pdf Graphic file (type pdf)
+<use ../../软件计划任务书/latex/计划任务书.pdf, page 23>
+ [25
+
+]
+File: ../../软件计划任务书/latex/计划任务书.pdf Graphic file (type pdf)
+<use ../../软件计划任务书/latex/计划任务书.pdf, page 24>
+File: ../../软件计划任务书/latex/计划任务书.pdf Graphic file (type pdf)
+<use ../../软件计划任务书/latex/计划任务书.pdf, page 24>
+File: ../../软件计划任务书/latex/计划任务书.pdf Graphic file (type pdf)
+<use ../../软件计划任务书/latex/计划任务书.pdf, page 24>
+ [26
+
+]
+File: ../../软件计划任务书/latex/计划任务书.pdf Graphic file (type pdf)
+<use ../../软件计划任务书/latex/计划任务书.pdf, page 25>
+File: ../../软件计划任务书/latex/计划任务书.pdf Graphic file (type pdf)
+<use ../../软件计划任务书/latex/计划任务书.pdf, page 25>
+File: ../../软件计划任务书/latex/计划任务书.pdf Graphic file (type pdf)
+<use ../../软件计划任务书/latex/计划任务书.pdf, page 25>
+ [27
+
+]
+File: ../../软件计划任务书/latex/计划任务书.pdf Graphic file (type pdf)
+<use ../../软件计划任务书/latex/计划任务书.pdf, page 26>
+File: ../../软件计划任务书/latex/计划任务书.pdf Graphic file (type pdf)
+<use ../../软件计划任务书/latex/计划任务书.pdf, page 26>
+File: ../../软件计划任务书/latex/计划任务书.pdf Graphic file (type pdf)
+<use ../../软件计划任务书/latex/计划任务书.pdf, page 26>
+ [28
+
+]
+File: ../../软件计划任务书/latex/计划任务书.pdf Graphic file (type pdf)
+<use ../../软件计划任务书/latex/计划任务书.pdf, page 27>
+File: ../../软件计划任务书/latex/计划任务书.pdf Graphic file (type pdf)
+<use ../../软件计划任务书/latex/计划任务书.pdf, page 27>
+File: ../../软件计划任务书/latex/计划任务书.pdf Graphic file (type pdf)
+<use ../../软件计划任务书/latex/计划任务书.pdf, page 27>
+ [29
+
+]
+File: ../../软件计划任务书/latex/计划任务书.pdf Graphic file (type pdf)
+<use ../../软件计划任务书/latex/计划任务书.pdf, page 28>
+File: ../../软件计划任务书/latex/计划任务书.pdf Graphic file (type pdf)
+<use ../../软件计划任务书/latex/计划任务书.pdf, page 28>
+File: ../../软件计划任务书/latex/计划任务书.pdf Graphic file (type pdf)
+<use ../../软件计划任务书/latex/计划任务书.pdf, page 28>
+ [30
+
+]
+File: ../../软件计划任务书/latex/计划任务书.pdf Graphic file (type pdf)
+<use ../../软件计划任务书/latex/计划任务书.pdf, page 29>
+File: ../../软件计划任务书/latex/计划任务书.pdf Graphic file (type pdf)
+<use ../../软件计划任务书/latex/计划任务书.pdf, page 29>
+File: ../../软件计划任务书/latex/计划任务书.pdf Graphic file (type pdf)
+<use ../../软件计划任务书/latex/计划任务书.pdf, page 29>
+ [31
+
+]
+File: ../../软件计划任务书/latex/计划任务书.pdf Graphic file (type pdf)
+<use ../../软件计划任务书/latex/计划任务书.pdf, page 30>
+File: ../../软件计划任务书/latex/计划任务书.pdf Graphic file (type pdf)
+<use ../../软件计划任务书/latex/计划任务书.pdf, page 30>
+File: ../../软件计划任务书/latex/计划任务书.pdf Graphic file (type pdf)
+<use ../../软件计划任务书/latex/计划任务书.pdf, page 30>
+
+[32
+
+] [33
+
+] [34
+
+]
+File: ../../需求规格说明书/latex/软件需求规格说明书.pdf Graphic file (type pdf)
+<use ../../需求规格说明书/latex/软件需求规格说明书.pdf>
+File: ../../需求规格说明书/latex/软件需求规格说明书.pdf Graphic file (type pdf)
+<use ../../需求规格说明书/latex/软件需求规格说明书.pdf>
+File: ../../需求规格说明书/latex/软件需求规格说明书.pdf Graphic file (type pdf)
+<use ../../需求规格说明书/latex/软件需求规格说明书.pdf, page 1>
+File: ../../需求规格说明书/latex/软件需求规格说明书.pdf Graphic file (type pdf)
+<use ../../需求规格说明书/latex/软件需求规格说明书.pdf, page 1>
+File: ../../需求规格说明书/latex/软件需求规格说明书.pdf Graphic file (type pdf)
+<use ../../需求规格说明书/latex/软件需求规格说明书.pdf, page 1>
+File: ../../需求规格说明书/latex/软件需求规格说明书.pdf Graphic file (type pdf)
+<use ../../需求规格说明书/latex/软件需求规格说明书.pdf, page 1>
+File: ../../需求规格说明书/latex/软件需求规格说明书.pdf Graphic file (type pdf)
+<use ../../需求规格说明书/latex/软件需求规格说明书.pdf, page 1>
+ [35
 
 
-! Package pdfpages Error: Cannot find file `-'.
+]
+File: ../../需求规格说明书/latex/软件需求规格说明书.pdf Graphic file (type pdf)
+<use ../../需求规格说明书/latex/软件需求规格说明书.pdf, page 2>
+File: ../../需求规格说明书/latex/软件需求规格说明书.pdf Graphic file (type pdf)
+<use ../../需求规格说明书/latex/软件需求规格说明书.pdf, page 2>
+File: ../../需求规格说明书/latex/软件需求规格说明书.pdf Graphic file (type pdf)
+<use ../../需求规格说明书/latex/软件需求规格说明书.pdf, page 2>
+ [36
 
-See the pdfpages package documentation for explanation.
-Type  H <return>  for immediate help.
- ...                                              
-                                                  
-l.157 ...e{empty}}]{../../软件测试报告/latex/测试分析报告.pdf}
-                                                  
-(That was another \errmessage.)
+]
+File: ../../需求规格说明书/latex/软件需求规格说明书.pdf Graphic file (type pdf)
+<use ../../需求规格说明书/latex/软件需求规格说明书.pdf, page 3>
+File: ../../需求规格说明书/latex/软件需求规格说明书.pdf Graphic file (type pdf)
+<use ../../需求规格说明书/latex/软件需求规格说明书.pdf, page 3>
+File: ../../需求规格说明书/latex/软件需求规格说明书.pdf Graphic file (type pdf)
+<use ../../需求规格说明书/latex/软件需求规格说明书.pdf, page 3>
+ [37
 
-! Undefined control sequence.
-\AM@expand@range ...M@i \relax \@tempcntb =\AM@ii 
-                                                  \relax \ifnum \@tempcnta <...
-l.157 ...e{empty}}]{../../软件测试报告/latex/测试分析报告.pdf}
-                                                  
-The control sequence at the end of the top line
-of your error message was never \def'ed. If you have
-misspelled it (e.g., `\hobx'), type `I' and the correct
-spelling (e.g., `I\hbox'). Otherwise just continue,
-and I'll forget about whatever was undefined.
+]
+File: ../../需求规格说明书/latex/软件需求规格说明书.pdf Graphic file (type pdf)
+<use ../../需求规格说明书/latex/软件需求规格说明书.pdf, page 4>
+File: ../../需求规格说明书/latex/软件需求规格说明书.pdf Graphic file (type pdf)
+<use ../../需求规格说明书/latex/软件需求规格说明书.pdf, page 4>
+File: ../../需求规格说明书/latex/软件需求规格说明书.pdf Graphic file (type pdf)
+<use ../../需求规格说明书/latex/软件需求规格说明书.pdf, page 4>
+ [38
 
-! Missing number, treated as zero.
-<to be read again> 
-                   \relax 
-l.157 ...e{empty}}]{../../软件测试报告/latex/测试分析报告.pdf}
-                                                  
-A number should have been here; I inserted `0'.
-(If you can't figure out why I needed to see a number,
-look up `weird error' in the index to The TeXbook.)
+]
+File: ../../需求规格说明书/latex/软件需求规格说明书.pdf Graphic file (type pdf)
+<use ../../需求规格说明书/latex/软件需求规格说明书.pdf, page 5>
+File: ../../需求规格说明书/latex/软件需求规格说明书.pdf Graphic file (type pdf)
+<use ../../需求规格说明书/latex/软件需求规格说明书.pdf, page 5>
+File: ../../需求规格说明书/latex/软件需求规格说明书.pdf Graphic file (type pdf)
+<use ../../需求规格说明书/latex/软件需求规格说明书.pdf, page 5>
+ [39
 
-! Undefined control sequence.
-\AM@checkpagenumber #1->\ifnum #1>\AM@pagecount 
-                                                \relax \ifthenelse {\boolean...
-l.157 ...e{empty}}]{../../软件测试报告/latex/测试分析报告.pdf}
-                                                  
-The control sequence at the end of the top line
-of your error message was never \def'ed. If you have
-misspelled it (e.g., `\hobx'), type `I' and the correct
-spelling (e.g., `I\hbox'). Otherwise just continue,
-and I'll forget about whatever was undefined.
+]
+File: ../../需求规格说明书/latex/软件需求规格说明书.pdf Graphic file (type pdf)
+<use ../../需求规格说明书/latex/软件需求规格说明书.pdf, page 6>
+File: ../../需求规格说明书/latex/软件需求规格说明书.pdf Graphic file (type pdf)
+<use ../../需求规格说明书/latex/软件需求规格说明书.pdf, page 6>
+File: ../../需求规格说明书/latex/软件需求规格说明书.pdf Graphic file (type pdf)
+<use ../../需求规格说明书/latex/软件需求规格说明书.pdf, page 6>
+ [40
 
-! Missing number, treated as zero.
-<to be read again> 
-                   \relax 
-l.157 ...e{empty}}]{../../软件测试报告/latex/测试分析报告.pdf}
-                                                  
-A number should have been here; I inserted `0'.
-(If you can't figure out why I needed to see a number,
-look up `weird error' in the index to The TeXbook.)
+]
+File: ../../需求规格说明书/latex/软件需求规格说明书.pdf Graphic file (type pdf)
+<use ../../需求规格说明书/latex/软件需求规格说明书.pdf, page 7>
+File: ../../需求规格说明书/latex/软件需求规格说明书.pdf Graphic file (type pdf)
+<use ../../需求规格说明书/latex/软件需求规格说明书.pdf, page 7>
+File: ../../需求规格说明书/latex/软件需求规格说明书.pdf Graphic file (type pdf)
+<use ../../需求规格说明书/latex/软件需求规格说明书.pdf, page 7>
+ [41
+
+]
+File: ../../需求规格说明书/latex/软件需求规格说明书.pdf Graphic file (type pdf)
+<use ../../需求规格说明书/latex/软件需求规格说明书.pdf, page 8>
+File: ../../需求规格说明书/latex/软件需求规格说明书.pdf Graphic file (type pdf)
+<use ../../需求规格说明书/latex/软件需求规格说明书.pdf, page 8>
+File: ../../需求规格说明书/latex/软件需求规格说明书.pdf Graphic file (type pdf)
+<use ../../需求规格说明书/latex/软件需求规格说明书.pdf, page 8>
+ [42
+
+]
+File: ../../需求规格说明书/latex/软件需求规格说明书.pdf Graphic file (type pdf)
+<use ../../需求规格说明书/latex/软件需求规格说明书.pdf, page 9>
+File: ../../需求规格说明书/latex/软件需求规格说明书.pdf Graphic file (type pdf)
+<use ../../需求规格说明书/latex/软件需求规格说明书.pdf, page 9>
+File: ../../需求规格说明书/latex/软件需求规格说明书.pdf Graphic file (type pdf)
+<use ../../需求规格说明书/latex/软件需求规格说明书.pdf, page 9>
+ [43
+
+]
+File: ../../需求规格说明书/latex/软件需求规格说明书.pdf Graphic file (type pdf)
+<use ../../需求规格说明书/latex/软件需求规格说明书.pdf, page 10>
+File: ../../需求规格说明书/latex/软件需求规格说明书.pdf Graphic file (type pdf)
+<use ../../需求规格说明书/latex/软件需求规格说明书.pdf, page 10>
+File: ../../需求规格说明书/latex/软件需求规格说明书.pdf Graphic file (type pdf)
+<use ../../需求规格说明书/latex/软件需求规格说明书.pdf, page 10>
+ [44
+
+]
+File: ../../需求规格说明书/latex/软件需求规格说明书.pdf Graphic file (type pdf)
+<use ../../需求规格说明书/latex/软件需求规格说明书.pdf, page 11>
+File: ../../需求规格说明书/latex/软件需求规格说明书.pdf Graphic file (type pdf)
+<use ../../需求规格说明书/latex/软件需求规格说明书.pdf, page 11>
+File: ../../需求规格说明书/latex/软件需求规格说明书.pdf Graphic file (type pdf)
+<use ../../需求规格说明书/latex/软件需求规格说明书.pdf, page 11>
+ [45
+
+]
+File: ../../需求规格说明书/latex/软件需求规格说明书.pdf Graphic file (type pdf)
+<use ../../需求规格说明书/latex/软件需求规格说明书.pdf, page 12>
+File: ../../需求规格说明书/latex/软件需求规格说明书.pdf Graphic file (type pdf)
+<use ../../需求规格说明书/latex/软件需求规格说明书.pdf, page 12>
+File: ../../需求规格说明书/latex/软件需求规格说明书.pdf Graphic file (type pdf)
+<use ../../需求规格说明书/latex/软件需求规格说明书.pdf, page 12>
+ [46
+
+]
+File: ../../需求规格说明书/latex/软件需求规格说明书.pdf Graphic file (type pdf)
+<use ../../需求规格说明书/latex/软件需求规格说明书.pdf, page 13>
+File: ../../需求规格说明书/latex/软件需求规格说明书.pdf Graphic file (type pdf)
+<use ../../需求规格说明书/latex/软件需求规格说明书.pdf, page 13>
+File: ../../需求规格说明书/latex/软件需求规格说明书.pdf Graphic file (type pdf)
+<use ../../需求规格说明书/latex/软件需求规格说明书.pdf, page 13>
+
+[47
+
+]
+File: ../../需求规格说明书/latex/软件需求规格说明书.pdf Graphic file (type pdf)
+<use ../../需求规格说明书/latex/软件需求规格说明书.pdf, page 14>
+File: ../../需求规格说明书/latex/软件需求规格说明书.pdf Graphic file (type pdf)
+<use ../../需求规格说明书/latex/软件需求规格说明书.pdf, page 14>
+File: ../../需求规格说明书/latex/软件需求规格说明书.pdf Graphic file (type pdf)
+<use ../../需求规格说明书/latex/软件需求规格说明书.pdf, page 14>
+ [48
+
+]
+File: ../../需求规格说明书/latex/软件需求规格说明书.pdf Graphic file (type pdf)
+<use ../../需求规格说明书/latex/软件需求规格说明书.pdf, page 15>
+File: ../../需求规格说明书/latex/软件需求规格说明书.pdf Graphic file (type pdf)
+<use ../../需求规格说明书/latex/软件需求规格说明书.pdf, page 15>
+File: ../../需求规格说明书/latex/软件需求规格说明书.pdf Graphic file (type pdf)
+<use ../../需求规格说明书/latex/软件需求规格说明书.pdf, page 15>
+ [49
+
+]
+File: ../../需求规格说明书/latex/软件需求规格说明书.pdf Graphic file (type pdf)
+<use ../../需求规格说明书/latex/软件需求规格说明书.pdf, page 16>
+File: ../../需求规格说明书/latex/软件需求规格说明书.pdf Graphic file (type pdf)
+<use ../../需求规格说明书/latex/软件需求规格说明书.pdf, page 16>
+File: ../../需求规格说明书/latex/软件需求规格说明书.pdf Graphic file (type pdf)
+<use ../../需求规格说明书/latex/软件需求规格说明书.pdf, page 16>
+ [50
+
+]
+File: ../../需求规格说明书/latex/软件需求规格说明书.pdf Graphic file (type pdf)
+<use ../../需求规格说明书/latex/软件需求规格说明书.pdf, page 17>
+File: ../../需求规格说明书/latex/软件需求规格说明书.pdf Graphic file (type pdf)
+<use ../../需求规格说明书/latex/软件需求规格说明书.pdf, page 17>
+File: ../../需求规格说明书/latex/软件需求规格说明书.pdf Graphic file (type pdf)
+<use ../../需求规格说明书/latex/软件需求规格说明书.pdf, page 17>
+ [51
+
+]
+File: ../../需求规格说明书/latex/软件需求规格说明书.pdf Graphic file (type pdf)
+<use ../../需求规格说明书/latex/软件需求规格说明书.pdf, page 18>
+File: ../../需求规格说明书/latex/软件需求规格说明书.pdf Graphic file (type pdf)
+<use ../../需求规格说明书/latex/软件需求规格说明书.pdf, page 18>
+File: ../../需求规格说明书/latex/软件需求规格说明书.pdf Graphic file (type pdf)
+<use ../../需求规格说明书/latex/软件需求规格说明书.pdf, page 18>
+ [52
+
+]
+File: ../../需求规格说明书/latex/软件需求规格说明书.pdf Graphic file (type pdf)
+<use ../../需求规格说明书/latex/软件需求规格说明书.pdf, page 19>
+File: ../../需求规格说明书/latex/软件需求规格说明书.pdf Graphic file (type pdf)
+<use ../../需求规格说明书/latex/软件需求规格说明书.pdf, page 19>
+File: ../../需求规格说明书/latex/软件需求规格说明书.pdf Graphic file (type pdf)
+<use ../../需求规格说明书/latex/软件需求规格说明书.pdf, page 19>
+ [53
+
+]
+File: ../../需求规格说明书/latex/软件需求规格说明书.pdf Graphic file (type pdf)
+<use ../../需求规格说明书/latex/软件需求规格说明书.pdf, page 20>
+File: ../../需求规格说明书/latex/软件需求规格说明书.pdf Graphic file (type pdf)
+<use ../../需求规格说明书/latex/软件需求规格说明书.pdf, page 20>
+File: ../../需求规格说明书/latex/软件需求规格说明书.pdf Graphic file (type pdf)
+<use ../../需求规格说明书/latex/软件需求规格说明书.pdf, page 20>
+ [54
+
+]
+File: ../../需求规格说明书/latex/软件需求规格说明书.pdf Graphic file (type pdf)
+<use ../../需求规格说明书/latex/软件需求规格说明书.pdf, page 21>
+File: ../../需求规格说明书/latex/软件需求规格说明书.pdf Graphic file (type pdf)
+<use ../../需求规格说明书/latex/软件需求规格说明书.pdf, page 21>
+File: ../../需求规格说明书/latex/软件需求规格说明书.pdf Graphic file (type pdf)
+<use ../../需求规格说明书/latex/软件需求规格说明书.pdf, page 21>
+ [55
+
+]
+File: ../../需求规格说明书/latex/软件需求规格说明书.pdf Graphic file (type pdf)
+<use ../../需求规格说明书/latex/软件需求规格说明书.pdf, page 22>
+File: ../../需求规格说明书/latex/软件需求规格说明书.pdf Graphic file (type pdf)
+<use ../../需求规格说明书/latex/软件需求规格说明书.pdf, page 22>
+File: ../../需求规格说明书/latex/软件需求规格说明书.pdf Graphic file (type pdf)
+<use ../../需求规格说明书/latex/软件需求规格说明书.pdf, page 22>
+ [56
+
+]
+File: ../../需求规格说明书/latex/软件需求规格说明书.pdf Graphic file (type pdf)
+<use ../../需求规格说明书/latex/软件需求规格说明书.pdf, page 23>
+File: ../../需求规格说明书/latex/软件需求规格说明书.pdf Graphic file (type pdf)
+<use ../../需求规格说明书/latex/软件需求规格说明书.pdf, page 23>
+File: ../../需求规格说明书/latex/软件需求规格说明书.pdf Graphic file (type pdf)
+<use ../../需求规格说明书/latex/软件需求规格说明书.pdf, page 23>
+ [57
+
+]
+File: ../../需求规格说明书/latex/软件需求规格说明书.pdf Graphic file (type pdf)
+<use ../../需求规格说明书/latex/软件需求规格说明书.pdf, page 24>
+File: ../../需求规格说明书/latex/软件需求规格说明书.pdf Graphic file (type pdf)
+<use ../../需求规格说明书/latex/软件需求规格说明书.pdf, page 24>
+File: ../../需求规格说明书/latex/软件需求规格说明书.pdf Graphic file (type pdf)
+<use ../../需求规格说明书/latex/软件需求规格说明书.pdf, page 24>
+ [58
+
+]
+File: ../../需求规格说明书/latex/软件需求规格说明书.pdf Graphic file (type pdf)
+<use ../../需求规格说明书/latex/软件需求规格说明书.pdf, page 25>
+File: ../../需求规格说明书/latex/软件需求规格说明书.pdf Graphic file (type pdf)
+<use ../../需求规格说明书/latex/软件需求规格说明书.pdf, page 25>
+File: ../../需求规格说明书/latex/软件需求规格说明书.pdf Graphic file (type pdf)
+<use ../../需求规格说明书/latex/软件需求规格说明书.pdf, page 25>
+ [59
+
+]
+File: ../../需求规格说明书/latex/软件需求规格说明书.pdf Graphic file (type pdf)
+<use ../../需求规格说明书/latex/软件需求规格说明书.pdf, page 26>
+File: ../../需求规格说明书/latex/软件需求规格说明书.pdf Graphic file (type pdf)
+<use ../../需求规格说明书/latex/软件需求规格说明书.pdf, page 26>
+File: ../../需求规格说明书/latex/软件需求规格说明书.pdf Graphic file (type pdf)
+<use ../../需求规格说明书/latex/软件需求规格说明书.pdf, page 26>
+ [60
+
+] [61
+
+]
+[62
+
+]
+File: ../../软件设计说明书/work/reference/wikibridge_spec.pdf Graphic file (type pdf)
+<use ../../软件设计说明书/work/reference/wikibridge_spec.pdf>
+File: ../../软件设计说明书/work/reference/wikibridge_spec.pdf Graphic file (type pdf)
+<use ../../软件设计说明书/work/reference/wikibridge_spec.pdf>
+File: ../../软件设计说明书/work/reference/wikibridge_spec.pdf Graphic file (type pdf)
+<use ../../软件设计说明书/work/reference/wikibridge_spec.pdf, page 1>
+File: ../../软件设计说明书/work/reference/wikibridge_spec.pdf Graphic file (type pdf)
+<use ../../软件设计说明书/work/reference/wikibridge_spec.pdf, page 1>
+File: ../../软件设计说明书/work/reference/wikibridge_spec.pdf Graphic file (type pdf)
+<use ../../软件设计说明书/work/reference/wikibridge_spec.pdf, page 1>
+File: ../../软件设计说明书/work/reference/wikibridge_spec.pdf Graphic file (type pdf)
+<use ../../软件设计说明书/work/reference/wikibridge_spec.pdf, page 1>
+File: ../../软件设计说明书/work/reference/wikibridge_spec.pdf Graphic file (type pdf)
+<use ../../软件设计说明书/work/reference/wikibridge_spec.pdf, page 1>
+ [63
 
 
-! Package pdfpages Error: Page 1 of `\AM@currentdocname ' does not exist.
+]
+File: ../../软件设计说明书/work/reference/wikibridge_spec.pdf Graphic file (type pdf)
+<use ../../软件设计说明书/work/reference/wikibridge_spec.pdf, page 2>
+File: ../../软件设计说明书/work/reference/wikibridge_spec.pdf Graphic file (type pdf)
+<use ../../软件设计说明书/work/reference/wikibridge_spec.pdf, page 2>
+File: ../../软件设计说明书/work/reference/wikibridge_spec.pdf Graphic file (type pdf)
+<use ../../软件设计说明书/work/reference/wikibridge_spec.pdf, page 2>
+ [64
 
-See the pdfpages package documentation for explanation.
-Type  H <return>  for immediate help.
- ...                                              
-                                                  
-l.157 ...e{empty}}]{../../软件测试报告/latex/测试分析报告.pdf}
-                                                  
-You have set a wrong page number in the `pages' option. Document 
-`\AM@currentdocname ' does not have 1 pages.
+]
+File: ../../软件设计说明书/work/reference/wikibridge_spec.pdf Graphic file (type pdf)
+<use ../../软件设计说明书/work/reference/wikibridge_spec.pdf, page 3>
+File: ../../软件设计说明书/work/reference/wikibridge_spec.pdf Graphic file (type pdf)
+<use ../../软件设计说明书/work/reference/wikibridge_spec.pdf, page 3>
+File: ../../软件设计说明书/work/reference/wikibridge_spec.pdf Graphic file (type pdf)
+<use ../../软件设计说明书/work/reference/wikibridge_spec.pdf, page 3>
+ [65
 
-! Undefined control sequence.
-\AM@checkpagenumber #1->\ifnum #1>\AM@pagecount 
-                                                \relax \ifthenelse {\boolean...
-l.157 ...e{empty}}]{../../软件测试报告/latex/测试分析报告.pdf}
-                                                  
-The control sequence at the end of the top line
-of your error message was never \def'ed. If you have
-misspelled it (e.g., `\hobx'), type `I' and the correct
-spelling (e.g., `I\hbox'). Otherwise just continue,
-and I'll forget about whatever was undefined.
+]
+File: ../../软件设计说明书/work/reference/wikibridge_spec.pdf Graphic file (type pdf)
+<use ../../软件设计说明书/work/reference/wikibridge_spec.pdf, page 4>
+File: ../../软件设计说明书/work/reference/wikibridge_spec.pdf Graphic file (type pdf)
+<use ../../软件设计说明书/work/reference/wikibridge_spec.pdf, page 4>
+File: ../../软件设计说明书/work/reference/wikibridge_spec.pdf Graphic file (type pdf)
+<use ../../软件设计说明书/work/reference/wikibridge_spec.pdf, page 4>
+ [66
 
-! Missing number, treated as zero.
-<to be read again> 
-                   \relax 
-l.157 ...e{empty}}]{../../软件测试报告/latex/测试分析报告.pdf}
-                                                  
-A number should have been here; I inserted `0'.
-(If you can't figure out why I needed to see a number,
-look up `weird error' in the index to The TeXbook.)
+]
+File: ../../软件设计说明书/work/reference/wikibridge_spec.pdf Graphic file (type pdf)
+<use ../../软件设计说明书/work/reference/wikibridge_spec.pdf, page 5>
+File: ../../软件设计说明书/work/reference/wikibridge_spec.pdf Graphic file (type pdf)
+<use ../../软件设计说明书/work/reference/wikibridge_spec.pdf, page 5>
+File: ../../软件设计说明书/work/reference/wikibridge_spec.pdf Graphic file (type pdf)
+<use ../../软件设计说明书/work/reference/wikibridge_spec.pdf, page 5>
+ [67
 
-[12
+]
+File: ../../软件设计说明书/work/reference/wikibridge_spec.pdf Graphic file (type pdf)
+<use ../../软件设计说明书/work/reference/wikibridge_spec.pdf, page 6>
+File: ../../软件设计说明书/work/reference/wikibridge_spec.pdf Graphic file (type pdf)
+<use ../../软件设计说明书/work/reference/wikibridge_spec.pdf, page 6>
+File: ../../软件设计说明书/work/reference/wikibridge_spec.pdf Graphic file (type pdf)
+<use ../../软件设计说明书/work/reference/wikibridge_spec.pdf, page 6>
+ [68
 
-] [13
+]
+File: ../../软件设计说明书/work/reference/wikibridge_spec.pdf Graphic file (type pdf)
+<use ../../软件设计说明书/work/reference/wikibridge_spec.pdf, page 7>
+File: ../../软件设计说明书/work/reference/wikibridge_spec.pdf Graphic file (type pdf)
+<use ../../软件设计说明书/work/reference/wikibridge_spec.pdf, page 7>
+File: ../../软件设计说明书/work/reference/wikibridge_spec.pdf Graphic file (type pdf)
+<use ../../软件设计说明书/work/reference/wikibridge_spec.pdf, page 7>
+ [69
 
-] [14
+]
+File: ../../软件设计说明书/work/reference/wikibridge_spec.pdf Graphic file (type pdf)
+<use ../../软件设计说明书/work/reference/wikibridge_spec.pdf, page 8>
+File: ../../软件设计说明书/work/reference/wikibridge_spec.pdf Graphic file (type pdf)
+<use ../../软件设计说明书/work/reference/wikibridge_spec.pdf, page 8>
+File: ../../软件设计说明书/work/reference/wikibridge_spec.pdf Graphic file (type pdf)
+<use ../../软件设计说明书/work/reference/wikibridge_spec.pdf, page 8>
+ [70
 
-] [15
+]
+File: ../../软件设计说明书/work/reference/wikibridge_spec.pdf Graphic file (type pdf)
+<use ../../软件设计说明书/work/reference/wikibridge_spec.pdf, page 9>
+File: ../../软件设计说明书/work/reference/wikibridge_spec.pdf Graphic file (type pdf)
+<use ../../软件设计说明书/work/reference/wikibridge_spec.pdf, page 9>
+File: ../../软件设计说明书/work/reference/wikibridge_spec.pdf Graphic file (type pdf)
+<use ../../软件设计说明书/work/reference/wikibridge_spec.pdf, page 9>
+ [71
+
+]
+File: ../../软件设计说明书/work/reference/wikibridge_spec.pdf Graphic file (type pdf)
+<use ../../软件设计说明书/work/reference/wikibridge_spec.pdf, page 10>
+File: ../../软件设计说明书/work/reference/wikibridge_spec.pdf Graphic file (type pdf)
+<use ../../软件设计说明书/work/reference/wikibridge_spec.pdf, page 10>
+File: ../../软件设计说明书/work/reference/wikibridge_spec.pdf Graphic file (type pdf)
+<use ../../软件设计说明书/work/reference/wikibridge_spec.pdf, page 10>
+ [72
+
+]
+File: ../../软件设计说明书/work/reference/wikibridge_spec.pdf Graphic file (type pdf)
+<use ../../软件设计说明书/work/reference/wikibridge_spec.pdf, page 11>
+File: ../../软件设计说明书/work/reference/wikibridge_spec.pdf Graphic file (type pdf)
+<use ../../软件设计说明书/work/reference/wikibridge_spec.pdf, page 11>
+File: ../../软件设计说明书/work/reference/wikibridge_spec.pdf Graphic file (type pdf)
+<use ../../软件设计说明书/work/reference/wikibridge_spec.pdf, page 11>
+ [73
+
+]
+File: ../../软件设计说明书/work/reference/wikibridge_spec.pdf Graphic file (type pdf)
+<use ../../软件设计说明书/work/reference/wikibridge_spec.pdf, page 12>
+File: ../../软件设计说明书/work/reference/wikibridge_spec.pdf Graphic file (type pdf)
+<use ../../软件设计说明书/work/reference/wikibridge_spec.pdf, page 12>
+File: ../../软件设计说明书/work/reference/wikibridge_spec.pdf Graphic file (type pdf)
+<use ../../软件设计说明书/work/reference/wikibridge_spec.pdf, page 12>
+ [74
+
+]
+File: ../../软件设计说明书/work/reference/wikibridge_spec.pdf Graphic file (type pdf)
+<use ../../软件设计说明书/work/reference/wikibridge_spec.pdf, page 13>
+File: ../../软件设计说明书/work/reference/wikibridge_spec.pdf Graphic file (type pdf)
+<use ../../软件设计说明书/work/reference/wikibridge_spec.pdf, page 13>
+File: ../../软件设计说明书/work/reference/wikibridge_spec.pdf Graphic file (type pdf)
+<use ../../软件设计说明书/work/reference/wikibridge_spec.pdf, page 13>
+ [75
+
+]
+File: ../../软件设计说明书/work/reference/wikibridge_spec.pdf Graphic file (type pdf)
+<use ../../软件设计说明书/work/reference/wikibridge_spec.pdf, page 14>
+File: ../../软件设计说明书/work/reference/wikibridge_spec.pdf Graphic file (type pdf)
+<use ../../软件设计说明书/work/reference/wikibridge_spec.pdf, page 14>
+File: ../../软件设计说明书/work/reference/wikibridge_spec.pdf Graphic file (type pdf)
+<use ../../软件设计说明书/work/reference/wikibridge_spec.pdf, page 14>
+ [76
+
+]
+File: ../../软件设计说明书/work/reference/wikibridge_spec.pdf Graphic file (type pdf)
+<use ../../软件设计说明书/work/reference/wikibridge_spec.pdf, page 15>
+File: ../../软件设计说明书/work/reference/wikibridge_spec.pdf Graphic file (type pdf)
+<use ../../软件设计说明书/work/reference/wikibridge_spec.pdf, page 15>
+File: ../../软件设计说明书/work/reference/wikibridge_spec.pdf Graphic file (type pdf)
+<use ../../软件设计说明书/work/reference/wikibridge_spec.pdf, page 15>
+
+[77
+
+]
+File: ../../软件设计说明书/work/reference/wikibridge_spec.pdf Graphic file (type pdf)
+<use ../../软件设计说明书/work/reference/wikibridge_spec.pdf, page 16>
+File: ../../软件设计说明书/work/reference/wikibridge_spec.pdf Graphic file (type pdf)
+<use ../../软件设计说明书/work/reference/wikibridge_spec.pdf, page 16>
+File: ../../软件设计说明书/work/reference/wikibridge_spec.pdf Graphic file (type pdf)
+<use ../../软件设计说明书/work/reference/wikibridge_spec.pdf, page 16>
+ [78
+
+]
+File: ../../软件设计说明书/work/reference/wikibridge_spec.pdf Graphic file (type pdf)
+<use ../../软件设计说明书/work/reference/wikibridge_spec.pdf, page 17>
+File: ../../软件设计说明书/work/reference/wikibridge_spec.pdf Graphic file (type pdf)
+<use ../../软件设计说明书/work/reference/wikibridge_spec.pdf, page 17>
+File: ../../软件设计说明书/work/reference/wikibridge_spec.pdf Graphic file (type pdf)
+<use ../../软件设计说明书/work/reference/wikibridge_spec.pdf, page 17>
+ [79
+
+]
+File: ../../软件设计说明书/work/reference/wikibridge_spec.pdf Graphic file (type pdf)
+<use ../../软件设计说明书/work/reference/wikibridge_spec.pdf, page 18>
+File: ../../软件设计说明书/work/reference/wikibridge_spec.pdf Graphic file (type pdf)
+<use ../../软件设计说明书/work/reference/wikibridge_spec.pdf, page 18>
+File: ../../软件设计说明书/work/reference/wikibridge_spec.pdf Graphic file (type pdf)
+<use ../../软件设计说明书/work/reference/wikibridge_spec.pdf, page 18>
+ [80
+
+] [81
+
+] [82
+
+]
+File: ../../软件测试报告/latex/测试分析报告.pdf Graphic file (type pdf)
+<use ../../软件测试报告/latex/测试分析报告.pdf>
+File: ../../软件测试报告/latex/测试分析报告.pdf Graphic file (type pdf)
+<use ../../软件测试报告/latex/测试分析报告.pdf>
+File: ../../软件测试报告/latex/测试分析报告.pdf Graphic file (type pdf)
+<use ../../软件测试报告/latex/测试分析报告.pdf, page 1>
+File: ../../软件测试报告/latex/测试分析报告.pdf Graphic file (type pdf)
+<use ../../软件测试报告/latex/测试分析报告.pdf, page 1>
+File: ../../软件测试报告/latex/测试分析报告.pdf Graphic file (type pdf)
+<use ../../软件测试报告/latex/测试分析报告.pdf, page 1>
+File: ../../软件测试报告/latex/测试分析报告.pdf Graphic file (type pdf)
+<use ../../软件测试报告/latex/测试分析报告.pdf, page 1>
+File: ../../软件测试报告/latex/测试分析报告.pdf Graphic file (type pdf)
+<use ../../软件测试报告/latex/测试分析报告.pdf, page 1>
+ [83
+
+
+]
+File: ../../软件测试报告/latex/测试分析报告.pdf Graphic file (type pdf)
+<use ../../软件测试报告/latex/测试分析报告.pdf, page 2>
+File: ../../软件测试报告/latex/测试分析报告.pdf Graphic file (type pdf)
+<use ../../软件测试报告/latex/测试分析报告.pdf, page 2>
+File: ../../软件测试报告/latex/测试分析报告.pdf Graphic file (type pdf)
+<use ../../软件测试报告/latex/测试分析报告.pdf, page 2>
+ [84
+
+]
+File: ../../软件测试报告/latex/测试分析报告.pdf Graphic file (type pdf)
+<use ../../软件测试报告/latex/测试分析报告.pdf, page 3>
+File: ../../软件测试报告/latex/测试分析报告.pdf Graphic file (type pdf)
+<use ../../软件测试报告/latex/测试分析报告.pdf, page 3>
+File: ../../软件测试报告/latex/测试分析报告.pdf Graphic file (type pdf)
+<use ../../软件测试报告/latex/测试分析报告.pdf, page 3>
+ [85
+
+]
+File: ../../软件测试报告/latex/测试分析报告.pdf Graphic file (type pdf)
+<use ../../软件测试报告/latex/测试分析报告.pdf, page 4>
+File: ../../软件测试报告/latex/测试分析报告.pdf Graphic file (type pdf)
+<use ../../软件测试报告/latex/测试分析报告.pdf, page 4>
+File: ../../软件测试报告/latex/测试分析报告.pdf Graphic file (type pdf)
+<use ../../软件测试报告/latex/测试分析报告.pdf, page 4>
+ [86
+
+]
+File: ../../软件测试报告/latex/测试分析报告.pdf Graphic file (type pdf)
+<use ../../软件测试报告/latex/测试分析报告.pdf, page 5>
+File: ../../软件测试报告/latex/测试分析报告.pdf Graphic file (type pdf)
+<use ../../软件测试报告/latex/测试分析报告.pdf, page 5>
+File: ../../软件测试报告/latex/测试分析报告.pdf Graphic file (type pdf)
+<use ../../软件测试报告/latex/测试分析报告.pdf, page 5>
+ [87
+
+]
+File: ../../软件测试报告/latex/测试分析报告.pdf Graphic file (type pdf)
+<use ../../软件测试报告/latex/测试分析报告.pdf, page 6>
+File: ../../软件测试报告/latex/测试分析报告.pdf Graphic file (type pdf)
+<use ../../软件测试报告/latex/测试分析报告.pdf, page 6>
+File: ../../软件测试报告/latex/测试分析报告.pdf Graphic file (type pdf)
+<use ../../软件测试报告/latex/测试分析报告.pdf, page 6>
+ [88
+
+]
+File: ../../软件测试报告/latex/测试分析报告.pdf Graphic file (type pdf)
+<use ../../软件测试报告/latex/测试分析报告.pdf, page 7>
+File: ../../软件测试报告/latex/测试分析报告.pdf Graphic file (type pdf)
+<use ../../软件测试报告/latex/测试分析报告.pdf, page 7>
+File: ../../软件测试报告/latex/测试分析报告.pdf Graphic file (type pdf)
+<use ../../软件测试报告/latex/测试分析报告.pdf, page 7>
+ [89
+
+]
+File: ../../软件测试报告/latex/测试分析报告.pdf Graphic file (type pdf)
+<use ../../软件测试报告/latex/测试分析报告.pdf, page 8>
+File: ../../软件测试报告/latex/测试分析报告.pdf Graphic file (type pdf)
+<use ../../软件测试报告/latex/测试分析报告.pdf, page 8>
+File: ../../软件测试报告/latex/测试分析报告.pdf Graphic file (type pdf)
+<use ../../软件测试报告/latex/测试分析报告.pdf, page 8>
+ [90
+
+]
+File: ../../软件测试报告/latex/测试分析报告.pdf Graphic file (type pdf)
+<use ../../软件测试报告/latex/测试分析报告.pdf, page 9>
+File: ../../软件测试报告/latex/测试分析报告.pdf Graphic file (type pdf)
+<use ../../软件测试报告/latex/测试分析报告.pdf, page 9>
+File: ../../软件测试报告/latex/测试分析报告.pdf Graphic file (type pdf)
+<use ../../软件测试报告/latex/测试分析报告.pdf, page 9>
+ [91
+
+]
+File: ../../软件测试报告/latex/测试分析报告.pdf Graphic file (type pdf)
+<use ../../软件测试报告/latex/测试分析报告.pdf, page 10>
+File: ../../软件测试报告/latex/测试分析报告.pdf Graphic file (type pdf)
+<use ../../软件测试报告/latex/测试分析报告.pdf, page 10>
+File: ../../软件测试报告/latex/测试分析报告.pdf Graphic file (type pdf)
+<use ../../软件测试报告/latex/测试分析报告.pdf, page 10>
+
+[92
+
+]
+File: ../../软件测试报告/latex/测试分析报告.pdf Graphic file (type pdf)
+<use ../../软件测试报告/latex/测试分析报告.pdf, page 11>
+File: ../../软件测试报告/latex/测试分析报告.pdf Graphic file (type pdf)
+<use ../../软件测试报告/latex/测试分析报告.pdf, page 11>
+File: ../../软件测试报告/latex/测试分析报告.pdf Graphic file (type pdf)
+<use ../../软件测试报告/latex/测试分析报告.pdf, page 11>
+ [93
+
+]
+File: ../../软件测试报告/latex/测试分析报告.pdf Graphic file (type pdf)
+<use ../../软件测试报告/latex/测试分析报告.pdf, page 12>
+File: ../../软件测试报告/latex/测试分析报告.pdf Graphic file (type pdf)
+<use ../../软件测试报告/latex/测试分析报告.pdf, page 12>
+File: ../../软件测试报告/latex/测试分析报告.pdf Graphic file (type pdf)
+<use ../../软件测试报告/latex/测试分析报告.pdf, page 12>
+ [94
+
+]
+File: ../../软件测试报告/latex/测试分析报告.pdf Graphic file (type pdf)
+<use ../../软件测试报告/latex/测试分析报告.pdf, page 13>
+File: ../../软件测试报告/latex/测试分析报告.pdf Graphic file (type pdf)
+<use ../../软件测试报告/latex/测试分析报告.pdf, page 13>
+File: ../../软件测试报告/latex/测试分析报告.pdf Graphic file (type pdf)
+<use ../../软件测试报告/latex/测试分析报告.pdf, page 13>
+ [95
+
+]
+File: ../../软件测试报告/latex/测试分析报告.pdf Graphic file (type pdf)
+<use ../../软件测试报告/latex/测试分析报告.pdf, page 14>
+File: ../../软件测试报告/latex/测试分析报告.pdf Graphic file (type pdf)
+<use ../../软件测试报告/latex/测试分析报告.pdf, page 14>
+File: ../../软件测试报告/latex/测试分析报告.pdf Graphic file (type pdf)
+<use ../../软件测试报告/latex/测试分析报告.pdf, page 14>
+ [96
+
+]
+File: ../../软件测试报告/latex/测试分析报告.pdf Graphic file (type pdf)
+<use ../../软件测试报告/latex/测试分析报告.pdf, page 15>
+File: ../../软件测试报告/latex/测试分析报告.pdf Graphic file (type pdf)
+<use ../../软件测试报告/latex/测试分析报告.pdf, page 15>
+File: ../../软件测试报告/latex/测试分析报告.pdf Graphic file (type pdf)
+<use ../../软件测试报告/latex/测试分析报告.pdf, page 15>
+ [97
+
+]
+File: ../../软件测试报告/latex/测试分析报告.pdf Graphic file (type pdf)
+<use ../../软件测试报告/latex/测试分析报告.pdf, page 16>
+File: ../../软件测试报告/latex/测试分析报告.pdf Graphic file (type pdf)
+<use ../../软件测试报告/latex/测试分析报告.pdf, page 16>
+File: ../../软件测试报告/latex/测试分析报告.pdf Graphic file (type pdf)
+<use ../../软件测试报告/latex/测试分析报告.pdf, page 16>
+ [98
+
+]
+File: ../../软件测试报告/latex/测试分析报告.pdf Graphic file (type pdf)
+<use ../../软件测试报告/latex/测试分析报告.pdf, page 17>
+File: ../../软件测试报告/latex/测试分析报告.pdf Graphic file (type pdf)
+<use ../../软件测试报告/latex/测试分析报告.pdf, page 17>
+File: ../../软件测试报告/latex/测试分析报告.pdf Graphic file (type pdf)
+<use ../../软件测试报告/latex/测试分析报告.pdf, page 17>
+ [99
+
+]
+File: ../../软件测试报告/latex/测试分析报告.pdf Graphic file (type pdf)
+<use ../../软件测试报告/latex/测试分析报告.pdf, page 18>
+File: ../../软件测试报告/latex/测试分析报告.pdf Graphic file (type pdf)
+<use ../../软件测试报告/latex/测试分析报告.pdf, page 18>
+File: ../../软件测试报告/latex/测试分析报告.pdf Graphic file (type pdf)
+<use ../../软件测试报告/latex/测试分析报告.pdf, page 18>
+ [100
+
+]
+File: ../../软件测试报告/latex/测试分析报告.pdf Graphic file (type pdf)
+<use ../../软件测试报告/latex/测试分析报告.pdf, page 19>
+File: ../../软件测试报告/latex/测试分析报告.pdf Graphic file (type pdf)
+<use ../../软件测试报告/latex/测试分析报告.pdf, page 19>
+File: ../../软件测试报告/latex/测试分析报告.pdf Graphic file (type pdf)
+<use ../../软件测试报告/latex/测试分析报告.pdf, page 19>
+ [101
+
+]
+File: ../../软件测试报告/latex/测试分析报告.pdf Graphic file (type pdf)
+<use ../../软件测试报告/latex/测试分析报告.pdf, page 20>
+File: ../../软件测试报告/latex/测试分析报告.pdf Graphic file (type pdf)
+<use ../../软件测试报告/latex/测试分析报告.pdf, page 20>
+File: ../../软件测试报告/latex/测试分析报告.pdf Graphic file (type pdf)
+<use ../../软件测试报告/latex/测试分析报告.pdf, page 20>
+ [102
+
+]
+File: ../../软件测试报告/latex/测试分析报告.pdf Graphic file (type pdf)
+<use ../../软件测试报告/latex/测试分析报告.pdf, page 21>
+File: ../../软件测试报告/latex/测试分析报告.pdf Graphic file (type pdf)
+<use ../../软件测试报告/latex/测试分析报告.pdf, page 21>
+File: ../../软件测试报告/latex/测试分析报告.pdf Graphic file (type pdf)
+<use ../../软件测试报告/latex/测试分析报告.pdf, page 21>
+ [103
+
+]
+File: ../../软件测试报告/latex/测试分析报告.pdf Graphic file (type pdf)
+<use ../../软件测试报告/latex/测试分析报告.pdf, page 22>
+File: ../../软件测试报告/latex/测试分析报告.pdf Graphic file (type pdf)
+<use ../../软件测试报告/latex/测试分析报告.pdf, page 22>
+File: ../../软件测试报告/latex/测试分析报告.pdf Graphic file (type pdf)
+<use ../../软件测试报告/latex/测试分析报告.pdf, page 22>
+ [104
+
+]
+File: ../../软件测试报告/latex/测试分析报告.pdf Graphic file (type pdf)
+<use ../../软件测试报告/latex/测试分析报告.pdf, page 23>
+File: ../../软件测试报告/latex/测试分析报告.pdf Graphic file (type pdf)
+<use ../../软件测试报告/latex/测试分析报告.pdf, page 23>
+File: ../../软件测试报告/latex/测试分析报告.pdf Graphic file (type pdf)
+<use ../../软件测试报告/latex/测试分析报告.pdf, page 23>
+ [105
+
+]
+File: ../../软件测试报告/latex/测试分析报告.pdf Graphic file (type pdf)
+<use ../../软件测试报告/latex/测试分析报告.pdf, page 24>
+File: ../../软件测试报告/latex/测试分析报告.pdf Graphic file (type pdf)
+<use ../../软件测试报告/latex/测试分析报告.pdf, page 24>
+File: ../../软件测试报告/latex/测试分析报告.pdf Graphic file (type pdf)
+<use ../../软件测试报告/latex/测试分析报告.pdf, page 24>
+
+[106
+
+]
+File: ../../软件测试报告/latex/测试分析报告.pdf Graphic file (type pdf)
+<use ../../软件测试报告/latex/测试分析报告.pdf, page 25>
+File: ../../软件测试报告/latex/测试分析报告.pdf Graphic file (type pdf)
+<use ../../软件测试报告/latex/测试分析报告.pdf, page 25>
+File: ../../软件测试报告/latex/测试分析报告.pdf Graphic file (type pdf)
+<use ../../软件测试报告/latex/测试分析报告.pdf, page 25>
+ [107
+
+]
+File: ../../软件测试报告/latex/测试分析报告.pdf Graphic file (type pdf)
+<use ../../软件测试报告/latex/测试分析报告.pdf, page 26>
+File: ../../软件测试报告/latex/测试分析报告.pdf Graphic file (type pdf)
+<use ../../软件测试报告/latex/测试分析报告.pdf, page 26>
+File: ../../软件测试报告/latex/测试分析报告.pdf Graphic file (type pdf)
+<use ../../软件测试报告/latex/测试分析报告.pdf, page 26>
+ [108
+
+]
+File: ../../软件测试报告/latex/测试分析报告.pdf Graphic file (type pdf)
+<use ../../软件测试报告/latex/测试分析报告.pdf, page 27>
+File: ../../软件测试报告/latex/测试分析报告.pdf Graphic file (type pdf)
+<use ../../软件测试报告/latex/测试分析报告.pdf, page 27>
+File: ../../软件测试报告/latex/测试分析报告.pdf Graphic file (type pdf)
+<use ../../软件测试报告/latex/测试分析报告.pdf, page 27>
+ [109
+
+]
+File: ../../软件测试报告/latex/测试分析报告.pdf Graphic file (type pdf)
+<use ../../软件测试报告/latex/测试分析报告.pdf, page 28>
+File: ../../软件测试报告/latex/测试分析报告.pdf Graphic file (type pdf)
+<use ../../软件测试报告/latex/测试分析报告.pdf, page 28>
+File: ../../软件测试报告/latex/测试分析报告.pdf Graphic file (type pdf)
+<use ../../软件测试报告/latex/测试分析报告.pdf, page 28>
+ [110
+
+] [111
+
+] [112
+
+] [113
 
 
 ]
@@ -1179,21 +1745,6 @@ Overfull \hbox (10.95486pt too wide) in paragraph at lines 173--175
 lar(0)/m/n/12 项 目：| \TU/lmr/m/n/12 WikiBridge \TU/FandolSong-Regular(0)/m/n/12 
 零 代 码 本 地 知 识 库 \TU/lmr/m/n/12 API \TU/FandolSong-Regular(0)/m/n/12 分 享 与 \TU/l
 mr/m/n/12 OpenCode/MCP
- []
-
-
-Underfull \hbox (badness 3354) in paragraph at lines 180--181
-[]|\TU/FandolSong-Regular(0)/m/n/12 测 试 质 量、|  集 成 保 障、|
- []
-
-
-Underfull \hbox (badness 1117) in paragraph at lines 180--181
-\TU/FandolSong-Regular(0)/m/n/12 后 端 部 署：|  负 责 \TU/lmr/m/n/12 Bear-
- []
-
-
-Underfull \hbox (badness 1681) in paragraph at lines 180--181
-\TU/lmr/m/n/12 FRP \TU/FandolSong-Regular(0)/m/n/12 前 端 与 前 后 端 部
  []
 
 
@@ -1219,23 +1770,7 @@ e KB
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 186--186
-[]|\TU/lmr/m/n/12 SES42\TU/FandolSong-Regular(0)/m/n/12 、|
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 186--186
 []|\TU/lmr/m/n/12 LLM-Wiki
- []
-
-
-Underfull \hbox (badness 2781) in paragraph at lines 186--186
-\TU/FandolSong-Regular(0)/m/n/12 方 向、| \TU/lmr/m/n/12 B \TU/FandolSong-Regular(
-0)/m/n/12 端
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 188--188
-[]|\TU/lmr/m/n/12 SES28\TU/FandolSong-Regular(0)/m/n/12 、|
  []
 
 
@@ -1263,9 +1798,9 @@ Overfull \hbox (28.65714pt too wide) in alignment at lines 176--192
  [] [] [] [] [] [] 
  []
 
-[16
+[114
 
-] [17] (./总报告.aux)
+] [115] (./总报告.aux)
  ***********
 LaTeX2e <2023-11-01> patch level 1
 L3 programming layer <2022/07/14>
@@ -1274,12 +1809,12 @@ Package rerunfilecheck Info: File `总报告.out' has not changed.
 (rerunfilecheck)             Checksum: D41D8CD98F00B204E9800998ECF8427E;0.
  ) 
 Here is how much of TeX's memory you used:
- 17161 strings out of 474773
- 378895 string characters out of 5757723
- 1940839 words of memory out of 5000000
- 39067 multiletter control sequences out of 15000+600000
+ 17343 strings out of 476415
+ 387875 string characters out of 5792682
+ 1936627 words of memory out of 5000000
+ 39055 multiletter control sequences out of 15000+600000
  563015 words of font info for 74 fonts, out of 8000000 for 9000
- 1348 hyphenation exceptions out of 8191
- 93i,12n,97p,1193b,428s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 264 hyphenation exceptions out of 8191
+ 93i,17n,97p,1193b,469s stack positions out of 10000i,1000n,20000p,200000b,200000s
 
-Output written on 总报告.xdv (19 pages, 50612 bytes).
+Output written on 总报告.xdv (117 pages, 110472 bytes).

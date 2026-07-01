@@ -1,0 +1,1506 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>WikiBridge 测试分析报告</title>
+  <style>
+    html {
+      color: #1a1a1a;
+      background-color: #fdfdfd;
+    }
+    body {
+      margin: 0 auto;
+      max-width: 36em;
+      padding-left: 50px;
+      padding-right: 50px;
+      padding-top: 50px;
+      padding-bottom: 50px;
+      hyphens: auto;
+      overflow-wrap: break-word;
+      text-rendering: optimizeLegibility;
+      font-kerning: normal;
+    }
+    @media (max-width: 600px) {
+      body {
+        font-size: 0.9em;
+        padding: 12px;
+      }
+      h1 {
+        font-size: 1.8em;
+      }
+    }
+    @media print {
+      html {
+        background-color: white;
+      }
+      body {
+        background-color: transparent;
+        color: black;
+        font-size: 12pt;
+      }
+      p, h2, h3 {
+        orphans: 3;
+        widows: 3;
+      }
+      h2, h3, h4 {
+        page-break-after: avoid;
+      }
+    }
+    p {
+      margin: 1em 0;
+    }
+    a {
+      color: #1a1a1a;
+    }
+    a:visited {
+      color: #1a1a1a;
+    }
+    img {
+      max-width: 100%;
+    }
+    h1, h2, h3, h4, h5, h6 {
+      margin-top: 1.4em;
+    }
+    h5, h6 {
+      font-size: 1em;
+      font-style: italic;
+    }
+    h6 {
+      font-weight: normal;
+    }
+    ol, ul {
+      padding-left: 1.7em;
+      margin-top: 1em;
+    }
+    li > ol, li > ul {
+      margin-top: 0;
+    }
+    blockquote {
+      margin: 1em 0 1em 1.7em;
+      padding-left: 1em;
+      border-left: 2px solid #e6e6e6;
+      color: #606060;
+    }
+    code {
+      font-family: Menlo, Monaco, Consolas, 'Lucida Console', monospace;
+      font-size: 85%;
+      margin: 0;
+      hyphens: manual;
+    }
+    pre {
+      margin: 1em 0;
+      overflow: auto;
+    }
+    pre code {
+      padding: 0;
+      overflow: visible;
+      overflow-wrap: normal;
+    }
+    .sourceCode {
+     background-color: transparent;
+     overflow: visible;
+    }
+    hr {
+      background-color: #1a1a1a;
+      border: none;
+      height: 1px;
+      margin: 1em 0;
+    }
+    table {
+      margin: 1em 0;
+      border-collapse: collapse;
+      width: 100%;
+      overflow-x: auto;
+      display: block;
+      font-variant-numeric: lining-nums tabular-nums;
+    }
+    table caption {
+      margin-bottom: 0.75em;
+    }
+    tbody {
+      margin-top: 0.5em;
+      border-top: 1px solid #1a1a1a;
+      border-bottom: 1px solid #1a1a1a;
+    }
+    th {
+      border-top: 1px solid #1a1a1a;
+      padding: 0.25em 0.5em 0.25em 0.5em;
+    }
+    td {
+      padding: 0.125em 0.5em 0.25em 0.5em;
+    }
+    header {
+      margin-bottom: 4em;
+      text-align: center;
+    }
+    #TOC li {
+      list-style: none;
+    }
+    #TOC ul {
+      padding-left: 1.3em;
+    }
+    #TOC > ul {
+      padding-left: 0;
+    }
+    #TOC a:not(:hover) {
+      text-decoration: none;
+    }
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    /* The extra [class] is a hack that increases specificity enough to
+       override a similar rule in reveal.js */
+    ul.task-list[class]{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      font-size: inherit;
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+  </style>
+</head>
+<body>
+<header id="title-block-header">
+<h1 class="title">WikiBridge 测试分析报告</h1>
+</header>
+<h1 id="wikibridge-测试分析报告">WikiBridge 测试分析报告</h1>
+<h2 id="封面信息">封面信息</h2>
+<table>
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>项目</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>文档编号</td>
+<td>WikiBridge-TAR-1.0</td>
+</tr>
+<tr class="even">
+<td>项目名称</td>
+<td>WikiBridge 零代码本地知识库 API 分享与 OpenCode/MCP 消费平台</td>
+</tr>
+<tr class="odd">
+<td>文档类型</td>
+<td>测试分析报告</td>
+</tr>
+<tr class="even">
+<td>参考模板</td>
+<td>测试分析报告（GB8567-88）</td>
+</tr>
+<tr class="odd">
+<td>文档版本</td>
+<td>V1.0</td>
+</tr>
+<tr class="even">
+<td>编写日期</td>
+<td>2026 年 6 月 26 日</td>
+</tr>
+<tr class="odd">
+<td>编写单位</td>
+<td>WikiBridge 项目组（武汉大学软件工程课程设计项目组）</td>
+</tr>
+<tr class="even">
+<td>被测版本</td>
+<td>当前 <code>/root/SE/wikibridge</code> 工作区版本</td>
+</tr>
+<tr class="odd">
+<td>测试阶段</td>
+<td>组装测试、确认测试、回归测试</td>
+</tr>
+</tbody>
+</table>
+<h2 id="文档变更历史记录">文档变更历史记录</h2>
+<table>
+<colgroup>
+<col style="width: 20%" />
+<col style="width: 20%" />
+<col style="width: 20%" />
+<col style="width: 20%" />
+<col style="width: 20%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>序号</th>
+<th>日期</th>
+<th>版本</th>
+<th>变更人员</th>
+<th>变更内容</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>1</td>
+<td>2026-06-26</td>
+<td>V0.1</td>
+<td>项目组</td>
+<td>根据 <code>测试文档.pdf</code>、测试命令输出和 Playwright
+截图说明整理测试分析报告初稿。</td>
+</tr>
+<tr class="even">
+<td>2</td>
+<td>2026-06-26</td>
+<td>V1.0</td>
+<td>项目组</td>
+<td>补充 Node 22 环境下 T-02、T-09 补跑结果，形成正式测试分析结论。</td>
+</tr>
+</tbody>
+</table>
+<h2 id="引言">1 引言</h2>
+<h3 id="编写目的">1.1 编写目的</h3>
+<p>本文档用于汇总 WikiBridge
+软件系统的测试执行情况、测试结果、功能结论、遗留问题、改进建议和资源消耗。本文档参考
+GB8567-88《测试分析报告》模板编写，作为课程设计验收、项目组质量评价和后续回归测试的依据。</p>
+<p>本文档重点回答两个问题：</p>
+<ol type="1">
+<li><code>/root/SE/doc/软件测试报告/测试文档.pdf</code> 中规划的 T-01 至
+T-09 测试任务是否已经执行并形成证据。</li>
+<li>当前版本是否满足 WikiBridge
+课程设计演示和验收所需的核心质量要求。</li>
+</ol>
+<h3 id="背景">1.2 背景</h3>
+<p>被测软件系统为 WikiBridge。系统当前架构基线为：B 端仅发布 LLM-Wiki
+API，S 端提供 BearFRP/frps 控制面与公网转发，C 端本地运行 OpenCode
+并通过 llm-wiki MCP server 消费远程知识库。</p>
+<p>测试对象包括：</p>
+<ul>
+<li>LLM-Wiki API 与 MCP server。</li>
+<li>OpenCode KB 模式及权限边界。</li>
+<li>BearFRP 用户、代理和 frps 插件。</li>
+<li>自动发布 sidecar。</li>
+<li>Docker Compose 集成栈。</li>
+<li>WikiBridge Desktop 桌面端系统测试和 Tauri/Rust 合同测试。</li>
+<li>端到端浏览器 UI 与截图证据。</li>
+</ul>
+<h3 id="定义">1.3 定义</h3>
+<table>
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>术语</th>
+<th>定义</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>T-01 至 T-09</td>
+<td><code>测试文档.pdf</code> 中定义的九类测试任务。</td>
+</tr>
+<tr class="even">
+<td>LLM-Wiki</td>
+<td>本地知识库编译与 API
+服务，提供健康检查、项目、文件、搜索和图谱能力。</td>
+</tr>
+<tr class="odd">
+<td>OpenCode KB 模式</td>
+<td>OpenCode 的知识库模式，用于限制文件访问、终端、PTY、MCP
+和配置变更等能力。</td>
+</tr>
+<tr class="even">
+<td>BearFRP</td>
+<td>本项目中的 frp 控制面，负责用户、代理、端口/子域名和脚本生成。</td>
+</tr>
+<tr class="odd">
+<td>frpc/frps</td>
+<td>frp 客户端和服务端。</td>
+</tr>
+<tr class="even">
+<td>MCP</td>
+<td>Model Context Protocol，用于将 LLM-Wiki API 注册为 OpenCode
+可调用工具。</td>
+</tr>
+<tr class="odd">
+<td>real-ui</td>
+<td>Playwright 通过真实浏览器页面断言并截图。</td>
+</tr>
+<tr class="even">
+<td>version-gated</td>
+<td>受 Node 或工具链版本限制而跳过的测试路径。</td>
+</tr>
+</tbody>
+</table>
+<h3 id="参考资料">1.4 参考资料</h3>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>序号</th>
+<th>文件或资料</th>
+<th>路径</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>1</td>
+<td>测试任务原始文档</td>
+<td><code>/root/SE/doc/软件测试报告/测试文档.pdf</code></td>
+</tr>
+<tr class="even">
+<td>2</td>
+<td>测试命令与脚本输出整理</td>
+<td><code>/root/SE/doc/软件测试报告/test-tasks-测试命令与输出.md</code></td>
+</tr>
+<tr class="odd">
+<td>3</td>
+<td>Playwright 人工测试截图说明</td>
+<td><code>/root/SE/doc/软件测试报告/playwright-人工测试截图说明.md</code></td>
+</tr>
+<tr class="even">
+<td>4</td>
+<td>测试脚本说明</td>
+<td><code>/root/SE/wikibridge/scripts/test-tasks.md</code></td>
+</tr>
+<tr class="odd">
+<td>5</td>
+<td>可执行测试脚本</td>
+<td><code>/root/SE/wikibridge/scripts/test-tasks.mjs</code></td>
+</tr>
+<tr class="even">
+<td>6</td>
+<td>截图采集脚本</td>
+<td><code>/root/SE/wikibridge/scripts/capture-manual-ui-screenshots.mjs</code></td>
+</tr>
+<tr class="odd">
+<td>7</td>
+<td>OpenCode KB 模式说明</td>
+<td><code>/root/SE/wikibridge/opencode/doc/kb-mode.md</code></td>
+</tr>
+<tr class="even">
+<td>8</td>
+<td>LLM Wiki MCP server 说明</td>
+<td><code>/root/SE/wikibridge/llm_wiki/mcp-server/README.md</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="测试概要">2 测试概要</h2>
+<h3 id="测试环境">2.1 测试环境</h3>
+<table>
+<thead>
+<tr class="header">
+<th>项目</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>测试目录</td>
+<td><code>/root/SE/wikibridge</code></td>
+</tr>
+<tr class="even">
+<td>操作系统</td>
+<td>Linux 测试主机</td>
+</tr>
+<tr class="odd">
+<td>Docker</td>
+<td>Docker version 29.4.3, build 055a478</td>
+</tr>
+<tr class="even">
+<td>Docker Compose</td>
+<td>Docker Compose version v5.1.3</td>
+</tr>
+<tr class="odd">
+<td>默认 Node</td>
+<td>v18.19.1</td>
+</tr>
+<tr class="even">
+<td>补跑 Node</td>
+<td>v22.13.1，路径 <code>/opt/node-v22.13.1-linux-x64/bin</code></td>
+</tr>
+<tr class="odd">
+<td>npm</td>
+<td>9.2.0 / 10.9.2</td>
+</tr>
+<tr class="even">
+<td>Python</td>
+<td>3.11.7</td>
+</tr>
+<tr class="odd">
+<td>Bun</td>
+<td>1.3.14</td>
+</tr>
+<tr class="even">
+<td>Rust/Cargo</td>
+<td>已安装，Tauri/Rust 合同测试可执行</td>
+</tr>
+<tr class="odd">
+<td>本地入口</td>
+<td><code>http://127.0.0.1:18080</code></td>
+</tr>
+<tr class="even">
+<td>BearFRP 控制面</td>
+<td><code>http://127.0.0.1:8000</code></td>
+</tr>
+<tr class="odd">
+<td>BearFRP 发布入口</td>
+<td><code>http://127.0.0.1:52600</code></td>
+</tr>
+<tr class="even">
+<td>截图目录</td>
+<td><code>/root/SE/doc/软件测试报告/screen-shot</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="测试任务完成情况判断">2.2 测试任务完成情况判断</h3>
+<p>结论：<code>测试文档.pdf</code> 中 T-01 至 T-09
+的主体测试任务已经完成，并已形成命令输出或截图证据。当前版本满足课程设计演示和验收的核心闭环要求。</p>
+<p>需要说明的是，2026-06-26 的一次全量汇总命令中，T-03
+的两个黑盒断言曾失败：脚本预期 <code>/vcs</code> 和
+<code>/vcs/diff</code> 在 KB 模式下返回 403，但当前 OpenCode
+实现和源码测试要求这两个 VCS 读接口返回 HTTP 200
+且内容为空对象或空数组，写入型 <code>/vcs/apply</code> 仍被 403
+拒绝。现已将 <code>test-tasks.mjs</code> 的 T-03
+黑盒断言同步为当前实现口径：<code>/vcs</code> 返回
+<code>{}</code>、<code>/vcs/diff</code> 返回
+<code>[]</code>、<code>/vcs/apply</code> 返回 403。同步后 T-03
+白盒与黑盒检查均通过。</p>
+<table>
+<colgroup>
+<col style="width: 20%" />
+<col style="width: 20%" />
+<col style="width: 20%" />
+<col style="width: 20%" />
+<col style="width: 20%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>测试标识</th>
+<th>测试名称</th>
+<th>完成状态</th>
+<th>主要证据</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>T-01</td>
+<td>部署与启动测试</td>
+<td>完成</td>
+<td><code>test-tasks.mjs --full --blackbox</code></td>
+<td>Compose 配置、nginx 入口、LLM-Wiki bridge health、BearFRP online API
+均通过。</td>
+</tr>
+<tr class="even">
+<td>T-02</td>
+<td>LLM Wiki API 测试</td>
+<td>完成</td>
+<td>Node 22 补跑、T-02/T-07 黑盒输出</td>
+<td>LLM-Wiki mocked tests 1548 个用例通过；MCP 14 个用例通过；API 黑盒
+health/projects/files/search/graph 通过。</td>
+</tr>
+<tr class="odd">
+<td>T-03</td>
+<td>OpenCode KB 权限测试</td>
+<td>完成</td>
+<td>Bun KB guard/server 测试、T-03 截图、T-03 黑盒补跑</td>
+<td>白盒 17 个用例通过；KB meta/UI 截图通过；VCS 读接口返回空结果、VCS
+apply 返回 403 的黑盒检查通过。</td>
+</tr>
+<tr class="even">
+<td>T-04</td>
+<td>BearFRP 用户与代理测试</td>
+<td>完成</td>
+<td>pytest 27 passed</td>
+<td>注册、登录、充值、代理创建、重复名称、非法输入等覆盖通过。</td>
+</tr>
+<tr class="odd">
+<td>T-05</td>
+<td>frps 插件鉴权测试</td>
+<td>完成</td>
+<td>pytest 10 passed</td>
+<td>token、子域名、Ping、CloseProxy 等插件鉴权路径通过。</td>
+</tr>
+<tr class="even">
+<td>T-06</td>
+<td>自动发布 sidecar 测试</td>
+<td>完成</td>
+<td><code>test-tasks-测试命令与输出.md</code></td>
+<td>Python 语法检查通过；<code>--full --docker</code> 下 sidecar image
+build 通过。</td>
+</tr>
+<tr class="odd">
+<td>T-07</td>
+<td>端到端访问测试</td>
+<td>完成</td>
+<td>黑盒输出与 real-ui 截图</td>
+<td>本地入口、BearFRP 发布入口、/llm-wiki
+页面、文件、搜索、图谱均通过。</td>
+</tr>
+<tr class="even">
+<td>T-08</td>
+<td>异常与安全测试</td>
+<td>完成</td>
+<td>pytest 37 passed、XSS 截图</td>
+<td>未认证、未知路径、超大请求体、XSS dialog 监听等通过。</td>
+</tr>
+<tr class="odd">
+<td>T-09</td>
+<td>桌面端知识库闭环测试</td>
+<td>完成</td>
+<td>Node 22 Playwright、Rust 合同测试、T-09 截图</td>
+<td>Desktop Playwright 16 个用例通过；Rust 31 passed、1
+ignored；四张桌面端截图通过。</td>
+</tr>
+</tbody>
+</table>
+<h3 id="执行命令摘要">2.3 执行命令摘要</h3>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>测试范围</th>
+<th>命令摘要</th>
+<th>结果</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>语法检查</td>
+<td><code>node --check scripts/test-tasks.mjs</code></td>
+<td>退出码 0。</td>
+</tr>
+<tr class="even">
+<td>空白检查</td>
+<td><code>git diff --check -- scripts/test-tasks.mjs scripts/test-tasks.md</code></td>
+<td>退出码 0。</td>
+</tr>
+<tr class="odd">
+<td>T-01/T-02/T-03/T-04/T-05/T-07/T-08/T-09 汇总</td>
+<td><code>node scripts/test-tasks.mjs --full --blackbox --base-url http://127.0.0.1:18080 --bearfrp-url http://127.0.0.1:8000 --query WikiBridge</code></td>
+<td>原汇总中 T-03 VCS 读接口断言口径不一致；已更新脚本并通过 T-03
+定向补跑。</td>
+</tr>
+<tr class="even">
+<td>T-02 补跑</td>
+<td><code>PATH="/opt/node-v22.13.1-linux-x64/bin:$PATH" node scripts/test-tasks.mjs --full --task T-02</code></td>
+<td>2 passed、0 skipped、0 failed。</td>
+</tr>
+<tr class="odd">
+<td>T-03 白盒补跑</td>
+<td><code>node scripts/test-tasks.mjs --full --task T-03</code></td>
+<td>1 passed、0 skipped、0 failed。</td>
+</tr>
+<tr class="even">
+<td>T-06 Docker 构建</td>
+<td><code>node scripts/test-tasks.mjs --full --docker --task T-06</code></td>
+<td>2 passed、0 skipped、0 failed。</td>
+</tr>
+<tr class="odd">
+<td>T-09 补跑</td>
+<td><code>PATH="/opt/node-v22.13.1-linux-x64/bin:$PATH" node scripts/test-tasks.mjs --full --task T-09</code></td>
+<td>2 passed、0 skipped、0 failed。</td>
+</tr>
+<tr class="even">
+<td>截图采集</td>
+<td><code>PATH="/opt/node-v22.13.1-linux-x64/bin:$PATH" node scripts/capture-manual-ui-screenshots.mjs</code></td>
+<td>T-03、T-07、T-08、T-09 共 12 张 real-ui 截图通过。</td>
+</tr>
+</tbody>
+</table>
+<h2 id="测试结果及发现">3 测试结果及发现</h2>
+<h3 id="t-01-部署与启动测试">3.1 T-01 部署与启动测试</h3>
+<table>
+<colgroup>
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>检查项</th>
+<th>输入或命令</th>
+<th>实际结果</th>
+<th>判定</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Docker Compose 配置</td>
+<td><code>docker compose config --quiet</code></td>
+<td>配置解析通过。</td>
+<td>通过</td>
+</tr>
+<tr class="even">
+<td>nginx OpenCode entry</td>
+<td><code>GET http://127.0.0.1:18080/global/health</code></td>
+<td>HTTP 200，健康响应正常。</td>
+<td>通过</td>
+</tr>
+<tr class="odd">
+<td>LLM-Wiki bridge health</td>
+<td><code>GET http://127.0.0.1:18080/instance/llm-wiki/health</code></td>
+<td>HTTP 200。</td>
+<td>通过</td>
+</tr>
+<tr class="even">
+<td>BearFRP online API</td>
+<td><code>GET http://127.0.0.1:8000/api/show/online</code></td>
+<td>HTTP 200，返回对象。</td>
+<td>通过</td>
+</tr>
+</tbody>
+</table>
+<p>发现：系统能够按 Compose 方式启动并形成 nginx 单入口。当前
+<code>docker compose ps</code> 中 OpenCode 容器曾显示
+<code>unhealthy</code>，但通过 nginx 的 <code>/global/health</code>
+和真实页面访问均通过，说明容器级 healthcheck
+与实际入口健康状态存在口径差异，建议后续修正 healthcheck 规则。</p>
+<h3 id="t-02-llm-wiki-api-测试">3.2 T-02 LLM Wiki API 测试</h3>
+<table>
+<colgroup>
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>检查项</th>
+<th>输入或命令</th>
+<th>实际结果</th>
+<th>判定</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>mocked tests</td>
+<td><code>npm run test:mocks</code></td>
+<td>Node 22 环境下 105 个测试文件、1548 个测试用例通过。</td>
+<td>通过</td>
+</tr>
+<tr class="even">
+<td>MCP tests</td>
+<td><code>npm run mcp:test</code></td>
+<td>14 个 MCP 测试全部通过。</td>
+<td>通过</td>
+</tr>
+<tr class="odd">
+<td>health</td>
+<td><code>GET /api/v1/health</code></td>
+<td>HTTP 200。</td>
+<td>通过</td>
+</tr>
+<tr class="even">
+<td>projects</td>
+<td><code>GET /api/v1/projects</code></td>
+<td>HTTP 200，返回项目数组。</td>
+<td>通过</td>
+</tr>
+<tr class="odd">
+<td>project files</td>
+<td><code>GET /projects/:id/files</code></td>
+<td>HTTP 200，返回文件数据。</td>
+<td>通过</td>
+</tr>
+<tr class="even">
+<td>search</td>
+<td><code>POST /projects/:id/search</code></td>
+<td>HTTP 200，返回搜索结果。</td>
+<td>通过</td>
+</tr>
+<tr class="odd">
+<td>graph</td>
+<td><code>GET /projects/:id/graph</code></td>
+<td>HTTP 200，返回图谱数据。</td>
+<td>通过</td>
+</tr>
+</tbody>
+</table>
+<p>过程记录：最初在默认 Node 18.19.1
+环境中，<code>llm_wiki mocked tests</code> 被脚本按 Node
+版本门控跳过；切换到 Node 22.13.1 后首次执行因 npm optional dependency
+缺少 <code>@rolldown/binding-linux-x64-gnu</code> 失败，执行
+<code>npm install --include=optional</code>
+后补跑通过。该问题属于本地依赖安装不完整，不是业务断言失败。</p>
+<p>发现：LLM-Wiki API 和 MCP server 的主要接口、错误处理、Token
+传递、搜索和图谱解析能力满足测试文档要求。</p>
+<h3 id="t-03-opencode-kb-权限测试">3.3 T-03 OpenCode KB 权限测试</h3>
+<table>
+<colgroup>
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>检查项</th>
+<th>输入或命令</th>
+<th>实际结果</th>
+<th>判定</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>KB guard tests</td>
+<td><code>bun test test/kb/guard.test.ts test/kb/server.test.ts</code></td>
+<td>17 pass，0 fail。</td>
+<td>通过</td>
+</tr>
+<tr class="even">
+<td>私有目录读写</td>
+<td>单元测试覆盖</td>
+<td>私有目录可读写。</td>
+<td>通过</td>
+</tr>
+<tr class="odd">
+<td>公开 Wiki 只读</td>
+<td>单元测试覆盖</td>
+<td>公开 Wiki 可读，不可写。</td>
+<td>通过</td>
+</tr>
+<tr class="even">
+<td>路径穿越</td>
+<td>单元测试覆盖</td>
+<td><code>../</code> 和项目外路径被拒绝。</td>
+<td>通过</td>
+</tr>
+<tr class="odd">
+<td>软链接逃逸</td>
+<td>单元测试覆盖</td>
+<td>realpath 后拒绝。</td>
+<td>通过</td>
+</tr>
+<tr class="even">
+<td>Shell/PTY/MCP/Config</td>
+<td>server tests 覆盖</td>
+<td>禁用或返回拒绝。</td>
+<td>通过</td>
+</tr>
+<tr class="odd">
+<td>KB meta/UI 截图</td>
+<td><code>T-03-kb-mode-meta-and-ui.png</code></td>
+<td>页面暴露 KB mode meta 并显示 KB UI。</td>
+<td>通过</td>
+</tr>
+<tr class="even">
+<td>VCS 读接口黑盒断言</td>
+<td><code>/vcs</code>、<code>/vcs/diff</code></td>
+<td>当前实现返回 HTTP 200 空对象/空数组，脚本已按该口径断言。</td>
+<td>通过</td>
+</tr>
+<tr class="odd">
+<td>VCS 写接口黑盒断言</td>
+<td><code>/vcs/apply</code></td>
+<td>KB 模式下返回 HTTP 403。</td>
+<td>通过</td>
+</tr>
+</tbody>
+</table>
+<p>发现：KB 模式的核心安全边界已经通过白盒测试、黑盒测试和真实 UI
+证据。VCS 读接口的当前实现是“保留读接口但返回空结果”，源码测试
+<code>httpapi-instance.test.ts</code>
+对此有明确断言；测试脚本已同步为该口径，并额外检查
+<code>/vcs/apply</code> 必须返回 403，以覆盖写入型 VCS
+能力禁用要求。</p>
+<h3 id="t-04-bearfrp-用户与代理测试">3.4 T-04 BearFRP
+用户与代理测试</h3>
+<table>
+<colgroup>
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>检查项</th>
+<th>输入或命令</th>
+<th>实际结果</th>
+<th>判定</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>BearFRP API coverage</td>
+<td><code>python -m pytest -q tests/test_api.py</code></td>
+<td>27 passed。</td>
+<td>通过</td>
+</tr>
+</tbody>
+</table>
+<p>发现：用户注册、登录、充值、代理创建、脚本生成、重复名称、非法输入和删除等控制面核心路径已通过当前
+pytest 覆盖。旧版 <code>测试文档.pdf</code>
+中提到的余额边界和删除列表一致性问题，在当前 pytest
+结果中未再表现为失败。</p>
+<h3 id="t-05-frps-插件鉴权测试">3.5 T-05 frps 插件鉴权测试</h3>
+<table>
+<colgroup>
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>检查项</th>
+<th>输入或命令</th>
+<th>实际结果</th>
+<th>判定</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>plugin and poller tests</td>
+<td><code>python -m pytest -q tests/test_plugin_and_poller.py</code></td>
+<td>10 passed。</td>
+<td>通过</td>
+</tr>
+</tbody>
+</table>
+<p>发现：frps 插件能够正确处理 token、代理名、子域名、Ping 和 CloseProxy
+等关键鉴权与状态同步场景。</p>
+<h3 id="t-06-自动发布-sidecar-测试">3.6 T-06 自动发布 sidecar 测试</h3>
+<table>
+<colgroup>
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>检查项</th>
+<th>输入或命令</th>
+<th>实际结果</th>
+<th>判定</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>sidecar Python syntax</td>
+<td><code>node scripts/test-tasks.mjs --task T-06</code></td>
+<td>Python AST 解析通过。</td>
+<td>通过</td>
+</tr>
+<tr class="even">
+<td>sidecar image build</td>
+<td><code>node scripts/test-tasks.mjs --full --docker --task T-06</code></td>
+<td>sidecar 镜像构建通过。</td>
+<td>通过</td>
+</tr>
+</tbody>
+</table>
+<p>发现：sidecar 能支持课程演示中的自动发布路径。默认轻量模式会跳过
+Docker build，这是脚本配置行为；<code>--full --docker</code>
+模式已实际构建成功。</p>
+<h3 id="t-07-端到端访问测试">3.7 T-07 端到端访问测试</h3>
+<table>
+<colgroup>
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>检查项</th>
+<th>输入或命令</th>
+<th>实际结果</th>
+<th>判定</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>OpenCode page advertises KB mode</td>
+<td><code>GET http://127.0.0.1:18080/</code></td>
+<td>HTTP 200，包含 <code>opencode-kb-mode</code>。</td>
+<td>通过</td>
+</tr>
+<tr class="even">
+<td>bridge project list</td>
+<td><code>GET /instance/llm-wiki/projects</code></td>
+<td>HTTP 200，返回项目数组。</td>
+<td>通过</td>
+</tr>
+<tr class="odd">
+<td>bridge project files</td>
+<td><code>GET /instance/llm-wiki/projects/:id/files</code></td>
+<td>HTTP 200，返回文件数据。</td>
+<td>通过</td>
+</tr>
+<tr class="even">
+<td>本地入口截图</td>
+<td><code>T-07-local-entry-opencode-kb-home.png</code></td>
+<td>real-ui 通过。</td>
+<td>通过</td>
+</tr>
+<tr class="odd">
+<td>LLM-Wiki 知识库页面</td>
+<td><code>T-07-llm-wiki-knowledge-base-page.png</code></td>
+<td>real-ui 通过。</td>
+<td>通过</td>
+</tr>
+<tr class="even">
+<td>图谱视图</td>
+<td><code>T-07-llm-wiki-graph-view.png</code></td>
+<td>real-ui 通过。</td>
+<td>通过</td>
+</tr>
+<tr class="odd">
+<td>文件内容</td>
+<td><code>T-07-llm-wiki-file-content.png</code></td>
+<td>real-ui 通过。</td>
+<td>通过</td>
+</tr>
+<tr class="even">
+<td>搜索结果</td>
+<td><code>T-07-llm-wiki-search-results.png</code></td>
+<td>real-ui 通过。</td>
+<td>通过</td>
+</tr>
+<tr class="odd">
+<td>BearFRP 发布入口</td>
+<td><code>T-07-bearfrp-published-entry.png</code></td>
+<td>real-ui 通过。</td>
+<td>通过</td>
+</tr>
+</tbody>
+</table>
+<p>发现：本地入口、LLM-Wiki 页面、搜索、图谱和 BearFRP
+发布入口均能形成可演示的端到端访问闭环。</p>
+<h3 id="t-08-异常与安全测试">3.8 T-08 异常与安全测试</h3>
+<table>
+<colgroup>
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>检查项</th>
+<th>输入或命令</th>
+<th>实际结果</th>
+<th>判定</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>BearFRP security/error coverage</td>
+<td><code>python -m pytest -q tests/test_api.py tests/test_plugin_and_poller.py</code></td>
+<td>37 passed。</td>
+<td>通过</td>
+</tr>
+<tr class="even">
+<td>unknown BearFRP path</td>
+<td><code>GET /__not_found__</code></td>
+<td>HTTP 404。</td>
+<td>通过</td>
+</tr>
+<tr class="odd">
+<td>user endpoint requires auth</td>
+<td><code>GET /api/user/me</code></td>
+<td>HTTP 401。</td>
+<td>通过</td>
+</tr>
+<tr class="even">
+<td>LLM Wiki oversized body</td>
+<td>超大 search body</td>
+<td>HTTP 503，符合脚本允许状态。</td>
+<td>通过</td>
+</tr>
+<tr class="odd">
+<td>XSS dialog 监听</td>
+<td><code>T-08-xss-no-alert-llm-wiki-content.png</code></td>
+<td>未捕获浏览器弹窗。</td>
+<td>通过</td>
+</tr>
+</tbody>
+</table>
+<p>发现：错误 token、未认证访问、未知路径、超大请求体和基础 XSS
+样例均按安全边界处理。公开部署前仍需替换默认密码、frps
+token、LLM_WIKI_TOKEN，并配置 HTTPS。</p>
+<h3 id="t-09-桌面端知识库闭环测试">3.9 T-09 桌面端知识库闭环测试</h3>
+<table>
+<colgroup>
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>检查项</th>
+<th>输入或命令</th>
+<th>实际结果</th>
+<th>判定</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Desktop Playwright system tests</td>
+<td><code>npm run test:system</code></td>
+<td>Node 22 环境下 16 passed。</td>
+<td>通过</td>
+</tr>
+<tr class="even">
+<td>Desktop Rust contract tests</td>
+<td><code>npm run test:contracts</code></td>
+<td>31 passed、1 ignored。</td>
+<td>通过</td>
+</tr>
+<tr class="odd">
+<td>项目仪表盘截图</td>
+<td><code>T-09-desktop-project-dashboard.png</code></td>
+<td>real-ui 通过。</td>
+<td>通过</td>
+</tr>
+<tr class="even">
+<td>编译准备状态截图</td>
+<td><code>T-09-desktop-compile-ready.png</code></td>
+<td>real-ui 通过。</td>
+<td>通过</td>
+</tr>
+<tr class="odd">
+<td>访问连接状态截图</td>
+<td><code>T-09-desktop-link-report-ready.png</code></td>
+<td>real-ui 通过。</td>
+<td>通过</td>
+</tr>
+<tr class="even">
+<td>消费端远程知识库截图</td>
+<td><code>T-09-desktop-local-wiki-reader.png</code></td>
+<td>real-ui 通过。</td>
+<td>通过</td>
+</tr>
+</tbody>
+</table>
+<p>过程记录：T-09 最初在 Node 18.19.1 环境中被 Playwright/Vite
+版本门控跳过；切换至 Node 22.13.1 后，Desktop Playwright 系统测试和 Rust
+合同测试均通过，截图脚本也补齐四张桌面端 real-ui 证据。</p>
+<p>发现：桌面端已覆盖本地知识项目、远程知识库添加、发布连接和消费端入口等课程演示所需路径。</p>
+<h2 id="对软件功能的结论">4 对软件功能的结论</h2>
+<h3 id="功能-f-01部署与统一入口">4.1 功能 F-01：部署与统一入口</h3>
+<p>结论：通过。系统能够通过 Docker Compose 形成可访问的 nginx
+单入口，并转发 OpenCode KB 页面和 LLM-Wiki bridge API。</p>
+<p>限制：OpenCode 容器级 healthcheck
+与真实入口健康状态存在口径差异，建议后续修正容器健康检查。</p>
+<h3 id="功能-f-02llm-wiki-知识库服务">4.2 功能 F-02：LLM-Wiki
+知识库服务</h3>
+<p>结论：通过。LLM-Wiki 的健康检查、项目、文件、搜索、图谱、mocked tests
+和 MCP server 测试均通过。</p>
+<p>限制：real-LLM 能力依赖外部模型服务和 API Key，本轮主要验证
+mock、API、MCP 和黑盒项目级能力。</p>
+<h3 id="功能-f-03opencode-kb-权限隔离">4.3 功能 F-03：OpenCode KB
+权限隔离</h3>
+<p>结论：通过。KB Guard、server 权限、路径隔离、Shell/PTY/MCP/Config
+禁用、VCS 读接口脱敏、VCS 写接口拒绝和 KB meta/UI 证据均通过。</p>
+<p>限制：VCS 读接口采用“返回空结果”而非“直接
+403”的安全口径，后续需求和测试文档需继续保持一致。</p>
+<h3 id="功能-f-04bearfrp-发布控制面">4.4 功能 F-04：BearFRP
+发布控制面</h3>
+<p>结论：通过。BearFRP 用户、代理、frps 插件和安全错误路径 pytest
+均通过，BearFRP 发布入口截图通过。</p>
+<p>限制：对外部署仍依赖公网端口、防火墙、HTTP vhost、DNS 或 TCP
+端口配置。</p>
+<h3 id="功能-f-05自动发布-sidecar">4.5 功能 F-05：自动发布 sidecar</h3>
+<p>结论：通过。sidecar 语法检查和 Docker
+镜像构建通过，能够支撑课程演示的一键发布链路。</p>
+<p>限制：首次运行可能依赖 frpc
+下载或镜像缓存，离线环境需提前准备二进制或缓存。</p>
+<h3 id="功能-f-06桌面端知识库闭环">4.6 功能 F-06：桌面端知识库闭环</h3>
+<p>结论：通过。Desktop Playwright 系统测试、Rust 合同测试和四张 real-ui
+截图均通过。</p>
+<p>限制：测试截图覆盖的是系统测试模式下的桌面前端入口；真实 Tauri
+打包后的跨平台表现仍需后续按提交平台补测。</p>
+<h2 id="分析摘要">5 分析摘要</h2>
+<h3 id="能力摘要">5.1 能力摘要</h3>
+<p>本轮测试证明 WikiBridge 当前版本具备以下能力：</p>
+<ol type="1">
+<li>能以 Docker Compose 方式启动主要服务，并通过 nginx 单入口访问。</li>
+<li>能通过 LLM-Wiki API 提供项目、文件、搜索和图谱能力。</li>
+<li>能通过 llm-wiki MCP server 将远程知识库能力接入 OpenCode。</li>
+<li>能通过 OpenCode KB 模式限制危险文件访问、终端、PTY、MCP
+和配置变更。</li>
+<li>能通过 BearFRP 控制面和 frps 插件创建、鉴权和管理发布代理。</li>
+<li>能通过 sidecar 自动发布演示入口。</li>
+<li>能通过浏览器真实 UI 展示知识库页面、图谱、文件内容、搜索结果和 XSS
+不执行证据。</li>
+<li>能通过 Desktop
+完成本地知识项目、发布连接和远程知识库消费端入口展示。</li>
+</ol>
+<h3 id="缺陷和限制">5.2 缺陷和限制</h3>
+<table>
+<colgroup>
+<col style="width: 20%" />
+<col style="width: 20%" />
+<col style="width: 20%" />
+<col style="width: 20%" />
+<col style="width: 20%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>编号</th>
+<th>缺陷或限制</th>
+<th>严重性</th>
+<th>影响</th>
+<th>状态</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>L-01</td>
+<td>T-03 汇总黑盒脚本曾要求 VCS 读接口返回 403，但当前实现返回 200
+空结果。</td>
+<td>低</td>
+<td>曾造成全量汇总脚本 2 个失败断言。</td>
+<td>已更新测试脚本，定向补跑通过</td>
+</tr>
+<tr class="even">
+<td>L-02</td>
+<td>默认 Node 18.19.1 低于 Desktop Playwright/Vite 要求。</td>
+<td>中</td>
+<td>不切换 Node 时 T-09 系统测试和截图会被跳过。</td>
+<td>已通过 Node 22 补跑</td>
+</tr>
+<tr class="odd">
+<td>L-03</td>
+<td><code>llm_wiki/node_modules</code> 曾缺少 npm optional native
+binding。</td>
+<td>中</td>
+<td>Node 22 下首次执行 mocked tests 失败。</td>
+<td>已通过 <code>npm install --include=optional</code> 修复并补跑</td>
+</tr>
+<tr class="even">
+<td>L-04</td>
+<td>OpenCode 容器级 healthcheck 曾显示
+<code>unhealthy</code>，但入口健康检查通过。</td>
+<td>低</td>
+<td>可能影响部署状态判断。</td>
+<td>待修正 healthcheck 口径</td>
+</tr>
+<tr class="odd">
+<td>L-05</td>
+<td>对外部署前默认密码、frps token、LLM_WIKI_TOKEN 和 HTTPS
+仍需按生产环境设置。</td>
+<td>高</td>
+<td>公开暴露时存在安全风险。</td>
+<td>部署前必须处理</td>
+</tr>
+<tr class="even">
+<td>L-06</td>
+<td>real-LLM、HTTP
+子域名和公网访问依赖外部模型服务、DNS、防火墙和端口配置。</td>
+<td>中</td>
+<td>可能影响非本地演示环境稳定性。</td>
+<td>按环境配置</td>
+</tr>
+</tbody>
+</table>
+<h3 id="建议">5.3 建议</h3>
+<table>
+<colgroup>
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>编号</th>
+<th>建议</th>
+<th>紧迫程度</th>
+<th>预计工作量</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>S-01</td>
+<td>保持 <code>scripts/test-tasks.mjs</code> 中 T-03 VCS
+黑盒断言与当前实现一致：<code>/vcs</code> 预期
+<code>{}</code>、<code>/vcs/diff</code> 预期
+<code>[]</code>、<code>/vcs/apply</code> 预期 403。</td>
+<td>中</td>
+<td>0.5 人日</td>
+</tr>
+<tr class="even">
+<td>S-02</td>
+<td>在提交或答辩环境统一使用 Node 22.13.1 或 Node 20.19+，避免 Desktop
+测试被版本门控跳过。</td>
+<td>高</td>
+<td>0.5 人日</td>
+</tr>
+<tr class="odd">
+<td>S-03</td>
+<td>将 <code>npm install --include=optional</code>
+或等价依赖安装步骤写入测试准备说明。</td>
+<td>中</td>
+<td>0.5 人日</td>
+</tr>
+<tr class="even">
+<td>S-04</td>
+<td>修正 OpenCode 容器 healthcheck，使 Compose 状态与
+<code>/global/health</code> 一致。</td>
+<td>中</td>
+<td>1 人日</td>
+</tr>
+<tr class="odd">
+<td>S-05</td>
+<td>公开部署前强制修改 OpenCode 密码、BearFRP 管理员密码、frps token 和
+LLM_WIKI_TOKEN，并配置 HTTPS。</td>
+<td>高</td>
+<td>0.5 人日</td>
+</tr>
+<tr class="even">
+<td>S-06</td>
+<td>保留 T-03/T-07/T-08/T-09 real-ui
+截图作为最终验收证据，并在答辩前重新生成一轮。</td>
+<td>中</td>
+<td>0.5 人日</td>
+</tr>
+</tbody>
+</table>
+<h3 id="评价">5.4 评价</h3>
+<p>从测试计划覆盖范围和当前执行结果看，WikiBridge 已完成
+<code>测试文档.pdf</code> 中 T-01 至 T-09
+的主体测试任务。系统可以用于课程设计演示和验收。</p>
+<p>当前没有发现影响主链路的阻塞级缺陷。主链路包括：B 端构建并通过
+LLM-Wiki API 暴露知识库，S 端通过 BearFRP/frps 发布入口，C 端本地
+OpenCode + MCP 消费远程知识库。需要在最终提交前处理或说明的事项主要是
+Node 版本要求、公开部署安全配置和容器 healthcheck 口径。</p>
+<h2 id="测试资源消耗">6 测试资源消耗</h2>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>资源类型</th>
+<th>数量或时间</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>测试人员</td>
+<td>1-2 人</td>
+<td>执行脚本、补跑环境、整理截图和报告。</td>
+</tr>
+<tr class="even">
+<td>开发协助</td>
+<td>1 人</td>
+<td>解释当前 OpenCode VCS 读接口和 KB 模式实现口径。</td>
+</tr>
+<tr class="odd">
+<td>测试主机</td>
+<td>1 台</td>
+<td>Linux + Docker Compose 环境。</td>
+</tr>
+<tr class="even">
+<td>浏览器</td>
+<td>Chromium / Playwright</td>
+<td>用于 real-ui 截图和 Desktop 系统测试。</td>
+</tr>
+<tr class="odd">
+<td>命令行测试时间</td>
+<td>约 1 小时</td>
+<td>包括 T-02、T-03、T-09 补跑和全量汇总。</td>
+</tr>
+<tr class="even">
+<td>截图采集时间</td>
+<td>约 10 分钟</td>
+<td>生成 T-03、T-07、T-08、T-09 共 12 张截图。</td>
+</tr>
+<tr class="odd">
+<td>报告整理时间</td>
+<td>约 1.5 小时</td>
+<td>对照 <code>测试文档.pdf</code>、命令输出和截图说明编写。</td>
+</tr>
+</tbody>
+</table>
+<h2 id="附录-a-截图证据清单">附录 A 截图证据清单</h2>
+<table>
+<thead>
+<tr class="header">
+<th>测试项</th>
+<th>截图文件</th>
+<th>结果</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>T-03</td>
+<td><code>screen-shot/T-03-kb-mode-meta-and-ui.png</code></td>
+<td>PASS</td>
+</tr>
+<tr class="even">
+<td>T-07</td>
+<td><code>screen-shot/T-07-local-entry-opencode-kb-home.png</code></td>
+<td>PASS</td>
+</tr>
+<tr class="odd">
+<td>T-07</td>
+<td><code>screen-shot/T-07-llm-wiki-knowledge-base-page.png</code></td>
+<td>PASS</td>
+</tr>
+<tr class="even">
+<td>T-07</td>
+<td><code>screen-shot/T-07-llm-wiki-graph-view.png</code></td>
+<td>PASS</td>
+</tr>
+<tr class="odd">
+<td>T-07</td>
+<td><code>screen-shot/T-07-llm-wiki-file-content.png</code></td>
+<td>PASS</td>
+</tr>
+<tr class="even">
+<td>T-07</td>
+<td><code>screen-shot/T-07-llm-wiki-search-results.png</code></td>
+<td>PASS</td>
+</tr>
+<tr class="odd">
+<td>T-07</td>
+<td><code>screen-shot/T-07-bearfrp-published-entry.png</code></td>
+<td>PASS</td>
+</tr>
+<tr class="even">
+<td>T-08</td>
+<td><code>screen-shot/T-08-xss-no-alert-llm-wiki-content.png</code></td>
+<td>PASS</td>
+</tr>
+<tr class="odd">
+<td>T-09</td>
+<td><code>screen-shot/T-09-desktop-project-dashboard.png</code></td>
+<td>PASS</td>
+</tr>
+<tr class="even">
+<td>T-09</td>
+<td><code>screen-shot/T-09-desktop-compile-ready.png</code></td>
+<td>PASS</td>
+</tr>
+<tr class="odd">
+<td>T-09</td>
+<td><code>screen-shot/T-09-desktop-link-report-ready.png</code></td>
+<td>PASS</td>
+</tr>
+<tr class="even">
+<td>T-09</td>
+<td><code>screen-shot/T-09-desktop-local-wiki-reader.png</code></td>
+<td>PASS</td>
+</tr>
+</tbody>
+</table>
+<h2 id="附录-b-重点回归用例清单">附录 B 重点回归用例清单</h2>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>编号</th>
+<th>回归用例</th>
+<th>预期结果</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>REG-01</td>
+<td>Compose 配置解析和 nginx 健康检查</td>
+<td>配置有效，入口 HTTP 200。</td>
+</tr>
+<tr class="even">
+<td>REG-02</td>
+<td>LLM-Wiki health/projects/files/search/graph</td>
+<td>均返回 HTTP 200 和预期 JSON 结构。</td>
+</tr>
+<tr class="odd">
+<td>REG-03</td>
+<td>LLM-Wiki mocked tests</td>
+<td>Node 20.19+ 或 Node 22 下全部通过。</td>
+</tr>
+<tr class="even">
+<td>REG-04</td>
+<td>LLM-Wiki MCP tests</td>
+<td>14 个 MCP 测试全部通过。</td>
+</tr>
+<tr class="odd">
+<td>REG-05</td>
+<td>KB 模式路径穿越、软链接、其它用户目录</td>
+<td>均被拒绝。</td>
+</tr>
+<tr class="even">
+<td>REG-06</td>
+<td>KB 模式 Shell/PTY/MCP/Config</td>
+<td>禁用或返回拒绝。</td>
+</tr>
+<tr class="odd">
+<td>REG-07</td>
+<td>KB 模式 VCS 读接口</td>
+<td><code>/vcs</code> 返回 200 <code>{}</code>，<code>/vcs/diff</code>
+返回 200 <code>[]</code>。</td>
+</tr>
+<tr class="even">
+<td>REG-08</td>
+<td>KB 模式 VCS apply</td>
+<td>返回 403。</td>
+</tr>
+<tr class="odd">
+<td>REG-09</td>
+<td>BearFRP 用户和代理 pytest</td>
+<td>27 passed。</td>
+</tr>
+<tr class="even">
+<td>REG-10</td>
+<td>frps 插件 pytest</td>
+<td>10 passed。</td>
+</tr>
+<tr class="odd">
+<td>REG-11</td>
+<td>sidecar 语法和镜像构建</td>
+<td>均通过。</td>
+</tr>
+<tr class="even">
+<td>REG-12</td>
+<td>本地入口和 BearFRP 发布入口</td>
+<td>均可访问并展示 KB shell。</td>
+</tr>
+<tr class="odd">
+<td>REG-13</td>
+<td>/llm-wiki 文件、搜索、图谱 UI</td>
+<td>real-ui 断言通过并生成截图。</td>
+</tr>
+<tr class="even">
+<td>REG-14</td>
+<td>XSS fixture</td>
+<td>页面显示脚本文本但不触发浏览器弹窗。</td>
+</tr>
+<tr class="odd">
+<td>REG-15</td>
+<td>Desktop Playwright system tests</td>
+<td>16 passed。</td>
+</tr>
+<tr class="even">
+<td>REG-16</td>
+<td>Desktop Rust contract tests</td>
+<td>31 passed、1 ignored。</td>
+</tr>
+</tbody>
+</table>
+</body>
+</html>
