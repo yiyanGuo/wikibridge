@@ -303,45 +303,46 @@ MCP 连接面板 & MCP 名称、工具列表、连接/检测按钮、错误提�
 \centering
 \resizebox{0.96\textwidth}{!}{%
 \begin{tikzpicture}[
-  font=\small,
-  actor/.style={draw=whu, fill=softblue, thick, ellipse, align=center, minimum width=2.7cm, minimum height=0.9cm},
-  usecase/.style={draw=whu, fill=white, thick, ellipse, align=center, minimum width=3.45cm, minimum height=0.9cm},
+  font=\scriptsize,
+  actor/.style={draw=whu, fill=softblue, thick, ellipse, align=center, minimum width=2.75cm, minimum height=1.0cm},
+  usecase/.style={draw=whu, fill=white, thick, ellipse, align=center, minimum width=3.25cm, minimum height=0.82cm},
   system/.style={draw=whu, rounded corners=4pt, thick, fill=softgray},
-  link/.style={draw=whu, thick},
+  link/.style={draw=whu, thick, shorten >=2pt, shorten <=2pt},
   include/.style={draw=whu, thick, dashed, -{Stealth[length=2mm]}},
-  note/.style={draw=orange!80!black, fill=softorange, rounded corners=3pt, align=left, inner sep=5pt}
+  note/.style={draw=orange!80!black, fill=softorange, rounded corners=3pt, align=left, inner sep=4pt}
 ]
-\node[actor] (creator) at (-6.3,2.7) {B 端知识拥有者\\发布者};
-\node[actor] (visitor) at (-6.3,-2.5) {C 端知识消费者\\受限访客};
-\node[actor] (admin) at (6.5,0) {S 端管理员\\服务器维护者};
+\node[actor] (creator) at (-6.8,2.15) {B 端知识拥有者\\发布者};
+\node[actor] (visitor) at (6.8,-2.15) {C 端知识消费者\\受限访客};
+\node[actor] (admin) at (6.8,1.25) {S 端管理员\\服务器维护者};
 
-\node[system, minimum width=9.0cm, minimum height=6.2cm] (box) at (0,0) {};
+\node[system, minimum width=9.7cm, minimum height=6.6cm] (box) at (0,0) {};
 \node[anchor=north west, text=whu, font=\bfseries] at (box.north west) {WikiBridge 平台};
 
-\node[usecase] (build) at (-2.5,2.0) {构建本地知识库};
-\node[usecase] (publish) at (1.9,2.0) {发布 LLM-Wiki API};
-\node[usecase] (manage) at (-2.5,0.35) {管理 BearFRP 代理};
-\node[usecase] (remote) at (1.9,0.35) {添加远程知识库};
-\node[usecase] (opencode) at (-2.5,-1.25) {启动本地 OpenCode};
-\node[usecase] (mcp) at (1.9,-1.25) {注册 llm-wiki MCP};
-\node[usecase] (chat) at (1.9,-2.8) {对话式读取/搜索};
+\node[usecase] (build) at (-2.3,2.35) {构建本地知识库};
+\node[usecase] (publish) at (-2.3,1.05) {发布 LLM-Wiki API};
+\node[usecase] (manage) at (-2.3,-0.25) {管理 BearFRP 代理};
+\node[usecase] (remote) at (2.35,1.75) {添加远程知识库};
+\node[usecase] (mcp) at (2.35,0.45) {注册 llm-wiki MCP};
+\node[usecase] (opencode) at (2.35,-0.85) {启动本地 OpenCode};
+\node[usecase] (chat) at (2.35,-2.15) {对话式读取/搜索};
 
-\draw[link] (creator) -- (build);
-\draw[link] (creator) -- (publish);
-\draw[link] (creator) -- (manage);
-\draw[link] (visitor) -- (remote);
-\draw[link] (visitor) -- (opencode);
-\draw[link] (visitor) -- (mcp);
-\draw[link] (visitor) -- (chat);
-\draw[link] (admin) -- (manage);
-\draw[link] (admin) -- (publish);
+\draw[link] (creator.east) -- (build.west);
+\draw[link] (creator.east) -- (publish.west);
+\draw[link] (creator.east) to[out=-35,in=165] (manage.west);
+\draw[link] (visitor.west) -- (remote.east);
+\draw[link] (visitor.west) -- (opencode.east);
+\draw[link] (visitor.west) -- (mcp.east);
+\draw[link] (visitor.west) -- (chat.east);
+\draw[link] (admin.west) -- (remote.east);
+\draw[link] (admin.west) to[out=190,in=15] (manage.east);
+\draw[link] (admin.west) to[out=160,in=10] (publish.east);
 
-\draw[include] (publish) -- node[above, sloped, font=\scriptsize] {include} (manage);
-\draw[include] (chat) -- node[right, font=\scriptsize] {include} (mcp);
-\draw[include] (mcp) -- node[above, sloped, font=\scriptsize] {include} (remote);
-\draw[include] (chat) -- node[below, sloped, font=\scriptsize] {include} (opencode);
+\draw[include] (publish.south) -- node[right, font=\scriptsize, fill=white, inner sep=1pt] {include} (manage.north);
+\draw[include] (mcp.north) -- node[right, font=\scriptsize, fill=white, inner sep=1pt] {include} (remote.south);
+\draw[include] (chat.north) -- node[right, pos=0.35, font=\tiny, fill=white, inner sep=1pt] {include} (opencode.south);
+\draw[include] (chat.north east) to[bend left=30] node[right, pos=0.78, xshift=4pt, font=\tiny, fill=white, inner sep=1pt] {include} (mcp.south east);
 
-\node[note] at (0,-4.05) {非功能约束：B 端不暴露完整 OpenCode；C 端自持模型配置；S 端不保存知识正文；MCP 工具受白名单与 KB 只读模式限制。};
+\node[note, text width=13.1cm] at (0,-4.1) {非功能约束：B 端不暴露完整 OpenCode；C 端自持模型配置；S 端不保存知识正文；MCP 工具受白名单与 KB 只读模式限制。};
 \end{tikzpicture}}
 \caption{WikiBridge 用例图}
 \label{fig:usecase}
